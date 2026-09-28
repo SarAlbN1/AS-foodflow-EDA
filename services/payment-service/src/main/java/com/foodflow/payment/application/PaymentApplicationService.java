@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,9 +42,14 @@ public class PaymentApplicationService {
      *
      * <p><strong>Un pedido, un pago.</strong> Si el pedido ya tiene pago se devuelve ese mismo y
      * no se cobra de nuevo, de modo que reprocesar el mismo {@code OrderCreated} no duplica
-     * nada (criterio 5). La garantia real es el indice unico de {@code order_id} en Payment DB:
-     * la consulta previa evita el caso comun y la restriccion cubre la carrera entre dos
-     * consumidores del grupo.
+     * nada (criterio 5).
+     *
+     * <p>Dos consumidores del grupo no pueden entrar aqui a la vez para el mismo pedido: la clave
+     * de particion es el {@code orderId} (regla 11, ADR-04), asi que todos los eventos de un
+     * pedido van a la misma particion y la atiende un solo consumidor del grupo. El indice unico
+     * de {@code order_id} queda como ultima garantia de la base; si llegara a violarse, el fallo
+     * sube y lo trata el consumidor, no se disimula aqui. Reintentarlo encontraria el pago ya
+     * escrito y volveria por la rama de arriba.
      *
      * <p>El contacto es dato personal y se registra enmascarado
      * ({@code docs/wiki/04-implementacion/convenciones.md}).
@@ -66,18 +70,12 @@ public class PaymentApplicationService {
                 orden.paymentToken(),
                 referencias.nueva(orden.orderId(), Instant.now()));
 
-        try {
-            Payment guardado = repositorio.saveAndFlush(pago);
-            log.info("Pago resuelto. orderId={} paymentId={} status={} amount={} {} reasonCode={} transactionReference={} eventId={} correlationId={} contacto={}",
-                    guardado.orderId(), guardado.id(), guardado.status(), guardado.amount(),
-                    orden.currency(), guardado.reasonCode(), guardado.transactionReference(),
-                    orden.eventId(), orden.correlationId(),
-                    ContactMasker.mask(orden.contact().destination()));
-            return guardado;
-        } catch (DataIntegrityViolationException e) {
-            // Otro consumidor del grupo escribio el pago de este pedido entre la consulta y el
-            // insert. El indice unico hizo su trabajo: se relee y se devuelve el que quedo.
-            return repositorio.findByOrderId(orden.orderId()).orElseThrow(() -> e);
-        }
+        Payment guardado = repositorio.saveAndFlush(pago);
+        log.info("Pago resuelto. orderId={} paymentId={} status={} amount={} {} reasonCode={} transactionReference={} eventId={} correlationId={} contacto={}",
+                guardado.orderId(), guardado.id(), guardado.status(), guardado.amount(),
+                orden.currency(), guardado.reasonCode(), guardado.transactionReference(),
+                orden.eventId(), orden.correlationId(),
+                ContactMasker.mask(orden.contact().destination()));
+        return guardado;
     }
 }

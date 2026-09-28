@@ -74,7 +74,9 @@ El pago es determinista (ADR-10): el resultado se conoce al procesar `OrderCreat
 
 `transactionReference` tiene el formato `TXN-<yyyyMMdd>-<8 primeros dígitos del orderId>` y nunca es nula, tampoco cuando el pago se rechaza: sirve para rastrear el intento. Es una referencia propia del servicio, no de una pasarela externa; el prototipo no integra ninguna.
 
-**Un pedido, un pago.** `payments.order_id` es único: reprocesar el mismo `OrderCreated` devuelve el pago que ya existía y no cobra de nuevo. La consulta previa evita el caso común y la restricción de la base cubre la carrera entre dos consumidores del grupo. El registro del `eventId` en `processed_events` (ADR-09) lo añade HU-601.
+**Un pedido, un pago.** `payments.order_id` es único: reprocesar el mismo `OrderCreated` devuelve el pago que ya existía y no cobra de nuevo.
+
+Dos consumidores del grupo no pueden procesar el mismo pedido a la vez: la clave de partición es el `orderId` (regla 11, ADR-04), así que todos sus eventos van a la misma partición y la atiende un solo consumidor. El índice único queda como última garantía de la base, no como el mecanismo del que depende el caso normal. El registro del `eventId` en `processed_events` (ADR-09) lo añade HU-601.
 
 El esquema lo crean los scripts de [`infrastructure/postgres/payment-db/`](../../infrastructure/postgres/payment-db) y Hibernate solo lo valida (`ddl-auto=validate`).
 
