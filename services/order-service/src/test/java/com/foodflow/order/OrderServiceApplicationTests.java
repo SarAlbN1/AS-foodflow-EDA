@@ -9,9 +9,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import com.foodflow.order.application.IdempotencyConflictException;
 import com.foodflow.order.application.OrderApplicationService;
+import com.foodflow.order.application.OrderCreationTransaction;
+import com.foodflow.order.application.RequestHash;
 import com.foodflow.order.application.OrderNotFoundException;
 import com.foodflow.order.domain.IdempotencyKey;
 import com.foodflow.order.domain.Order;
@@ -19,6 +22,8 @@ import com.foodflow.order.domain.OrderStatus;
 import com.foodflow.order.infrastructure.persistence.IdempotencyKeyRepository;
 import com.foodflow.order.infrastructure.persistence.OrderRepository;
 import com.foodflow.order.validation.OrderDraft;
+import com.foodflow.order.validation.OrderValidator;
+import com.foodflow.order.validation.ValidatedOrderCommand;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -44,6 +49,9 @@ class OrderServiceApplicationTests {
 
     @Autowired
     private IdempotencyKeyRepository claves;
+
+    @Autowired
+    private OrderCreationTransaction transaccion;
 
     @Test
     void contextLoads() {
@@ -88,6 +96,32 @@ class OrderServiceApplicationTests {
         } finally {
             claves.deleteById(clave);
             repositorio.deleteById(primero.id());
+        }
+    }
+
+    @Test
+    @DisplayName("CA-2 de HU-107: la solicitud que pierde la carrera no crea un segundo pedido")
+    void laSolicitudQuePierdeLaCarreraNoCreaOtroPedido() {
+        String clave = "IT-" + UUID.randomUUID();
+        OrderDraft draft = new OrderDraft("PED-IT-" + UUID.randomUUID(), "ana@foodflow.test",
+                "EMAIL", new BigDecimal("45000.00"), "PAY-OK");
+        ValidatedOrderCommand comando = new OrderValidator().validar(draft);
+        String huella = RequestHash.de(comando);
+
+        // La ganadora confirma su transaccion. La perdedora llega despues, en otra transaccion:
+        // es el caso en que paso la consulta previa justo antes de ese commit.
+        Order ganadora = transaccion.crear(comando, huella, clave, UUID.randomUUID());
+
+        try {
+            assertThatExceptionOfType(DataIntegrityViolationException.class)
+                    .as("la clave primaria debe impedir el segundo pedido; si no salta, se cobra dos veces")
+                    .isThrownBy(() -> transaccion.crear(comando, huella, clave, UUID.randomUUID()));
+
+            assertThat(claves.findById(clave)).get()
+                    .extracting(IdempotencyKey::orderId).isEqualTo(ganadora.id());
+        } finally {
+            claves.deleteById(clave);
+            repositorio.deleteById(ganadora.id());
         }
     }
 
