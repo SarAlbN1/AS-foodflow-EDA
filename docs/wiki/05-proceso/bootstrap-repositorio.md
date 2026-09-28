@@ -2,7 +2,7 @@
 
 [← Índice del proceso](README.md)
 
-Runbook para **publicar y configurar** el repositorio por primera vez. Lo ejecuta Claude Code (o una persona) desde la raíz del repo, que ya contiene la estructura, la wiki, las plantillas y los scripts.
+Runbook para **publicar y configurar** el repositorio por primera vez. Lo ejecuta un asistente de IA o una persona desde la raíz del repo, que ya contiene la estructura, la wiki, las plantillas y los scripts.
 
 > **Alcance del bootstrap:** publicar y configurar. **No** crea proyectos Spring Boot ni Angular, ni código de negocio: eso es la HU-001 y las siguientes.
 
@@ -117,7 +117,7 @@ gh api "repos/{owner}/{repo}/branches/main/protection" --jq '.required_pull_requ
 ## Primeros pasos de Juan
 
 1. Acepta la invitación al repositorio y clónalo.
-2. Lee `README.md`, `CLAUDE.md` y la [Home de la wiki](../Home.md). Abre Claude Code en la carpeta.
+2. Lee `README.md`, `CLAUDE.md` y la [Home de la wiki](../Home.md). Abre el asistente de IA en la carpeta.
 3. Tus issues del Sprint 1: **HU-001** (5 pts), HU-004 (2), HU-009 (2), HU-401 (3) y HU-102 (2).
 4. **Empieza por HU-001**: es la ruta crítica. Crea el esqueleto compilable de los proyectos (Angular, gateway y los tres servicios) para que Sara pueda construir sobre ellos.
    ```bash

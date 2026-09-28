@@ -23,4 +23,9 @@ export class OrderApiService {
       headers: new HttpHeaders({ 'Idempotency-Key': idempotencyKey }),
     });
   }
+
+  /** `GET /orders/{id}`: el estado persistido más reciente. Nunca crea ni modifica nada. */
+  consultarPedido(id: string): Observable<Order> {
+    return this.http.get<Order>(`${this.baseUrl}/orders/${encodeURIComponent(id)}`);
+  }
 }

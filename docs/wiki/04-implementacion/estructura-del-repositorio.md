@@ -23,7 +23,7 @@ foodflow-eda/
 ├── LICENSE                            # Por definir (punto abierto A-7)
 ├── .gitignore  .gitattributes  .editorconfig  .env.example
 │
-├── .claude/                           # Claude Code
+├── .claude/                           # Configuración del asistente de IA
 │   ├── settings.json
 │   └── commands/                      # /hu  /verificar  /pr
 ├── .github/

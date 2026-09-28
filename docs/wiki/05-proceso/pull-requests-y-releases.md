@@ -34,6 +34,23 @@ Closes #<n> — HU-###
 
 Reglas: el autor no aprueba su propio PR (lo revisa la otra persona); el PR es pequeño y corresponde a una sola HU; el título sigue el formato de commit.
 
+## La traza no nombra herramientas de IA
+
+El repositorio es el entregable. Se evalúa el trabajo del equipo, así que **ninguna marca de herramienta de IA aparece en commits, PR, issues, releases, wiki, informe ni comentarios de código**. La regla completa está en la sección 8 de [`CLAUDE.md`](../../../CLAUDE.md).
+
+| Dónde | Qué no va | Qué sí |
+|---|---|---|
+| Mensaje de commit | `Co-Authored-By: <herramienta>`, `Generated with…` | Solo el autor del commit |
+| Descripción del PR | `🤖 Generated with…`, cualquier nombre comercial | Nada; la plantilla no lo pide |
+| Comentario de revisión | Nombres comerciales | «lo verifiqué», «lo comprobé» |
+| Wiki, informe, README | `Claude`, `Copilot`, `ChatGPT`… | «un asistente de IA» |
+
+**Únicas excepciones:** `CLAUDE.md` y `.claude/` conservan su nombre porque son configuración localizada por ruta. Referirse a ellos es citar un archivo, no nombrar una herramienta.
+
+**Se comprueba al revisar.** Una firma de herramienta en un commit o en una descripción es motivo de pedir cambios, igual que cualquier otro incumplimiento del proceso.
+
+> **Nota sobre el historial.** Los commits ya integrados en `main` antes de esta regla conservan su firma. No se reescribe el historial: rompería las referencias de todos los PR y los enlaces de la wiki. La regla aplica de aquí en adelante.
+
 ## Propiedad del trabajo entre agentes
 
 Cada persona trabaja con su propio asistente, y **cada quien corrige lo suyo**. La regla completa está en la sección 7 de [`CLAUDE.md`](../../../CLAUDE.md); aquí queda cómo se aplica a la revisión.
