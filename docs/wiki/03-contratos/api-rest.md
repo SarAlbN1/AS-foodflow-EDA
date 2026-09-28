@@ -54,7 +54,25 @@ Cada servicio Spring Boot publica su estado con Spring Boot Actuator. `health` e
 | `GET /actuator/health/liveness` | La aplicación arrancó y su contexto está vivo | `200` | `503` |
 | `GET /actuator/health/readiness` | El servicio puede atender tráfico: sus dependencias responden | `200` | `503` |
 
-La separación entre `liveness` y `readiness` es la que distingue una aplicación iniciada de una dependencia esencial no disponible. Cuando un servicio adquiera su base PostgreSQL, Actuator registra por sí solo el contribuyente `db`, que pasa a formar parte del estado agregado. Para Kafka no hay indicador automático: Spring Boot solo aporta uno para Kafka Streams, así que si se quiere reflejar el broker en el health habrá que añadir un `HealthIndicator` propio en la HU que lo justifique.
+La separación entre `liveness` y `readiness` es la que distingue una aplicación iniciada de una dependencia esencial no disponible.
+
+**Una dependencia nueva no entra sola en `readiness`.** Verificado por ejecución sobre payment-service con su base caída:
+
+| Endpoint | Sin configurar el grupo | Con `readiness.include=readinessState,db` |
+|---|---|---|
+| `GET /actuator/health` | `503` (el agregado sí incluye `db`) | `503` |
+| `GET /actuator/health/liveness` | `200` | `200` |
+| `GET /actuator/health/readiness` | **`200`** | `503` |
+
+Por omisión el grupo `readiness` contiene solo `readinessState`, así que sin esa línea un servicio anunciaría que puede atender tráfico con su base caída. Por eso **la HU que añade la base a un servicio añade también**, en su `application.properties`:
+
+```properties
+management.endpoint.health.group.readiness.include=readinessState,db
+```
+
+No se pone por adelantado en los servicios que todavía no tienen base: el arranque falla con `Health contributor 'db' defined in 'management.endpoint.health.group.readiness.include' does not exist`.
+
+**Para Kafka no hay indicador automático.** Spring Boot solo aporta uno para Kafka Streams; `spring-boot-kafka` no trae ningún `HealthIndicator`. Si se quiere reflejar el broker en la salud, hay que escribir el indicador en la HU que lo justifique.
 
 **El cuerpo no revela credenciales.** Se publica el estado por componente (`show-components=always`) pero nunca su detalle (`show-details=never`), que es donde Actuator incluiría la URL JDBC, el usuario o la versión del motor:
 
