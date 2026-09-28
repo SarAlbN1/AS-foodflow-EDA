@@ -1,0 +1,107 @@
+package com.foodflow.payment.application;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.math.BigDecimal;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import com.foodflow.payment.domain.NotificationChannel;
+import com.foodflow.payment.domain.NotificationContact;
+import com.foodflow.payment.domain.Payment;
+import com.foodflow.payment.domain.PaymentStatus;
+import com.foodflow.payment.domain.PaymentToken;
+import com.foodflow.payment.domain.RejectionReason;
+import com.foodflow.payment.infrastructure.persistence.PaymentRepository;
+
+/**
+ * HU-202 — resolucion y persistencia del pago, con el repositorio simulado. La persistencia
+ * real contra Payment DB la cubre {@code PaymentServiceApplicationTests}.
+ */
+class PaymentApplicationServiceTests {
+
+    private static final UUID ORDER_ID = UUID.fromString("3f8b1c2e-5a47-4d9b-8e10-7c2a6b4f9d31");
+
+    private PaymentRepository repositorio;
+    private PaymentApplicationService servicio;
+
+    @BeforeEach
+    void prepararServicio() {
+        repositorio = mock(PaymentRepository.class);
+        when(repositorio.findByOrderId(any())).thenReturn(Optional.empty());
+        when(repositorio.saveAndFlush(any())).thenAnswer(invocacion -> invocacion.getArgument(0));
+        servicio = new PaymentApplicationService(repositorio, new TransactionReferences());
+    }
+
+    @Test
+    @DisplayName("CA-1 y CA-2: crea el pago del pedido con el monto del evento")
+    void creaElPagoConElMontoRecibido() {
+        Payment pago = servicio.iniciarPago(orden("45900.00", PaymentToken.PAY_OK));
+
+        assertThat(pago.orderId()).isEqualTo(ORDER_ID);
+        assertThat(pago.amount()).isEqualByComparingTo("45900.00");
+        verify(repositorio).saveAndFlush(any());
+    }
+
+    @Test
+    @DisplayName("CA-3: PAY-OK produce APROBADO y no lleva motivo de rechazo (ADR-10)")
+    void payOkProduceAprobado() {
+        Payment pago = servicio.iniciarPago(orden("45900.00", PaymentToken.PAY_OK));
+
+        assertThat(pago.status()).isEqualTo(PaymentStatus.APROBADO);
+        assertThat(pago.aprobado()).isTrue();
+        assertThat(pago.reasonCode()).isNull();
+    }
+
+    @Test
+    @DisplayName("CA-3: PAY-FAIL produce RECHAZADO con el motivo del catalogo (ADR-10)")
+    void payFailProduceRechazado() {
+        Payment pago = servicio.iniciarPago(orden("45900.00", PaymentToken.PAY_FAIL));
+
+        assertThat(pago.status()).isEqualTo(PaymentStatus.RECHAZADO);
+        assertThat(pago.aprobado()).isFalse();
+        assertThat(pago.reasonCode()).isEqualTo(RejectionReason.PAGO_RECHAZADO_POR_TOKEN);
+    }
+
+    @Test
+    @DisplayName("CA-4: la referencia de transaccion no es nula, tambien cuando el pago se rechaza")
+    void siempreDejaUnaReferenciaDeTransaccion() {
+        assertThat(servicio.iniciarPago(orden("45900.00", PaymentToken.PAY_OK)).transactionReference())
+                .isNotBlank();
+        assertThat(servicio.iniciarPago(orden("45900.00", PaymentToken.PAY_FAIL)).transactionReference())
+                .isNotBlank();
+    }
+
+    @Test
+    @DisplayName("CA-5: si el pedido ya tiene pago, se devuelve ese y no se crea otro")
+    void noCobraDosVecesElMismoPedido() {
+        Payment existente = Payment.resolver(ORDER_ID, new BigDecimal("45900.00"),
+                PaymentToken.PAY_OK, "TXN-20260927-" + ORDER_ID);
+        when(repositorio.findByOrderId(ORDER_ID)).thenReturn(Optional.of(existente));
+
+        Payment pago = servicio.iniciarPago(orden("45900.00", PaymentToken.PAY_OK));
+
+        assertThat(pago).isSameAs(existente);
+        verify(repositorio, never()).saveAndFlush(any());
+    }
+
+    private StartPaymentCommand orden(String total, PaymentToken token) {
+        return new StartPaymentCommand(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                ORDER_ID,
+                new BigDecimal(total),
+                "COP",
+                token,
+                new NotificationContact(NotificationChannel.EMAIL, "cliente@foodflow.test"));
+    }
+}

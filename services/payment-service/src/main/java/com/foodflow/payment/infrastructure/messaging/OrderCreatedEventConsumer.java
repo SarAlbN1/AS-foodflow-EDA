@@ -33,8 +33,10 @@ import tools.jackson.databind.ObjectMapper;
  * offset, sin error y sin DLQ
  * ({@code docs/wiki/02-arquitectura/comportamiento-del-flujo.md}).
  *
- * <p><strong>Confirmacion del offset.</strong> Hoy se confirma tras registrar la orden. Cuando
- * HU-202 persista el pago, la confirmacion debe quedar despues del commit local (ADR-09).
+ * <p><strong>Confirmacion del offset.</strong> Se confirma despues de que el caso de uso
+ * retorna, es decir despues del commit de su transaccion local (ADR-09). El registro del
+ * {@code eventId} en {@code processed_events}, dentro de esa misma transaccion, lo anade
+ * HU-601.
  */
 @Component
 public class OrderCreatedEventConsumer {
