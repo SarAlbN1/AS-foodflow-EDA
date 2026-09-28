@@ -14,7 +14,7 @@
 | [HU-008](epicas/EP-00-base-tecnica-y-estandares.md) | Alinear el documento técnico con las decisiones consolidadas | 1 | Sara | 3 | Pendiente | | |
 | [HU-009](epicas/EP-00-base-tecnica-y-estandares.md) | Configurar los estándares del repositorio | 1 | Juan | 2 | Pendiente | | |
 | [HU-101](epicas/EP-01-pedidos.md) | Crear un pedido válido | 1 | Sara | 5 | Pendiente | | |
-| [HU-102](epicas/EP-01-pedidos.md) | Consultar un pedido por identificador | 1 | Juan | 2 | Pendiente | | |
+| [HU-102](epicas/EP-01-pedidos.md) | Consultar un pedido por identificador | 1 | Juan | 2 | En revisión | [#69](https://github.com/SarAlbN1/AS-foodflow-EDA/pull/69) | |
 | [HU-401](epicas/EP-04-gateway-y-contratos.md) | Enrutar operaciones de pedidos | 1 | Juan | 3 | Pendiente | | |
 | [HU-103](epicas/EP-01-pedidos.md) | Publicar OrderCreated al crear el pedido | 2 | Sara | 5 | Pendiente | | |
 | [HU-107](epicas/EP-01-pedidos.md) | Evitar pedidos duplicados con Idempotency-Key | 2 | Sara | 3 | Pendiente | | |
