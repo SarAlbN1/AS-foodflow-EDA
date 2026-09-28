@@ -28,7 +28,7 @@
 | [HU-106](epicas/EP-01-pedidos.md) | Publicar OrderStatusChanged al cambiar el estado del pedido | 3 | Juan | 3 | Pendiente | | |
 | [HU-201](epicas/EP-02-pagos.md) | Consumir OrderCreated para iniciar un pago | 3 | Sara | 3 | En revisión | #71 | Consume OrderCreated; el pago se crea en HU-202 |
 | [HU-202](epicas/EP-02-pagos.md) | Procesar y persistir el resultado del pago | 3 | Sara | 5 | En revisión | #73 | Resuelve y persiste el pago; la publicación es HU-203 y HU-204 |
-| [HU-203](epicas/EP-02-pagos.md) | Publicar PaymentApproved | 3 | Sara | 2 | En revisión | #84 | Publica PaymentApproved tras el commit |
+| [HU-203](epicas/EP-02-pagos.md) | Publicar PaymentApproved | 3 | Sara | 2 | En revisión | | Publica PaymentApproved tras el commit; el rechazo es HU-204 |
 | [HU-204](epicas/EP-02-pagos.md) | Publicar PaymentRejected | 3 | Sara | 2 | En revisión | | Publica PaymentRejected; un pago produce un solo evento |
 | [HU-702](epicas/EP-07-entregables-y-sustentacion.md) | Proyección laboral en la matriz de mercado | 3 | Juan | 2 | En revisión | [#76](https://github.com/SarAlbN1/AS-foodflow-EDA/pull/76) | Propuesta a `main.tex`: la aplica Sara |
 | [HU-703](epicas/EP-07-entregables-y-sustentacion.md) | Patrones, antipatrones y trazabilidad en el documento técnico | 3 | Sara | 3 | Pendiente | | |
