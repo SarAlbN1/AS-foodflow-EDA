@@ -11,14 +11,14 @@ Revisado el **2026-09-28** contra `main.tex` de 1043 líneas. Las líneas corres
 | CA1 — El Cliente solo crea el pedido; el pago se inicia al consumir `OrderCreated` | **Cumple** | Flujo end-to-end (paso 5), HLD (línea 725: «Payment Service no recibe una orden de pago directa del Cliente: reacciona a `OrderCreated`») y ADR-07 |
 | CA2 — Portada y §1 declaran REST/JSON sobre HTTPS y eventos JSON sobre Kafka; REST y API Gateway investigados con el mismo formato | **Cumple** | Portada: «Protocolo de integración en el borde: REST/JSON sobre HTTPS» y «Integración asíncrona interna: Apache Kafka + eventos JSON». §1.3 «Protocolo de Integración: REST/JSON sobre HTTPS y API Gateway» (línea 319) |
 | CA3 — `OrderStatusChanged` reemplaza a `OrderUpdated` | **Cumple** | `grep -c OrderUpdated main.tex` → `0`; los diagramas C2, C3 y dinámico usan `OrderStatusChanged` |
-| CA4 — La matriz de tácticas incorpora ADR-08 a ADR-11 y la recuperabilidad figura como **Parcial** | **No cumple literalmente** | Ver **Propuesta 1** |
+| CA4 — La matriz de tácticas incorpora ADR-08 a ADR-11 y la recuperabilidad figura como **Parcial** | **Cumple** | **Aplicado**: la recuperabilidad dice `\textbf{Parcial}` y una frase de cierre conecta la matriz con los ADR de §3 |
 | CA5 — La matriz de calidad incluye la columna de criterio verificable | **Cumple** | Columna «Indicadores o criterios de verificación» (línea 371) y §3 «Criterios de verificación del prototipo» (línea 658) |
 | CA6 — Backoffice y Analítica fuera de alcance y con relaciones punteadas; «único actor» limitado al prototipo | **Cumple** | §4 System Landscape (línea 840): «sistemas de contexto fuera del alcance de implementación del prototipo»; el diagrama los dibuja punteados |
-| CA7 — Las referencias definidas y no citadas se citan o se eliminan | **No cumple** | Ver **Propuesta 2** |
+| CA7 — Las referencias definidas y no citadas se citan o se eliminan | **Cumple** | **Aplicado**: `spring-kafka-retry` se cita en el párrafo de robustez mínima |
 
 No se pudo comprobar que el documento **compila**: en esta máquina no hay ningún motor LaTeX instalado (`pdflatex`, `xelatex`, `lualatex`, `latexmk` y `tectonic` no existen). Ninguna afirmación de este archivo implica que el PDF se genere sin errores.
 
-## Propuesta 1 — CA4: tácticas con su ADR y recuperabilidad explícita
+## Propuesta 1 — CA4: tácticas con su ADR y recuperabilidad explícita · **APLICADA**
 
 La matriz de tácticas (§2.3, líneas 414-446) es deliberadamente general en esta versión: no menciona ADR concretos, y la trazabilidad táctica → decisión vive en la tabla de ADR de §3 (líneas 620-640), que sí incluye ADR-01 a ADR-12 y marca ADR-08 como *Riesgo aceptado*. El criterio se cumple **en sustancia** pero no en la letra, por dos detalles:
 
@@ -40,7 +40,7 @@ Una frase es suficiente: mantiene la matriz como análisis general y da la traza
 
 **1.3 Si prefieres no tocar el informe**, la alternativa es ajustar el criterio 4 de HU-008 en el backlog para que describa esta estructura (matriz general en §2 + tabla de ADR en §3). El criterio se redactó contra la versión anterior del documento, donde las dos cosas vivían en la misma tabla. Decide una de las dos vías; la wiki no debe quedar pidiendo algo que el informe organiza de otra forma.
 
-## Propuesta 2 — CA7: referencia definida y no citada
+## Propuesta 2 — CA7: referencia definida y no citada · **APLICADA**
 
 `spring-kafka-retry` está en la bibliografía y **no se cita en el texto**. Las otras 49 referencias están citadas y no hay ninguna cita sin definir.
 
@@ -50,6 +50,8 @@ Dos salidas, cualquiera cierra el criterio:
 - **Eliminar** el `\bibitem{spring-kafka-retry}` de la sección de referencias.
 
 Recomendación: citarla, porque el mecanismo de reintentos de Spring Kafka es justo el que implementa esa táctica y la referencia aporta respaldo.
+
+> **Las propuestas 3 a 5 no son criterios de HU-008.** Son mejoras detectadas al revisar el documento, y las tres primeras coinciden con divergencias que siguen pendientes de decisión: los nombres de campo son [D-7, D-8 y D-9](../wiki/02-arquitectura/divergencias-informe-wiki.md). Se deciden allí, no aquí.
 
 ## Propuesta 3 — Nombres de campos que ya viven en contratos y código
 

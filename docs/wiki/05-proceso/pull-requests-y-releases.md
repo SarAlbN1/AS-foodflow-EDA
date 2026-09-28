@@ -49,6 +49,8 @@ El repositorio es el entregable. Se evalúa el trabajo del equipo, así que **ni
 
 **Se comprueba al revisar.** Una firma de herramienta en un commit o en una descripción es motivo de pedir cambios, igual que cualquier otro incumplimiento del proceso.
 
+**Al integrar con squash, el mensaje se escribe a mano.** GitHub propone por defecto un cuerpo con los mensajes de todos los commits del PR, *trailers* incluidos. Si se acepta tal cual, una firma que estaba en una rama entra igualmente en `main`. Antes de pulsar el botón: título escrito a mano con el formato de commit del proyecto y **cuerpo vacío**, o el texto que se quiera conservar sin firmas.
+
 > **Nota sobre el historial.** Los commits ya integrados en `main` antes de esta regla conservan su firma. No se reescribe el historial: rompería las referencias de todos los PR y los enlaces de la wiki. La regla aplica de aquí en adelante.
 
 ## Propiedad del trabajo entre agentes
