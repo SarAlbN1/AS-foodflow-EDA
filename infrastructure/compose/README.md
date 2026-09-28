@@ -85,6 +85,33 @@ Comprobar que **no** hay acceso cruzado (el usuario de una base no entra en otra
 docker exec foodflow-payment-db psql -U "$ORDER_DB_USER" -d "$PAYMENT_DB_NAME" -c 'select 1'   # debe fallar
 ```
 
+### Health check de los servicios Spring Boot (HU-604)
+
+Los tres servicios publican `GET /actuator/health/readiness` sobre su propio puerto
+(contrato en [api-rest.md](../../docs/wiki/03-contratos/api-rest.md)). Todavía no están en
+este Compose: los añade HU-607. Cuando se incorporen, cada uno declara este `healthcheck`,
+que es el que Compose usa para decidir si el contenedor está `healthy`:
+
+```yaml
+    healthcheck:
+      # Readiness: el servicio arrancó y sus dependencias esenciales responden.
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health/readiness >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+```
+
+Comprobación manual equivalente, una vez que el servicio esté levantado:
+
+```bash
+curl -i http://localhost:8080/actuator/health/readiness   # 200 UP / 503 DOWN
+```
+
+> El puerto de cada servicio en el host lo asigna HU-607. Fuera de Compose, ejecutarlos con
+> `./mvnw spring-boot:run` los arranca en el `8080` por defecto, así que conviene levantarlos
+> de uno en uno hasta que HU-607 fije sus puertos.
+
 ## Detener y recrear
 
 ```bash

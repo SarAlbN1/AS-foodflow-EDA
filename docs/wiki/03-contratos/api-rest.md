@@ -43,3 +43,29 @@ No existe un endpoint de consulta de pagos: el resultado del pago es visible med
 ```
 
 Nunca se devuelven trazas de pila. El contrato vive en `contracts/api/openapi.yaml` y se actualiza antes o junto con el código.
+
+## Health checks (HU-604)
+
+Cada servicio Spring Boot publica su estado con Spring Boot Actuator. `health` es el único grupo de endpoints expuesto: `env`, `configprops`, `metrics` y el resto responden `404`.
+
+| Endpoint | Responde | Éxito | Error |
+|---|---|---|---|
+| `GET /actuator/health` | Estado agregado del servicio y de sus dependencias esenciales | `200` `UP` | `503` `DOWN` |
+| `GET /actuator/health/liveness` | La aplicación arrancó y su contexto está vivo | `200` | `503` |
+| `GET /actuator/health/readiness` | El servicio puede atender tráfico: sus dependencias responden | `200` | `503` |
+
+La separación entre `liveness` y `readiness` es la que distingue una aplicación iniciada de una dependencia esencial no disponible. A medida que cada servicio adquiere su base PostgreSQL o su cliente Kafka, Actuator registra por sí solo los contribuyentes `db` y `kafka`, que pasan a formar parte del estado agregado y de `readiness`.
+
+**El cuerpo no revela credenciales.** Se publica el estado por componente (`show-components=always`) pero nunca su detalle (`show-details=never`), que es donde Actuator incluiría la URL JDBC, el usuario o la versión del motor:
+
+```json
+{
+  "status": "UP",
+  "components": {
+    "diskSpace": { "status": "UP" },
+    "ping": { "status": "UP" }
+  }
+}
+```
+
+**El gateway todavía no los expone.** `gateway/api-gateway` sigue siendo un esqueleto sin servidor web: su health check se añade en HU-401, junto con la decisión de su stack (servlet o reactivo).
