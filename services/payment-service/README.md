@@ -1,6 +1,6 @@
 # services/payment-service — Payment Service
 
-> **Estado:** consume `OrderCreated` (HU-201) y resuelve y persiste el pago en Payment DB (HU-202). Todavía no publica el resultado: `PaymentApproved` es HU-203 y `PaymentRejected` es HU-204.
+> **Estado:** consume `OrderCreated` (HU-201), resuelve y persiste el pago (HU-202) y publica `PaymentApproved` en `payments.events` (HU-203). `PaymentRejected` lo añade HU-204.
 
 **Responsabilidad:** Consume `OrderCreated`, decide el pago de forma determinista (`PAY-OK` / `PAY-FAIL`) y publica `PaymentApproved` o `PaymentRejected`. Único propietario de Payment DB.
 
@@ -107,6 +107,29 @@ export PAYMENT_DB_URL="jdbc:postgresql://localhost:$PAYMENT_DB_HOST_PORT/$PAYMEN
 cd services/payment-service && ./mvnw verify
 ```
 
+## Publicación del resultado (HU-203)
+
+Tras persistir el pago, Payment Service publica `PaymentApproved` en `payments.events`. **Order Service y Notification Service lo consumen cada uno por su cuenta**, en grupos distintos: Payment no llama por REST a ninguno de los dos (reglas 4, 6 y 10).
+
+| Qué | Cómo |
+|---|---|
+| Cuándo se publica | **Después del commit** de la transacción que persiste el pago. Si la persistencia falla, no se publica nada |
+| Clave del mensaje | El `orderId`, que es la clave de partición (regla 11, ADR-04): Order y Notification reciben los eventos de un pedido en orden |
+| Garantías del productor | `acks=all` y `enable.idempotence=true` |
+| Contacto | El `notificationContact` **no está en Payment DB**: viaja del evento de entrada al de salida (ADR-11), que es lo que permite a Notification Service no consultar otra base |
+| Reproceso | Si el pedido ya tenía pago, no se cobra **ni se publica** de nuevo: repetirlo haría que Order y Notification procesaran el mismo resultado dos veces |
+
+**El riesgo aceptado de ADR-08.** Si el commit sale bien y la publicación falla, el pago queda registrado **sin que nadie se entere**, y el pedido se queda en `CREADO` para siempre. Se registra un `ERROR` y ahí termina: no hay Outbox ni reconciliación.
+
+**Un pago rechazado todavía no produce evento.** `PaymentRejected` lo publica HU-204. Hasta entonces el pago se persiste como `RECHAZADO` y el publicador lo deja dicho en un `WARN`, para que no parezca un fallo silencioso.
+
+Ver los eventos con la infraestructura levantada:
+
+```bash
+docker exec foodflow-kafka /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 --topic payments.events --from-beginning --max-messages 1
+```
+
 ## Configuración
 
 Variables en [`.env.example`](../../.env.example):
@@ -117,6 +140,8 @@ Variables en [`.env.example`](../../.env.example):
 | `KAFKA_BOOTSTRAP_SERVERS` | `localhost:29092` | Broker |
 | `PAYMENT_ORDERS_CONSUMER_GROUP` | `payment-service.orders` | Grupo de consumidores propio del servicio |
 | `ORDERS_TOPIC` | `orders.events` | Tópico de entrada; los tópicos se leen de configuración, nunca como literales |
+| `PAYMENTS_TOPIC` | `payments.events` | Tópico de salida |
+| `PAYMENTS_PUBLISH_TIMEOUT_MS` | `10000` | Cuánto se espera a que Kafka confirme antes de darlo por fallido |
 | `PAYMENT_DB_URL` | `jdbc:postgresql://localhost:5434/paymentdb` | URL de **su** base; el servicio no recibe la de ninguna otra (regla 2) |
 | `PAYMENT_DB_USER`, `PAYMENT_DB_PASSWORD` | — | Credenciales propias de Payment DB |
 

@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.cfg.DateTimeFeature;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
@@ -16,8 +17,9 @@ import tools.jackson.databind.json.JsonMapper;
  * {@code FAIL_ON_UNKNOWN_PROPERTIES} desactivado por defecto, asi que aqui se activa de forma
  * explicita.
  *
- * <p>Se mantiene separado del mapper general para que endurecer la lectura de eventos no
- * cambie el comportamiento de ningun otro componente del servicio.
+ * <p>Se mantiene separado del mapper general para que el formato de los eventos no dependa
+ * de ajustes pensados para otra cosa. Se usa en los dos sentidos: leer lo que llega de
+ * {@code orders.events} y escribir lo que se publica en {@code payments.events}.
  */
 @Configuration
 public class EventJsonConfig {
@@ -29,6 +31,9 @@ public class EventJsonConfig {
     public ObjectMapper eventObjectMapper() {
         return JsonMapper.builder()
                 .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                // Al publicar, occurredAt debe salir en ISO 8601 UTC y no como marca de tiempo
+                // numerica: es lo que exige el patron del envelope en contracts/events/v1/.
+                .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
                 .build();
     }
 }
