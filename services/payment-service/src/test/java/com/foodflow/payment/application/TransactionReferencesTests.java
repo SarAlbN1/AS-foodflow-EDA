@@ -14,13 +14,25 @@ class TransactionReferencesTests {
     private static final UUID ORDER_ID = UUID.fromString("3f8b1c2e-5a47-4d9b-8e10-7c2a6b4f9d31");
 
     @Test
-    @DisplayName("lleva la fecha UTC y el prefijo del pedido, y cabe en el contrato")
+    @DisplayName("lleva la fecha UTC y el pedido completo, y cabe en el contrato")
     void componeUnaReferenciaRastreable() {
         String referencia = new TransactionReferences().nueva(ORDER_ID, Instant.parse("2026-09-27T20:00:00Z"));
 
-        assertThat(referencia).isEqualTo("TXN-20260927-3f8b1c2e");
+        assertThat(referencia).isEqualTo("TXN-20260927-3f8b1c2e-5a47-4d9b-8e10-7c2a6b4f9d31");
         // El contrato de payment-approved limita transactionReference a 100 caracteres.
         assertThat(referencia).hasSizeLessThanOrEqualTo(100);
+    }
+
+    @Test
+    @DisplayName("dos pedidos distintos del mismo dia no comparten referencia, aunque coincida su prefijo")
+    void noColisionaEntrePedidosConElMismoPrefijo() {
+        TransactionReferences referencias = new TransactionReferences();
+        Instant mismoDia = Instant.parse("2026-09-27T20:00:00Z");
+        // Mismos 8 primeros digitos, pedidos distintos: con un prefijo compartirian referencia.
+        UUID otro = UUID.fromString("3f8b1c2e-0000-4000-8000-000000000000");
+
+        assertThat(referencias.nueva(ORDER_ID, mismoDia))
+                .isNotEqualTo(referencias.nueva(otro, mismoDia));
     }
 
     @Test
@@ -28,6 +40,6 @@ class TransactionReferencesTests {
     void usaUtc() {
         String referencia = new TransactionReferences().nueva(ORDER_ID, Instant.parse("2026-09-28T02:00:00Z"));
 
-        assertThat(referencia).isEqualTo("TXN-20260928-3f8b1c2e");
+        assertThat(referencia).startsWith("TXN-20260928-");
     }
 }

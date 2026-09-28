@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 class PaymentTests {
 
     private static final UUID ORDER_ID = UUID.randomUUID();
-    private static final String REFERENCIA = "TXN-20260927-3f8b1c2e";
+    private static final String REFERENCIA = "TXN-20260927-" + ORDER_ID;
 
     @Test
     @DisplayName("el importe se guarda con escala 2, como NUMERIC(12,2)")

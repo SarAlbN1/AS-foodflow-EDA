@@ -62,7 +62,13 @@ El `notificationContact` no se guarda en Payment DB —la tabla `payments` no ti
 
 ### Deuda conocida hasta HU-602
 
-Un evento no procesable debería ir a `orders.events.dlq` sin reintentos ([comportamiento del flujo](../../docs/wiki/02-arquitectura/comportamiento-del-flujo.md)). HU-201 todavía no publica en la DLQ: registra el fallo y confirma el offset, porque dejar de confirmarlo bloquearía la partición y con ella todos los eventos posteriores del mismo pedido. Los reintentos y la DLQ los añade HU-602.
+Dos huecos que cierra HU-602, la historia de reintentos y DLQ. Se dejan aquí por escrito porque hasta entonces el comportamiento por omisión no es el que describe la wiki.
+
+**1. Un evento no procesable no va a la DLQ.** Debería ir a `orders.events.dlq` sin reintentos ([comportamiento del flujo](../../docs/wiki/02-arquitectura/comportamiento-del-flujo.md)). Hoy se registra el fallo y se confirma el offset, porque no confirmarlo bloquearía la partición y con ella todos los eventos posteriores del mismo pedido.
+
+**2. Un fallo transitorio de Payment DB pierde el pago.** Si la base no responde un momento, la excepción no es la de evento no procesable y sube al contenedor de Kafka. Como todavía no hay `CommonErrorHandler` propio, actúa el `DefaultErrorHandler` de Spring Kafka con su `FixedBackOff(0, 9)`: **diez intentos seguidos sin espera** y, agotados, confirma el offset y sigue. Un corte de unos segundos deja el pedido en `CREADO` para siempre, sin rastro en ninguna DLQ.
+
+La política que corresponde está fijada en [convenciones](../../docs/wiki/04-implementacion/convenciones.md): 3 intentos, espera inicial 1 s, multiplicador 2. La aplica HU-602 junto con el publicador de DLQ, para no partir esa configuración entre dos historias.
 
 ## Resolución y persistencia del pago (HU-202)
 
@@ -74,7 +80,7 @@ El pago es determinista (ADR-10): el resultado se conoce al procesar `OrderCreat
 | `PAY-FAIL` | `RECHAZADO` | `PAGO_RECHAZADO_POR_TOKEN` |
 | cualquier otro | no se crea pago | el evento es no procesable y lo descarta el consumidor (HU-201) |
 
-`transactionReference` tiene el formato `TXN-<yyyyMMdd>-<8 primeros dígitos del orderId>` y nunca es nula, tampoco cuando el pago se rechaza: sirve para rastrear el intento. Es una referencia propia del servicio, no de una pasarela externa; el prototipo no integra ninguna.
+`transactionReference` tiene el formato `TXN-<yyyyMMdd>-<orderId>` y nunca es nula, tampoco cuando el pago se rechaza: sirve para rastrear el intento. Es una referencia propia del servicio, no de una pasarela externa; el prototipo no integra ninguna.
 
 **Un pedido, un pago.** `payments.order_id` es único: reprocesar el mismo `OrderCreated` devuelve el pago que ya existía y no cobra de nuevo.
 

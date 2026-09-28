@@ -85,7 +85,7 @@ class PaymentApplicationServiceTests {
     @DisplayName("CA-5: si el pedido ya tiene pago, se devuelve ese y no se crea otro")
     void noCobraDosVecesElMismoPedido() {
         Payment existente = Payment.resolver(ORDER_ID, new BigDecimal("45900.00"),
-                PaymentToken.PAY_OK, "TXN-20260927-3f8b1c2e");
+                PaymentToken.PAY_OK, "TXN-20260927-" + ORDER_ID);
         when(repositorio.findByOrderId(ORDER_ID)).thenReturn(Optional.of(existente));
 
         Payment pago = servicio.iniciarPago(orden("45900.00", PaymentToken.PAY_OK));
