@@ -1,0 +1,70 @@
+name: Decisión arquitectónica (ADR)
+description: Propón una decisión arquitectónica para registrarla como ADR.
+title: "ADR-##: <decisión en una frase>"
+labels: ["adr", "documentation", "area:docs"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        El ADR se escribe en `docs/wiki/02-arquitectura/adr/` con la plantilla `plantilla.md`
+        y se añade al índice `adr/README.md`. Un cambio de decisión **no** edita el ADR anterior:
+        crea uno nuevo y marca el anterior como `Superseded`.
+  - type: input
+    id: numero
+    attributes:
+      label: Número propuesto
+      placeholder: ADR-13
+    validations:
+      required: true
+  - type: dropdown
+    id: estado
+    attributes:
+      label: Estado propuesto
+      options:
+        - Propuesto
+        - Aceptado
+        - Superseded
+    validations:
+      required: true
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto
+      description: Problema, fuerzas en tensión y restricciones del prototipo.
+    validations:
+      required: true
+  - type: textarea
+    id: decision
+    attributes:
+      label: Decisión
+    validations:
+      required: true
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: Alternativas consideradas
+      description: Al menos una, con el motivo del descarte.
+    validations:
+      required: true
+  - type: textarea
+    id: consecuencias
+    attributes:
+      label: Consecuencias
+      description: Positivas, negativas y riesgos aceptados.
+    validations:
+      required: true
+  - type: input
+    id: tactica
+    attributes:
+      label: Táctica de la matriz del documento técnico
+      description: Táctica de calidad que implementa esta decisión.
+      placeholder: "Disponibilidad — reintentos con espera exponencial"
+    validations:
+      required: true
+  - type: textarea
+    id: reemplaza
+    attributes:
+      label: ¿Reemplaza a otro ADR?
+      description: Indica cuál y por qué. Déjalo vacío si no aplica.
+    validations:
+      required: false

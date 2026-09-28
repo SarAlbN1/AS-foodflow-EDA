@@ -1,0 +1,84 @@
+name: Historia de usuario (HU)
+description: Registra una historia del backlog de FoodFlow EDA.
+title: "HU-### — <título de la historia>"
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        La fuente de verdad de la historia es su épica en `docs/wiki/06-backlog/epicas/`.
+        Este issue la refleja; no la reemplaza.
+        Recuerda añadir manualmente: 1 etiqueta de área, 1 de prioridad, 1 de épica, el milestone `Sprint N` y el responsable.
+  - type: input
+    id: epica
+    attributes:
+      label: Épica
+      description: Identificador de la épica (EP-00 a EP-07).
+      placeholder: EP-00
+    validations:
+      required: true
+  - type: input
+    id: fuente
+    attributes:
+      label: Fuente de verdad
+      description: Ruta de la épica en la wiki.
+      placeholder: docs/wiki/06-backlog/epicas/EP-00-base-tecnica-y-estandares.md
+    validations:
+      required: true
+  - type: textarea
+    id: historia
+    attributes:
+      label: Historia
+      description: Como <rol>, quiero <capacidad>, para <beneficio>.
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Criterios de aceptación
+      description: Uno por línea, en formato Dado / Cuando / Entonces cuando aplique.
+      value: |
+        1. **Dado** … **cuando** … **entonces** …
+        2. …
+    validations:
+      required: true
+  - type: input
+    id: propietario-datos
+    attributes:
+      label: Servicio propietario de los datos
+      description: Único servicio que accede a la base implicada (o "ninguno").
+      placeholder: order-service
+    validations:
+      required: true
+  - type: textarea
+    id: contratos
+    attributes:
+      label: Contratos afectados
+      description: Endpoints REST, eventos, esquemas JSON, tópicos o tablas que cambian.
+      placeholder: |
+        - `POST /orders` (contracts/api/openapi.yaml)
+        - `OrderCreated` v1 (contracts/events/v1/order-created.schema.json)
+    validations:
+      required: true
+  - type: input
+    id: rama
+    attributes:
+      label: Rama sugerida
+      placeholder: feat/HU-101-crear-pedido-valido
+    validations:
+      required: true
+  - type: input
+    id: puntos
+    attributes:
+      label: Puntos
+      description: Se registran también en el campo `Points` del Project.
+      placeholder: "5"
+    validations:
+      required: true
+  - type: textarea
+    id: dependencias
+    attributes:
+      label: Dependencias
+      description: HU que deben estar terminadas antes. Añade `status:blocked` si aplica.
+    validations:
+      required: false

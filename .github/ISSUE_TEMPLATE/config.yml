@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Wiki del repositorio (fuente de verdad)
+    url: https://github.com/SarAlbN1/AS-foodflow-EDA/blob/main/docs/wiki/Home.md
+    about: Diseño, contratos, procesos y backlog de FoodFlow EDA.
+  - name: Backlog y plan de sprints
+    url: https://github.com/SarAlbN1/AS-foodflow-EDA/blob/main/docs/wiki/06-backlog/README.md
+    about: Historias de usuario, priorización y estado.

@@ -1,0 +1,62 @@
+name: Defecto (bug)
+description: Reporta un defecto sobre algo ya terminado.
+title: "bug: <resumen corto>"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Usa esta plantilla solo para un defecto de una HU ya cerrada.
+        Recuerda añadir 1 etiqueta de área, 1 de prioridad y el milestone del sprint en curso.
+  - type: input
+    id: hu-origen
+    attributes:
+      label: HU afectada
+      placeholder: HU-101
+    validations:
+      required: true
+  - type: input
+    id: componente
+    attributes:
+      label: Componente
+      description: frontend, gateway, order-service, payment-service, notification-service, contracts, infra, mocks o docs.
+      placeholder: order-service
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Comportamiento esperado
+      description: Cita el criterio de aceptación, el contrato o la regla arquitectónica que se incumple.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Comportamiento observado
+    validations:
+      required: true
+  - type: textarea
+    id: reproduccion
+    attributes:
+      label: Pasos para reproducir
+      value: |
+        1. `scripts/up.sh`
+        2. …
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: evidencia
+    attributes:
+      label: Evidencia
+      description: Logs estructurados, `correlationId`, `eventId` o respuesta HTTP. Enmascara el contacto del cliente (`a***@dominio.com`) y no incluyas secretos.
+    validations:
+      required: false
+  - type: textarea
+    id: alcance
+    attributes:
+      label: Impacto arquitectónico
+      description: ¿Rompe alguna regla de `docs/wiki/02-arquitectura/reglas-arquitectonicas.md`? ¿Cuál?
+    validations:
+      required: false
