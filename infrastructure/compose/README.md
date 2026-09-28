@@ -6,13 +6,14 @@
 
 **Reglas que aplican:** Cada servicio recibe únicamente la configuración de su propia base.
 
-> **Estado:** HU-002 completada — Kafka (KRaft) y las tres PostgreSQL. Todavía **no** hay tópicos (HU-004) ni servicios, gateway, frontend o mock (HU-607).
+> **Estado:** HU-002 y HU-004 completadas — Kafka (KRaft), sus tópicos y DLQ, y las tres PostgreSQL. Todavía **no** hay servicios, gateway, frontend o mock (HU-607).
 
 ## Qué levanta hoy
 
 | Servicio | Imagen | Puerto en el host | Propietario exclusivo |
 |---|---|---|---|
 | `kafka` | `apache/kafka:4.3.1` | `29092` (escucha externa) | — |
+| `kafka-init` | `apache/kafka:4.3.1` | — (de un solo uso: crea los tópicos y termina) | — |
 | `order-db` | `postgres:18.6` | `5433` | `order-service` |
 | `payment-db` | `postgres:18.6` | `5434` | `payment-service` |
 | `notification-db` | `postgres:18.6` | `5435` | `notification-service` |
@@ -20,6 +21,8 @@
 Las versiones se toman de [versiones.md](../../docs/wiki/04-implementacion/versiones.md) mediante las variables `KAFKA_IMAGE` y `POSTGRES_IMAGE`; nunca se usa `latest`.
 
 Kafka corre en **modo KRaft**: un solo nodo con los roles `broker` y `controller`. Kafka 4.x no usa ZooKeeper. `auto.create.topics.enable` está en `false` a propósito: los tópicos se declaran de forma explícita en la HU-004.
+
+**Tópicos (HU-004).** El contenedor `kafka-init` espera a que `kafka` esté `healthy`, crea `orders.events`, `payments.events` y `notifications.events` con sus DLQ (`<tópico>.dlq`) mediante [`infrastructure/kafka/scripts/create-topics.sh`](../kafka/scripts/create-topics.sh) y termina con código 0. En `docker compose ps -a` aparece como `exited (0)`: es lo esperado. Detalle, comprobación e inspección de DLQ: [`infrastructure/kafka/topics.md`](../kafka/topics.md).
 
 ## Aislamiento de las bases (reglas 2 y 3)
 
@@ -120,8 +123,8 @@ volumen con `down -v`. Flyway es opcional (HU-010).
 
 Las tres bases usan volúmenes con nombre (`foodflow-*-db-data`), así que sus datos sobreviven a un `down`.
 **Kafka no monta volumen**: sus datos viven en la capa de escritura del contenedor, sobreviven a
-`stop`/`start` pero no a un `down`. Es deliberado en el prototipo — los tópicos los recrea la
-automatización de la HU-004 y la retención de 7 días solo importa dentro de una ejecución.
+`stop`/`start` pero no a un `down`. Es deliberado en el prototipo — los tópicos los recrea
+`kafka-init` (HU-004) y la retención de 7 días solo importa dentro de una ejecución.
 Si más adelante hace falta conservar el log entre recreaciones, es un cambio para la HU-607.
 
 Referencias: [`CLAUDE.md`](../../CLAUDE.md) · [Wiki](../../docs/wiki/Home.md) · [Persistencia](../../docs/wiki/03-contratos/persistencia.md) · [Versiones](../../docs/wiki/04-implementacion/versiones.md)

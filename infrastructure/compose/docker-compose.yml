@@ -1,12 +1,12 @@
 # ============================================================================
-#  FoodFlow EDA — infraestructura local (HU-002)
+#  FoodFlow EDA — infraestructura local (HU-002, HU-004)
 # ============================================================================
 #  Contiene SOLO la infraestructura de datos y mensajería:
 #    - Apache Kafka en modo KRaft (un nodo que hace de broker y de controller).
 #    - Tres PostgreSQL independientes, una por servicio, con credenciales propias.
+#    - Los tópicos y sus DLQ, creados por `kafka-init` (HU-004).
 #
-#  Fuera del alcance de esta HU:
-#    - Creación de tópicos  -> HU-004
+#  Fuera del alcance:
 #    - Servicios, gateway, frontend y mock -> HU-001 y HU-607
 #
 #  Reglas que aplican:
@@ -61,6 +61,25 @@ services:
       start_period: 40s
     networks: [foodflow]
     restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  #  Creación de tópicos (HU-004). Contenedor de un solo uso: espera a que Kafka
+  #  esté healthy, crea los tópicos y sus DLQ de forma idempotente y termina.
+  #  Declaración de tópicos: infrastructure/kafka/scripts/create-topics.sh
+  # --------------------------------------------------------------------------
+  kafka-init:
+    image: ${KAFKA_IMAGE}
+    container_name: foodflow-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+    volumes:
+      - ../kafka/scripts:/scripts:ro
+    entrypoint: ["/bin/bash", "/scripts/create-topics.sh"]
+    networks: [foodflow]
+    restart: "no"
 
   # --------------------------------------------------------------------------
   #  Order DB — la usa ÚNICAMENTE order-service.
