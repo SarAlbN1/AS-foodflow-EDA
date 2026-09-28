@@ -17,7 +17,7 @@
 | [HU-102](epicas/EP-01-pedidos.md) | Consultar un pedido por identificador | 1 | Juan | 2 | Terminada | #69 | Verificada con Order DB real por Sara (25/25) |
 | [HU-401](epicas/EP-04-gateway-y-contratos.md) | Enrutar operaciones de pedidos | 1 | Juan | 3 | Terminada | #70 | Verificada contra un Order Service simulado; prueba E2E con el servicio real pendiente de Docker |
 | [HU-103](epicas/EP-01-pedidos.md) | Publicar OrderCreated al crear el pedido | 2 | Sara | 5 | En revisión | #81 | Publica OrderCreated tras el commit; sin Outbox (ADR-08) |
-| [HU-107](epicas/EP-01-pedidos.md) | Evitar pedidos duplicados con Idempotency-Key | 2 | Sara | 3 | Pendiente | | |
+| [HU-107](epicas/EP-01-pedidos.md) | Evitar pedidos duplicados con Idempotency-Key | 2 | Sara | 3 | En revisión | | Cabecera obligatoria; corrige ADR-12 y el CA4 de la HU |
 | [HU-403](epicas/EP-04-gateway-y-contratos.md) | Propagar correlationId y manejar CORS | 2 | Juan | 3 | En revisión | [#72](https://github.com/SarAlbN1/AS-foodflow-EDA/pull/72) | |
 | [HU-404](epicas/EP-04-gateway-y-contratos.md) | Contrato OpenAPI y errores Problem Details | 2 | Sara | 5 | En revisión | #67 |  |
 | [HU-501](epicas/EP-05-frontend.md) | Crear un pedido desde Angular | 2 | Juan | 5 | Terminada | #74 | Criterios verificados con pruebas de componente; prueba E2E con el backend real pendiente de Docker |

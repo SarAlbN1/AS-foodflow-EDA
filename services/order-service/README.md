@@ -1,6 +1,6 @@
 # services/order-service — Order Service
 
-> **Estado:** `POST /orders` crea y persiste el pedido en estado `CREADO` (HU-101), `GET /orders/{id}` lo consulta (HU-102) y la creación publica `OrderCreated` en `orders.events` (HU-103). El resto de la funcionalidad la construyen las historias indicadas.
+> **Estado:** `POST /orders` crea y persiste el pedido en estado `CREADO` (HU-101), `GET /orders/{id}` lo consulta (HU-102) la creación publica `OrderCreated` en `orders.events` (HU-103) y `Idempotency-Key` impide crear dos pedidos con la misma solicitud (HU-107). El resto de la funcionalidad la construyen las historias indicadas.
 
 **Responsabilidad:** Crea y consulta pedidos; publica `OrderCreated` y `OrderStatusChanged`; consume `PaymentApproved` y `PaymentRejected`. Único propietario de Order DB.
 
@@ -70,6 +70,21 @@ levanta Order DB y exporta las variables como arriba.
 
 > Kafka todavía no se usa: `OrderCreated` se publica en HU-103. Order Service nunca llama a
 > Payment Service por REST (regla arquitectónica 8).
+
+## `Idempotency-Key` (HU-107)
+
+La cabecera es **obligatoria** en `POST /orders`: sin ella la solicitud se rechaza con `400` antes de validar nada. Lo exige el informe técnico y lo declara `required: true` el contrato OpenAPI.
+
+| Situación | Respuesta |
+|---|---|
+| Clave nueva | `201`. Se crea el pedido y se publica `OrderCreated` |
+| Misma clave, mismo cuerpo | `201` con el **pedido original**. No se crea otro ni se publica otro evento |
+| Misma clave, cuerpo distinto | `409` `IDEMPOTENCY_CONFLICT`. El pedido original no se toca |
+| Sin cabecera o vacía | `400` `VALIDATION_ERROR` con `detail: 'Idempotency-Key: es obligatoria'` |
+
+**Qué cuenta como «el mismo cuerpo».** La huella se calcula sobre los campos **ya validados**, no sobre los bytes recibidos. Así, reenviar el mismo pedido con otro formato de JSON —espacios, saltos de línea, otro orden de claves— o con el total escrito `45000` en vez de `45000.00` cuenta como reintento y no como conflicto. Si se hiciera sobre el texto crudo, un cliente que reformatease su JSON recibiría un `409` sin haber cambiado ningún dato.
+
+**Dos solicitudes a la vez con la misma clave.** La clave primaria de `idempotency_keys` decide: la que pierde ve fallar su transacción entera —pedido incluido, porque ambas escrituras van juntas— y vuelve a leer, ya fuera de la transacción, para devolver el pedido que ganó. Por eso el caso de uso no es transaccional y la escritura vive en `OrderCreationTransaction`: si estuvieran en el mismo objeto, Spring no aplicaría el proxy y la relectura ocurriría sobre una transacción marcada para descarte.
 
 ## Publicación de `OrderCreated` (HU-103)
 

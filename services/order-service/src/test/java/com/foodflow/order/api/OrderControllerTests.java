@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import com.foodflow.order.application.IdempotencyConflictException;
 import com.foodflow.order.application.OrderApplicationService;
 import com.foodflow.order.application.OrderNotFoundException;
 import com.foodflow.order.domain.NotificationChannel;
@@ -20,6 +21,7 @@ import com.foodflow.order.validation.OrderValidationException;
 import com.foodflow.order.validation.OrderValidationException.Violation;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -38,6 +40,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * datos: el caso de uso esta simulado, asi que la prueba no depende de infraestructura.
  */
 class OrderControllerTests {
+
+    private static final String CLAVE_IDEMPOTENCIA = "Idempotency-Key";
+    private static final String CLAVE = "7c9e6679-7425-40de-944b-e07fc1f90ae7";
 
     private static final String CUERPO_VALIDO = """
             {
@@ -61,9 +66,10 @@ class OrderControllerTests {
     void creaPedido() throws Exception {
         Order pedido = Order.crear("PED-0001", NotificationChannel.EMAIL, "ana@foodflow.test",
                 PaymentToken.PAY_OK, new BigDecimal("45000.00"));
-        when(servicio.crearPedido(any(OrderDraft.class), any(UUID.class))).thenReturn(pedido);
+        when(servicio.crearPedido(any(OrderDraft.class), any(UUID.class), anyString())).thenReturn(pedido);
 
-        mockMvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON).content(CUERPO_VALIDO))
+        mockMvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON)
+                        .header(CLAVE_IDEMPOTENCIA, CLAVE).content(CUERPO_VALIDO))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "/orders/" + pedido.id()))
                 .andExpect(jsonPath("$.id").value(pedido.id().toString()))
@@ -79,10 +85,11 @@ class OrderControllerTests {
     @Test
     @DisplayName("400 en formato Problem Details cuando la entrada es invalida")
     void entradaInvalida() throws Exception {
-        when(servicio.crearPedido(any(OrderDraft.class), any(UUID.class)))
+        when(servicio.crearPedido(any(OrderDraft.class), any(UUID.class), anyString()))
                 .thenThrow(new OrderValidationException(List.of(new Violation("total", "debe ser mayor que cero"))));
 
         mockMvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON)
+                        .header(CLAVE_IDEMPOTENCIA, CLAVE)
                         .header("X-Correlation-Id", "11111111-1111-1111-1111-111111111111")
                         .content(CUERPO_VALIDO.replace("45000.00", "0")))
                 .andExpect(status().isBadRequest())
@@ -102,6 +109,51 @@ class OrderControllerTests {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.correlationId").isNotEmpty());
+    }
+
+    @Test
+    @DisplayName("CA-1 de HU-107: sin Idempotency-Key responde 400 en Problem Details")
+    void sinClaveDeIdempotencia() throws Exception {
+        mockMvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON).content(CUERPO_VALIDO))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.detail").value("Idempotency-Key: es obligatoria"))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.correlationId").isNotEmpty());
+
+        // La solicitud no llega siquiera al caso de uso: no se crea ni se valida nada.
+        verifyNoInteractions(servicio);
+    }
+
+    @Test
+    @DisplayName("CA-1 de HU-107: una cabecera vacia se trata como ausente")
+    void claveDeIdempotenciaVacia() throws Exception {
+        mockMvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON)
+                        .header(CLAVE_IDEMPOTENCIA, "   ").content(CUERPO_VALIDO))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value("Idempotency-Key: es obligatoria"));
+
+        verifyNoInteractions(servicio);
+    }
+
+    @Test
+    @DisplayName("CA-3 de HU-107: reusar la clave con otro cuerpo responde 409 en Problem Details")
+    void claveReutilizadaConOtroCuerpo() throws Exception {
+        when(servicio.crearPedido(any(OrderDraft.class), any(UUID.class), anyString()))
+                .thenThrow(new IdempotencyConflictException(CLAVE));
+
+        mockMvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON)
+                        .header(CLAVE_IDEMPOTENCIA, CLAVE)
+                        .header("X-Correlation-Id", "44444444-4444-4444-4444-444444444444")
+                        .content(CUERPO_VALIDO))
+                .andExpect(status().isConflict())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("https://foodflow.local/problems/idempotency-conflict"))
+                .andExpect(jsonPath("$.title").value("Clave de idempotencia reutilizada"))
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.detail").value("la clave " + CLAVE + " ya se uso con un cuerpo distinto"))
+                .andExpect(jsonPath("$.code").value("IDEMPOTENCY_CONFLICT"))
+                .andExpect(jsonPath("$.correlationId").value("44444444-4444-4444-4444-444444444444"));
     }
 
     @Test
@@ -156,9 +208,10 @@ class OrderControllerTests {
     @Test
     @DisplayName("un fallo no controlado responde 500 sin trazas de pila")
     void sinTrazas() throws Exception {
-        when(servicio.crearPedido(any(OrderDraft.class), any(UUID.class))).thenThrow(new IllegalStateException("fallo interno"));
+        when(servicio.crearPedido(any(OrderDraft.class), any(UUID.class), anyString())).thenThrow(new IllegalStateException("fallo interno"));
 
-        mockMvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON).content(CUERPO_VALIDO))
+        mockMvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON)
+                        .header(CLAVE_IDEMPOTENCIA, CLAVE).content(CUERPO_VALIDO))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.detail").value("la solicitud no pudo procesarse"))
                 .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"));
