@@ -3,6 +3,8 @@ package com.foodflow.order.api;
 import java.net.URI;
 import java.util.UUID;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,10 +33,16 @@ class OrderController {
         this.servicio = servicio;
     }
 
-    /** Crea el pedido y responde {@code 201} con {@code Location} hacia el recurso creado. */
+    /**
+     * Crea el pedido y responde {@code 201} con {@code Location} hacia el recurso creado.
+     *
+     * <p>El {@code correlationId} de la peticion viaja al envelope de {@code OrderCreated}, que
+     * se publica despues del commit (HU-103).
+     */
     @PostMapping
-    ResponseEntity<OrderResponse> crear(@RequestBody CreateOrderRequest request) {
-        Order pedido = servicio.crearPedido(request.aBorrador());
+    ResponseEntity<OrderResponse> crear(@RequestBody CreateOrderRequest request,
+            HttpServletRequest peticion) {
+        Order pedido = servicio.crearPedido(request.aBorrador(), CorrelationId.de(peticion));
         return ResponseEntity
                 .created(URI.create("/orders/" + pedido.id()))
                 .body(OrderResponse.from(pedido));

@@ -11,6 +11,7 @@ import com.foodflow.order.domain.NotificationChannel;
 import com.foodflow.order.domain.Order;
 import com.foodflow.order.domain.OrderStatus;
 import com.foodflow.order.domain.PaymentToken;
+import com.foodflow.order.infrastructure.messaging.OrderEventPublisher;
 import com.foodflow.order.infrastructure.persistence.OrderRepository;
 import com.foodflow.order.validation.OrderDraft;
 import com.foodflow.order.validation.OrderValidationException;
@@ -32,8 +33,12 @@ import static org.mockito.Mockito.when;
  */
 class OrderApplicationServiceTests {
 
+    private static final UUID CORRELACION = UUID.fromString("1a2b3c4d-5e6f-4071-8293-a4b5c6d7e8f9");
+
     private final OrderRepository repositorio = mock(OrderRepository.class);
-    private final OrderApplicationService servicio = new OrderApplicationService(new OrderValidator(), repositorio);
+    private final OrderEventPublisher publicador = mock(OrderEventPublisher.class);
+    private final OrderApplicationService servicio =
+            new OrderApplicationService(new OrderValidator(), repositorio, publicador);
 
     @Test
     @DisplayName("el pedido se crea en CREADO, con identificador propio y el snapshot de ADR-11")
@@ -41,7 +46,7 @@ class OrderApplicationServiceTests {
         when(repositorio.save(any(Order.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
 
         Order pedido = servicio.crearPedido(new OrderDraft(
-                "PED-0001", "ana@foodflow.test", "EMAIL", new BigDecimal("45000.00"), "PAY-OK"));
+                "PED-0001", "ana@foodflow.test", "EMAIL", new BigDecimal("45000.00"), "PAY-OK"), CORRELACION);
 
         assertThat(pedido.id()).isNotNull();
         assertThat(pedido.status()).isEqualTo(OrderStatus.CREADO);
@@ -60,7 +65,7 @@ class OrderApplicationServiceTests {
         when(repositorio.save(any(Order.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
         OrderDraft draft = new OrderDraft("PED-1", "ana@foodflow.test", "EMAIL", new BigDecimal("1.00"), "PAY-OK");
 
-        assertThat(servicio.crearPedido(draft).id()).isNotEqualTo(servicio.crearPedido(draft).id());
+        assertThat(servicio.crearPedido(draft, CORRELACION).id()).isNotEqualTo(servicio.crearPedido(draft, CORRELACION).id());
     }
 
     @Test
@@ -69,7 +74,7 @@ class OrderApplicationServiceTests {
         OrderDraft invalido = new OrderDraft("PED-2", "sin-arroba", "SMS", BigDecimal.ZERO, "PAY-QUIZAS");
 
         assertThatExceptionOfType(OrderValidationException.class)
-                .isThrownBy(() -> servicio.crearPedido(invalido));
+                .isThrownBy(() -> servicio.crearPedido(invalido, CORRELACION));
 
         verify(repositorio, never()).save(any(Order.class));
     }
