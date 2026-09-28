@@ -35,10 +35,10 @@ Decidido el **2026-09-28** por Sara y Juan. **Gana la wiki**: Notification Servi
 
 | | |
 |---|---|
-| **Informe (a corregir)** | Notification Service consume **`OrderStatusChanged`** (líneas 571, 655, 725, 727, 753, 808) |
+| **Informe (a corregir)** | Notification Service consume **`OrderStatusChanged`** (líneas 571, 634, 655, 725, 727, 753, 808) |
 | **Decisión** | **`payments.events`**: Payment publica el resultado y Order y Notification reaccionan en paralelo, cada uno por su cuenta |
 | **Qué NO cambia** | Reglas 10 y 13, [Eventos](../03-contratos/eventos.md), [Estilo y flujo](estilo-y-flujo.md), ADR-11, los seis esquemas de `contracts/events/v1/` y los criterios de HU-301 a HU-304. Tampoco el código ya entregado: en #71 Payment ya copia el `notificationContact` de `OrderCreated` para llevarlo al evento de pago |
-| **Qué sí cambia** | Seis frases de `main.tex` (solo las edita Sara) y **los diagramas**: la vista `Dynamic_OrderFlow` dibuja la cadena y el C2 tiene la flecha `OrderStatusChanged → Notification`. El modelo Structurizr y la reexportación son **HU-704, de Juan** |
+| **Qué sí cambia** | Siete frases de `main.tex` (solo las edita Sara), incluida la fila de ADR-11 de la tabla de decisiones, que es la que originó A-2, y **los diagramas**: la vista `Dynamic_OrderFlow` dibuja la cadena y el C2 tiene la flecha `OrderStatusChanged → Notification`. El modelo Structurizr y la reexportación son **HU-704, de Juan** |
 
 **Por qué el abanico**
 

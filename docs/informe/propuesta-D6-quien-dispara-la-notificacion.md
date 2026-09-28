@@ -10,7 +10,7 @@ Revisado contra `main.tex` de 1043 líneas. Si el documento cambia, localiza cad
 
 **No cambia nada** de la wiki, los contratos ni el código: la decisión confirma lo que ya dicen las reglas 10 y 13, ADR-11, [Eventos](../wiki/03-contratos/eventos.md) y los seis esquemas de `contracts/events/v1/`. En #71 Payment Service ya copia el `notificationContact` de `OrderCreated` para llevarlo al evento de pago, que es exactamente lo que esta topología necesita.
 
-Cambian **seis frases del informe** y **dos diagramas**. Los diagramas son HU-704 (Juan): la vista `Dynamic_OrderFlow` dibuja la cadena y el C2 tiene la flecha `OrderStatusChanged → Notification`. Hay que corregir el modelo Structurizr y reexportar las imágenes.
+Cambian **siete frases del informe** y **dos diagramas**. Los diagramas son HU-704 (Juan): la vista `Dynamic_OrderFlow` dibuja la cadena y el C2 tiene la flecha `OrderStatusChanged → Notification`. Hay que corregir el modelo Structurizr y reexportar las imágenes.
 
 ## Reemplazos
 
@@ -51,6 +51,16 @@ Cada base PostgreSQL está conectada exclusivamente con su servicio propietario.
 ```latex
 La vista \texttt{Dynamic\_OrderFlow} representa el \textbf{happy path reproducible} del caso de uso con \texttt{PAY-OK}. El Cliente confirma el pedido; Angular invoca \texttt{POST /orders} con \texttt{Idempotency-Key}; el API Gateway enruta la solicitud a Order Service; Order Service persiste el Pedido y publica \texttt{OrderCreated}; Payment Service consume el evento, registra el Pago y publica \texttt{PaymentApproved}. A partir de ahí el flujo se abre en dos ramas independientes: Order Service actualiza el Pedido y publica \texttt{OrderStatusChanged}, y Notification Service persiste la Notificación, invoca al proveedor y publica \texttt{NotificationSent}. Ninguna de las dos espera a la otra.
 ```
+
+### 7. Línea 634 — fila de ADR-11 en la tabla de decisiones
+
+Es la frase que originó A-2: describe la cadena justo en el punto donde ADR-11 explica cómo viaja el contacto. Sin este reemplazo, la tabla de decisiones contradiría al resto del documento.
+
+```latex
+ADR-11 & Snapshot de contacto & El pedido captura canal/destino; \texttt{OrderCreated} lo transporta, Payment Service lo copia en \texttt{PaymentApproved}/\texttt{PaymentRejected} y Notification Service lo toma de ahí sin consultar otra base. \texttt{OrderStatusChanged} también lo lleva, para consumidores futuros. & Implementar \\
+```
+
+> La línea 629 (fila de ADR-06) también nombra `OrderStatusChanged`, pero solo lo enumera entre los eventos explícitos del diseño. **No hay que tocarla:** sigue siendo cierta con el abanico.
 
 ## Frase nueva recomendada
 
