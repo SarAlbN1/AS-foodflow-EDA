@@ -2,6 +2,15 @@
 
 [← Índice de la wiki](../Home.md)
 
+## Contenedores (C4 nivel 2)
+
+Cada base PostgreSQL se conecta exclusivamente con su servicio propietario, y Kafka se relaciona con los servicios, nunca con las bases. Las reglas 3 a 7 se leen directamente en este diagrama.
+
+![Diagrama de contenedores C4 nivel 2 de FoodFlow](diagramas/c4-c2-contenedores.png)
+
+> Imagen exportada del informe técnico (`docs/informe/main.tex`), que es la fuente de verdad del diseño.
+> Sus fuentes (`workspace.dsl`, `.mmd`, `.puml`, `.dbml`) las versiona HU-704.
+
 ## Reglas arquitectónicas obligatorias
 
 1. Angular nunca accede directamente a Kafka ni a PostgreSQL.
