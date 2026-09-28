@@ -15,7 +15,7 @@
 | [HU-009](epicas/EP-00-base-tecnica-y-estandares.md) | Configurar los estándares del repositorio | 1 | Juan | 2 | Terminada | — | Integrada en el commit inicial del repositorio, sin PR |
 | [HU-101](epicas/EP-01-pedidos.md) | Crear un pedido válido | 1 | Sara | 5 | En revisión | #65 |  |
 | [HU-102](epicas/EP-01-pedidos.md) | Consultar un pedido por identificador | 1 | Juan | 2 | Terminada | #69 | Verificada con Order DB real por Sara (25/25) |
-| [HU-401](epicas/EP-04-gateway-y-contratos.md) | Enrutar operaciones de pedidos | 1 | Juan | 3 | Pendiente | | |
+| [HU-401](epicas/EP-04-gateway-y-contratos.md) | Enrutar operaciones de pedidos | 1 | Juan | 3 | Terminada | #70 | Verificada contra un Order Service simulado; prueba E2E con el servicio real pendiente de Docker |
 | [HU-103](epicas/EP-01-pedidos.md) | Publicar OrderCreated al crear el pedido | 2 | Sara | 5 | Pendiente | | |
 | [HU-107](epicas/EP-01-pedidos.md) | Evitar pedidos duplicados con Idempotency-Key | 2 | Sara | 3 | Pendiente | | |
 | [HU-403](epicas/EP-04-gateway-y-contratos.md) | Propagar correlationId y manejar CORS | 2 | Juan | 3 | Pendiente | | |
@@ -30,7 +30,7 @@
 | [HU-202](epicas/EP-02-pagos.md) | Procesar y persistir el resultado del pago | 3 | Sara | 5 | Pendiente | | |
 | [HU-203](epicas/EP-02-pagos.md) | Publicar PaymentApproved | 3 | Sara | 2 | Pendiente | | |
 | [HU-204](epicas/EP-02-pagos.md) | Publicar PaymentRejected | 3 | Sara | 2 | Pendiente | | |
-| [HU-702](epicas/EP-07-entregables-y-sustentacion.md) | Proyección laboral en la matriz de mercado | 3 | Juan | 2 | Pendiente | | |
+| [HU-702](epicas/EP-07-entregables-y-sustentacion.md) | Proyección laboral en la matriz de mercado | 3 | Juan | 2 | En revisión | [#76](https://github.com/SarAlbN1/AS-foodflow-EDA/pull/76) | Propuesta a `main.tex`: la aplica Sara |
 | [HU-703](epicas/EP-07-entregables-y-sustentacion.md) | Patrones, antipatrones y trazabilidad en el documento técnico | 3 | Sara | 3 | Pendiente | | |
 | [HU-301](epicas/EP-03-notificaciones.md) | Crear una notificación ante el resultado del pago | 4 | Sara | 5 | Pendiente | | |
 | [HU-302](epicas/EP-03-notificaciones.md) | Enviar una notificación mediante el proveedor externo | 4 | Sara | 5 | Pendiente | | |
