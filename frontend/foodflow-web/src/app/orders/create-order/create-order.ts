@@ -6,6 +6,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
 import { nuevaIdempotencyKey } from '../../core/idempotency-key';
 import { ErrorVisible, aErrorVisible } from '../../core/problem-details';
@@ -42,7 +43,7 @@ function totalValido(control: AbstractControl): ValidationErrors | null {
  */
 @Component({
   selector: 'app-create-order',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './create-order.html',
   styleUrl: './create-order.css',
 })
