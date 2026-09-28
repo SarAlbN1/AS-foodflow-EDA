@@ -1,0 +1,152 @@
+# ============================================================================
+#  FoodFlow EDA — infraestructura local (HU-002)
+# ============================================================================
+#  Contiene SOLO la infraestructura de datos y mensajería:
+#    - Apache Kafka en modo KRaft (un nodo que hace de broker y de controller).
+#    - Tres PostgreSQL independientes, una por servicio, con credenciales propias.
+#
+#  Fuera del alcance de esta HU:
+#    - Creación de tópicos  -> HU-004
+#    - Servicios, gateway, frontend y mock -> HU-001 y HU-607
+#
+#  Reglas que aplican:
+#    2. Cada servicio es el único propietario de su base.
+#    3. Ninguna base publica ni consume eventos; Kafka nunca escribe en PostgreSQL.
+#
+#  Uso (desde la raíz del repositorio, con `.env` ya creado):
+#    docker compose --env-file .env -f infrastructure/compose/docker-compose.yml up -d
+#    docker compose --env-file .env -f infrastructure/compose/docker-compose.yml ps
+#    docker compose --env-file .env -f infrastructure/compose/docker-compose.yml down
+#
+#  Detalle y solución de problemas: infrastructure/compose/README.md
+# ============================================================================
+
+name: foodflow-eda
+
+services:
+
+  # --------------------------------------------------------------------------
+  #  Apache Kafka — modo KRaft. Kafka 4.x no usa ZooKeeper.
+  # --------------------------------------------------------------------------
+  kafka:
+    image: ${KAFKA_IMAGE}
+    container_name: foodflow-kafka
+    ports:
+      # Escucha externa, solo para herramientas ejecutadas en el host.
+      - "${KAFKA_HOST_PORT}:29092"
+    environment:
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID}
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,PLAINTEXT_HOST://:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:${KAFKA_HOST_PORT}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      # Un solo nodo: todo con factor de replicación 1.
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      # Los tópicos los declara la HU-004 de forma explícita: nada de creación implícita.
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+    healthcheck:
+      # El broker está listo cuando responde a una consulta de versiones de API.
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 40s
+    networks: [foodflow]
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  #  Order DB — la usa ÚNICAMENTE order-service.
+  #  URL para order-service: jdbc:postgresql://order-db:5432/${ORDER_DB_NAME}
+  # --------------------------------------------------------------------------
+  order-db:
+    image: ${POSTGRES_IMAGE}
+    container_name: foodflow-order-db
+    ports:
+      - "${ORDER_DB_HOST_PORT}:5432"
+    environment:
+      POSTGRES_DB: ${ORDER_DB_NAME}
+      POSTGRES_USER: ${ORDER_DB_USER}
+      POSTGRES_PASSWORD: ${ORDER_DB_PASSWORD}
+    volumes:
+      - order-db-data:/var/lib/postgresql/data
+      # Los scripts se ejecutan en orden alfabético la primera vez que se crea el volumen.
+      - ../postgres/order-db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [foodflow]
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  #  Payment DB — la usa ÚNICAMENTE payment-service.
+  #  URL para payment-service: jdbc:postgresql://payment-db:5432/${PAYMENT_DB_NAME}
+  # --------------------------------------------------------------------------
+  payment-db:
+    image: ${POSTGRES_IMAGE}
+    container_name: foodflow-payment-db
+    ports:
+      - "${PAYMENT_DB_HOST_PORT}:5432"
+    environment:
+      POSTGRES_DB: ${PAYMENT_DB_NAME}
+      POSTGRES_USER: ${PAYMENT_DB_USER}
+      POSTGRES_PASSWORD: ${PAYMENT_DB_PASSWORD}
+    volumes:
+      - payment-db-data:/var/lib/postgresql/data
+      - ../postgres/payment-db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [foodflow]
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  #  Notification DB — la usa ÚNICAMENTE notification-service.
+  #  URL para notification-service: jdbc:postgresql://notification-db:5432/${NOTIFICATION_DB_NAME}
+  # --------------------------------------------------------------------------
+  notification-db:
+    image: ${POSTGRES_IMAGE}
+    container_name: foodflow-notification-db
+    ports:
+      - "${NOTIFICATION_DB_HOST_PORT}:5432"
+    environment:
+      POSTGRES_DB: ${NOTIFICATION_DB_NAME}
+      POSTGRES_USER: ${NOTIFICATION_DB_USER}
+      POSTGRES_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
+    volumes:
+      - notification-db-data:/var/lib/postgresql/data
+      - ../postgres/notification-db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks: [foodflow]
+    restart: unless-stopped
+
+networks:
+  foodflow:
+    name: foodflow-eda
+    driver: bridge
+
+volumes:
+  order-db-data:
+    name: foodflow-order-db-data
+  payment-db-data:
+    name: foodflow-payment-db-data
+  notification-db-data:
+    name: foodflow-notification-db-data
