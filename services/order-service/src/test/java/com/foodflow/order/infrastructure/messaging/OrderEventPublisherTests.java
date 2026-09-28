@@ -1,6 +1,7 @@
 package com.foodflow.order.infrastructure.messaging;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -10,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
@@ -124,6 +126,19 @@ class OrderEventPublisherTests {
 
         String occurredAt = jackson.readTree(cuerpoPublicado()).get("occurredAt").asString();
         assertThat(occurredAt).matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$");
+    }
+
+    @Test
+    @DisplayName("la publicacion no espera a Kafka: corre en el hilo de la peticion y no debe bloquearla")
+    void noBloqueaLaPeticion() {
+        // Un envio que nunca se confirma: si el publicador esperase, esta prueba se colgaria.
+        when(kafka.send(anyString(), anyString(), anyString())).thenReturn(new CompletableFuture<>());
+
+        assertTimeoutPreemptively(Duration.ofSeconds(2),
+                () -> publicador.publicarOrderCreated(pedido(), UUID.randomUUID()),
+                "publicarOrderCreated se queda esperando la confirmacion de Kafka");
+
+        verify(kafka).send(eq(TOPICO), anyString(), anyString());
     }
 
     @Test

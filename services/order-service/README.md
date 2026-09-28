@@ -102,7 +102,9 @@ Al crear un pedido, Order Service publica `OrderCreated` en `orders.events`. Pay
 
 **El riesgo aceptado de ADR-08.** No hay Transactional Outbox. Si el commit sale bien y la publicación falla, el pedido queda en `CREADO` **sin evento y sin que nadie lo reconcilie**. Se registra un `ERROR` con el `orderId` y el `correlationId`, y ahí termina: no se reintenta desde la base ni existe tarea de recuperación. Es la decisión de ADR-08, no un olvido.
 
-Por eso el productor tiene un tiempo límite (`ORDERS_PUBLISH_TIMEOUT_MS`, 10 s): la publicación ocurre después del commit, así que sin límite una espera larga retrasaría la respuesta de un pedido que **ya está creado**.
+**La publicación no bloquea la respuesta.** Ocurre en `afterCommit`, es decir en el hilo de la petición y antes de responder, así que esperar la confirmación de Kafka acoplaría el tiempo de respuesta de `POST /orders` al del broker: con `acks=all`, una réplica lenta podría estirar la espera hasta el límite de entrega, el gateway cortaría primero (su `read-timeout` es de 10 s) y el cliente recibiría un `503` por un pedido que **sí se creó**. El resultado se registra en `whenComplete`, así que un fallo sigue dejando su `ERROR`.
+
+`ORDERS_PUBLISH_TIMEOUT_MS` (10 s) sigue acotando cuánto insiste el productor antes de darlo por fallido, pero ya no afecta al tiempo de respuesta.
 
 Ver los eventos con la infraestructura levantada:
 
