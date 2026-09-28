@@ -1,6 +1,6 @@
 # gateway/api-gateway — API Gateway
 
-> **Estado:** HU-401 y HU-403 en revisión: enruta `POST /orders` y `GET /orders/{id}` a Order Service, resuelve y propaga `X-Correlation-Id` y aplica CORS. La consulta de notificaciones la añade HU-402.
+> **Estado:** enruta las tres operaciones de la API mínima: `POST /orders` y `GET /orders/{id}` a Order Service (HU-401) y `GET /orders/{id}/notifications` a Notification Service (HU-402). Resuelve y propaga `X-Correlation-Id` y aplica CORS (HU-403).
 
 **Responsabilidad:** Punto de entrada REST. Enruta hacia el servicio propietario sin aplicar reglas de negocio.
 
@@ -33,6 +33,7 @@ El valor resuelto se reenvía al servicio destino en la misma cabecera, vuelve a
 |---|---|---|
 | `POST /orders` | Order Service | Reenvía método, ruta, cuerpo y cabeceras; `Idempotency-Key` va **sin modificar** |
 | `GET /orders/{id}` | Order Service | Igual |
+| `GET /orders/{id}/notifications` | Notification Service (HU-402) | Igual. Solo va a Notification Service: el gateway no consulta a Order Service ni combina datos, y una lista vacía vuelve como `[]` |
 | Cualquier otra ruta | — | `404` del gateway; no llega a ningún servicio |
 
 **Códigos HTTP** (criterio 4 de HU-401):
@@ -46,6 +47,7 @@ El valor resuelto se reenvía al servicio destino en la misma cabecera, vuelve a
 |---|---|---|
 | `GATEWAY_PORT` | `8080` | Puerto del borde, el del servidor de `contracts/api/openapi.yaml` |
 | `ORDER_SERVICE_URL` | `http://localhost:8081` | Ubicación interna de Order Service. En Compose será `http://order-service:8081` |
+| `NOTIFICATION_SERVICE_URL` | `http://localhost:8083` | Ubicación interna de Notification Service. En Compose será `http://notification-service:8083` |
 | `GATEWAY_CORS_ALLOWED_ORIGINS` | `http://localhost:4200` | Orígenes autorizados por CORS, separados por comas. El valor por omisión es el de `ng serve` |
 | `GATEWAY_CONNECT_TIMEOUT` | `2s` | Tiempo máximo para establecer la conexión con el servicio destino |
 | `GATEWAY_READ_TIMEOUT` | `10s` | Tiempo máximo de espera de la respuesta. Spring Boot no trae valor por omisión: sin él, un servicio atascado dejaría al cliente colgado |
@@ -72,6 +74,6 @@ curl -i -X POST http://localhost:8080/orders \
        "notificationChannel":"EMAIL","total":45000.00,"paymentToken":"PAY-OK"}'
 ```
 
-Las pruebas (`OrderRoutesTests`, `DependencyUnavailableTests`, `CorrelationIdAndCorsTests`) levantan el gateway en un puerto aleatorio frente a un Order Service simulado con el servidor HTTP del JDK: no necesitan Docker ni el servicio real.
+Las pruebas (`OrderRoutesTests`, `NotificationRoutesTests`, `DependencyUnavailableTests`, `CorrelationIdAndCorsTests`) levantan el gateway en un puerto aleatorio frente a un Order Service simulado con el servidor HTTP del JDK: no necesitan Docker ni el servicio real.
 
 Referencias: [`CLAUDE.md`](../../CLAUDE.md) · [Wiki](../../docs/wiki/Home.md)
