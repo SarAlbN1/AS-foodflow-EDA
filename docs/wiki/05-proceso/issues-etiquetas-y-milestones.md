@@ -6,7 +6,8 @@
 
 - Un issue de GitHub por HU, con título `HU-101 — Crear un pedido válido`.
 - El cuerpo usa la plantilla `story.yml`: historia, criterios de aceptación, contratos afectados y servicio propietario.
-- Cada issue lleva **obligatoriamente**: 1 etiqueta de tipo, al menos 1 de área, 1 de prioridad, 1 de épica, un *milestone* (`Sprint N`) y un responsable.
+- Todas las HU del backlog tienen su issue desde el inicio del proyecto; no se crean sprint a sprint.
+- Cada issue lleva **obligatoriamente**: 1 etiqueta de tipo, al menos 1 de área, 1 de prioridad, 1 de épica, un *milestone* (`Sprint N`) y un responsable. Excepción: las HU opcionales (P2) sin sprint asignado no llevan milestone ni responsable hasta que se planifiquen.
 - Los puntos de historia se registran como campo del GitHub Project (`Points`), no como etiquetas.
 - El PR referencia el issue con `Closes #<n>`.
 
@@ -63,5 +64,5 @@ label "status:needs-decision" "e99695" "Requiere decisión del equipo"
 ## Milestones y tablero
 
 - Un *milestone* por sprint: `Sprint 1` a `Sprint 6`.
-- Un GitHub Project con columnas `Todo`, `En curso`, `En revisión`, `Hecho` y campos `Points`, `Sprint` y `Responsable`.
+- Un GitHub Project ([FoodFlowEDA](https://github.com/users/SarAlbN1/projects/7)) con columnas `Todo`, `En curso`, `En revisión`, `Hecho` y campos `Points`, `Sprint` y `Responsable`. Todas las HU están en él; una HU nueva entra en `Todo`.
 - `docs/wiki/06-backlog/estado.md` refleja el estado en el repositorio para que un asistente sin acceso al tablero lo consulte.
