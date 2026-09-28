@@ -98,7 +98,8 @@ Flyway, Testcontainers y CI son **opcionales**: no los conviertas en requisito.
 | Prueba de humo E2E | `scripts/smoke-test.sh` | HU-607 |
 | Validar contratos de eventos | `bash scripts/validate-events.sh` | HU-003 |
 | Verificar arquitectura | `scripts/verify-architecture.sh` | HU-006 |
-| Construir y probar un servicio | Se define en HU-001 | HU-001 |
+| Construir y probar un servicio | `./mvnw verify` (en `services/<servicio>` o `gateway/api-gateway`; Windows: `mvnw.cmd verify`) | HU-001 |
+| Construir y probar el frontend | `npm ci && npm run build && npm test -- --watch=false` (en `frontend/foodflow-web`) | HU-001 |
 
 ## 10. Comandos de Claude Code del proyecto
 

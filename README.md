@@ -43,6 +43,51 @@ foodflow-eda/
 
 Detalle completo: [estructura del repositorio](docs/wiki/04-implementacion/estructura-del-repositorio.md).
 
+## Cómo ejecutar, detener y probar localmente
+
+Requisitos: JDK 25, Node.js 24.21.0 con npm y Docker o Podman con Compose. Las versiones fijadas están en [versiones.md](docs/wiki/04-implementacion/versiones.md). Maven no hace falta instalarlo: cada proyecto Java trae su *wrapper* (`mvnw`).
+
+> **Estado actual:** los proyectos son esqueletos sin funcionalidad de negocio (HU-001). A partir de la HU-607, `scripts/up.sh`, `scripts/down.sh` y `scripts/smoke-test.sh` levantarán, detendrán y probarán la solución completa.
+
+**Infraestructura (Kafka y las tres PostgreSQL).** Desde la raíz del repositorio:
+
+```bash
+cp .env.example .env                                                                # primera vez; cambia las contraseñas
+docker compose --env-file .env -f infrastructure/compose/docker-compose.yml up -d   # levantar
+docker compose --env-file .env -f infrastructure/compose/docker-compose.yml down    # detener
+```
+
+Detalle y comprobación de salud: [`infrastructure/compose/README.md`](infrastructure/compose/README.md).
+
+**Servicios y gateway (Spring Boot + Maven).** Desde la carpeta de cada proyecto (`services/order-service`, `services/payment-service`, `services/notification-service`, `gateway/api-gateway`):
+
+| Acción | Comando (en Windows: `mvnw.cmd` en lugar de `./mvnw`) |
+|---|---|
+| Compilar y probar | `./mvnw verify` |
+| Ejecutar | `./mvnw spring-boot:run` |
+| Detener | `Ctrl+C` |
+
+**Frontend (Angular).** Desde `frontend/foodflow-web`:
+
+| Acción | Comando |
+|---|---|
+| Instalar dependencias | `npm ci` |
+| Compilar | `npm run build` |
+| Probar | `npm test -- --watch=false` |
+| Ejecutar | `npm start` (http://localhost:4200/) |
+| Detener | `Ctrl+C` |
+
+**Compilar y probar todo de una vez** (Bash o Git Bash, desde la raíz):
+
+```bash
+for p in services/order-service services/payment-service services/notification-service gateway/api-gateway; do
+  (cd "$p" && ./mvnw -B verify) || exit 1
+done
+(cd frontend/foodflow-web && npm ci && npm run build && npm test -- --watch=false)
+```
+
+Cada componente documenta sus detalles en su propio `README.md`.
+
 ## Cómo contribuir
 
 Lee [`CONTRIBUTING.md`](CONTRIBUTING.md) y la carpeta [`docs/wiki/05-proceso/`](docs/wiki/05-proceso/README.md).

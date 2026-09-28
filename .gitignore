@@ -37,3 +37,6 @@ yarn-error.log*
 
 # Entorno de validación de contratos (scripts/validate-events.sh)
 .venv-contracts/
+
+# Artefactos de Maven
+target/
