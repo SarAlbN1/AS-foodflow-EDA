@@ -105,6 +105,8 @@ El repositorio es el entregable académico. Lo que se evalúa es el trabajo del 
 
 **Excepciones, y solo estas dos:** el archivo `CLAUDE.md` y la carpeta `.claude/` conservan su nombre, porque son configuración que la herramienta localiza por ruta y renombrarlos la rompe. Las referencias a esos dos nombres son rutas de archivo, no menciones.
 
+**Al integrar con squash, el mensaje se escribe a mano.** GitHub propone un cuerpo con los mensajes de los commits del PR, *trailers* incluidos: aceptarlo mete la firma en `main` aunque el PR estuviera limpio. Título escrito a mano y cuerpo vacío.
+
 **Al revisar un PR se comprueba.** Una firma de herramienta en un commit o en la descripción es motivo de pedir cambios.
 
 ## 9. Cómo trabajar una HU

@@ -383,7 +383,7 @@ Consistencia de datos & Limitado entre servicios & EDA favorece consistencia eve
 Testabilidad & Medio & La asincronía aumenta la complejidad de las pruebas, aunque Spring Boot, contratos versionados, entornos contenerizados y herramientas de prueba permiten aislar componentes y reproducir escenarios. & Cobertura de flujos síncronos/asíncronos, pruebas de contrato, pruebas de integración y reproducibilidad de escenarios. \\
 Observabilidad / Trazabilidad & Medio, requiere diseño explícito & Los flujos distribuidos necesitan identificadores de correlación, logs estructurados y métricas del broker para reconstruir una operación completa. & Cobertura de \texttt{correlationId}/\texttt{eventId}, trazabilidad de extremo a extremo, métricas de lag y calidad de logs. \\
 Rendimiento & Potencial alto & Kafka está diseñado para alto throughput y procesamiento secuencial por partición; PostgreSQL y Spring Boot ofrecen rendimiento sólido si se dimensionan y configuran correctamente. & Latencia p50/p95/p99, throughput, uso de CPU/memoria, lag y tiempo de acceso a datos. \\
-Recuperabilidad & Alta para eventos publicados, condicionada por la integración & Kafka facilita replay de eventos ya persistidos en el log. Sin un patrón como Transactional Outbox puede existir una ventana entre el commit en la base y la publicación en el broker. & Capacidad de replay, RTO/RPO, pérdida de eventos, recuperación tras fallos y tratamiento de escritura dual. \\
+Recuperabilidad & \textbf{Parcial}: alta para eventos publicados, no cubierta para eventos nunca publicados & Kafka facilita replay de eventos ya persistidos en el log. Sin un patrón como Transactional Outbox puede existir una ventana entre el commit en la base y la publicación en el broker. & Capacidad de replay, RTO/RPO, pérdida de eventos, recuperación tras fallos y tratamiento de escritura dual. \\
 Seguridad & Dependiente de configuración & EDA no garantiza seguridad por sí mismo. HTTPS, autenticación, autorización, ACL de Kafka, gestión de secretos y validación de entradas deben diseñarse explícitamente. & Cobertura TLS, control de acceso, gestión de secretos, auditoría y validación de datos. \\
 \bottomrule
 \end{longtable}
@@ -443,6 +443,8 @@ Configuración externa & Contenedores / variables de entorno & Evitar hardcoding
 \end{longtable}
 \setlength{\tabcolsep}{6pt}
 \normalsize
+
+Las tácticas anteriores se concretan en FoodFlow mediante los ADR de la sección 3: desacoplamiento temporal (ADR-01), base propietaria (ADR-03), orden por \texttt{orderId} (ADR-04), reintentos y DLQ (ADR-05), escritura dual aceptada sin \textit{Outbox} (ADR-08), idempotencia de consumidores (ADR-09), pago determinista (ADR-10), snapshot de contacto (ADR-11) y contrato HTTP (ADR-12).
 
 \subsection{Patrones y Antipatrones Relacionados con el Estilo y el Stack}
 
@@ -573,7 +575,7 @@ El caso de uso principal se limita a \textbf{crear un pedido, procesar automáti
     \item Notification Service actualiza el estado de la Notificación y publica \texttt{NotificationSent} o \texttt{NotificationFailed}.
 \end{enumerate}
 
-\textbf{Robustez mínima.} Los consumidores identifican cada mensaje por \texttt{eventId}; el procesamiento y el registro en \texttt{processed\_events} se ejecutan dentro de la misma transacción local. Los errores transitorios se reintentan hasta 3 veces y, si persisten, el evento se envía a DLQ. Los errores de validación no se reintentan indefinidamente. Estas medidas reducen duplicados y bloqueos, pero no eliminan la ventana de escritura dual DB--Kafka aceptada en ADR-08.
+\textbf{Robustez mínima.} Los consumidores identifican cada mensaje por \texttt{eventId}; el procesamiento y el registro en \texttt{processed\_events} se ejecutan dentro de la misma transacción local. Los errores transitorios se reintentan hasta 3 veces y, si persisten, el evento se envía a DLQ \cite{spring-kafka-retry}. Los errores de validación no se reintentan indefinidamente. Estas medidas reducen duplicados y bloqueos, pero no eliminan la ventana de escritura dual DB--Kafka aceptada en ADR-08.
 
 \subsubsection{Integración síncrona y contrato HTTP del caso práctico}
 
