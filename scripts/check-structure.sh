@@ -37,6 +37,7 @@ required=(
   infrastructure/postgres/notification-db/README.md infrastructure/nginx/README.md
   mocks/notification-provider/README.md
   scripts/setup-labels.sh scripts/setup-github.sh scripts/create-issues.sh scripts/check-structure.sh
+  scripts/verify-architecture.sh
 )
 
 missing=0

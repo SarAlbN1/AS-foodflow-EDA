@@ -19,6 +19,8 @@
 
     <properties>
         <java.version>25</java.version>
+        <!-- Guardas de arquitectura (HU-006): docs/wiki/04-implementacion/versiones.md -->
+        <archunit.version>1.5.1</archunit.version>
     </properties>
 
     <dependencies>
@@ -34,6 +36,13 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- Reglas arquitectonicas ejecutables (HU-006). Solo pruebas. -->
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>${archunit.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

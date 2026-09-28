@@ -114,7 +114,7 @@ El repositorio es el entregable académico. Lo que se evalúa es el trabajo del 
 1. Confirma que la HU existe como issue y lee su épica y sus criterios de aceptación.
 2. Identifica el servicio propietario de los datos y los contratos afectados.
 3. Crea la rama, implementa (dominio y aplicación primero; luego adaptadores HTTP, Kafka y base de datos) y agrega pruebas.
-4. Ejecuta las pruebas y la verificación de arquitectura (cuando exista `scripts/verify-architecture.sh`).
+4. Ejecuta las pruebas y la verificación de arquitectura (`bash scripts/verify-architecture.sh`).
 5. Actualiza contratos, OpenAPI, ADR y `docs/wiki/06-backlog/estado.md` cuando corresponda.
 6. Abre el PR y entrega el reporte de `docs/wiki/05-proceso/trabajo-con-ia.md`.
 7. No marques la HU como terminada si algún criterio de aceptación no está verificado.
@@ -134,7 +134,7 @@ El repositorio es el entregable académico. Lo que se evalúa es el trabajo del 
 | Prueba de humo E2E | `scripts/smoke-test.sh` | HU-607 |
 | Validar contratos de eventos | `bash scripts/validate-events.sh` | HU-003 |
 | Validar el contrato REST | `bash scripts/validate-openapi.sh` | HU-404 |
-| Verificar arquitectura | `scripts/verify-architecture.sh` | HU-006 |
+| Verificar arquitectura | `bash scripts/verify-architecture.sh` (`--sin-tests` omite las pruebas ArchUnit) | HU-006 |
 | Construir y probar un servicio | `./mvnw verify` (en `services/<servicio>` o `gateway/api-gateway`; Windows: `mvnw.cmd verify`) | HU-001 |
 | Construir y probar el frontend | `npm ci && npm run build && npm test -- --watch=false` (en `frontend/foodflow-web`) | HU-001 |
 
