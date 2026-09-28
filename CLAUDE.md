@@ -70,7 +70,7 @@ Flyway, Testcontainers y CI son **opcionales**: no los conviertas en requisito.
 - Una HU = un issue = una rama = un PR. Rama: `<tipo>/<HU-###>-<slug>` (por ejemplo `feat/HU-101-crear-pedido`). Nunca commits directos a `main`.
 - Commit: `<tipo>(<ámbito>): <descripción imperativa en español> [HU-###]`.
 - Cada issue lleva 1 etiqueta de tipo, ≥1 de área, 1 de prioridad, 1 de épica y un milestone `Sprint N`.
-- El PR usa la plantilla, referencia `Closes #<n>`, lo revisa la otra persona y se integra con squash. Si hubo asistencia sustancial de IA, añade la etiqueta `ai-assisted`.
+- El PR usa la plantilla, referencia `Closes #<n>`, lo revisa la otra persona y se integra con squash.
 - Detalle: `docs/wiki/05-proceso/`.
 
 ## 7. Cómo trabajar una HU
