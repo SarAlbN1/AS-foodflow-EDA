@@ -21,7 +21,7 @@ Una HU se considera terminada únicamente cuando:
 1. Cumple todos sus criterios de aceptación.
 2. El código compila y las pruebas unitarias relevantes pasan.
 3. Las pruebas de integración relevantes pasan cuando la HU involucra persistencia, Kafka o HTTP externo.
-4. `scripts/verify-architecture.sh` pasa (cuando HU-006 ya existe).
+4. `bash scripts/verify-architecture.sh` pasa (HU-006).
 5. No introduce dependencias entre servicios que violen la arquitectura.
 6. No contiene secretos versionados ni registra el contacto completo en logs.
 7. Los errores se manejan de forma controlada (Problem Details en HTTP; reintento o DLQ en Kafka).

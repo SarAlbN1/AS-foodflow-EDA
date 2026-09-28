@@ -31,6 +31,21 @@ Cada base PostgreSQL se conecta exclusivamente con su servicio propietario, y Ka
 16. Los eventos representan hechos ocurridos y no se modifican tras publicarse.
 17. Todo evento usa los nombres y el envelope de la página [API REST](../03-contratos/api-rest.md).
 
+## Qué reglas se verifican automáticamente (HU-006)
+
+`bash scripts/verify-architecture.sh` comprueba las reglas que pueden automatizarse, sin CI. Con `--sin-tests` omite las pruebas ArchUnit y no compila.
+
+| Comprobación | Cómo | Reglas |
+|---|---|---|
+| Ningún `pom.xml` depende de otro módulo `com.foodflow` | Script | 12 (sin código compartido) |
+| En Compose, cada servicio recibe solo las variables de su propia base | Script. Hoy no hay servicios en Compose: se activa con HU-607 | 3, 4 y 5 |
+| No hay literales de tópicos (`orders.events`, `payments.events`, `notifications.events` y sus DLQ) en el código de producción | Script | Tópicos solo en configuración |
+| `@KafkaListener` y `KafkaTemplate` solo en `infrastructure.messaging` | ArchUnit (`ArchitectureTest` de cada servicio) | 7 y convenciones |
+| El paquete `domain` no depende de `api` ni de `infrastructure` | ArchUnit | Capas |
+| Order y Payment no usan clientes HTTP salientes; en Notification solo `infrastructure.provider` | ArchUnit | 8 y 11 |
+
+Las reglas de comportamiento (idempotencia, reintentos y DLQ, independencia ante fallos) no se prueban aquí: las cubren las pruebas de cada HU y HU-605/HU-606.
+
 ## Decisión sobre el pago (ADR-10)
 
 El cliente crea el pedido; `OrderCreated` dispara el pago. El resultado es determinista: `PAY-OK` produce `PaymentApproved` y `PAY-FAIL` produce `PaymentRejected`. Payment Service no consulta a Order Service, y no existe llamada `Order -> Payment` ni orquestador.
