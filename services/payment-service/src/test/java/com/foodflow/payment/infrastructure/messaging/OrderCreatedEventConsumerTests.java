@@ -174,6 +174,28 @@ class OrderCreatedEventConsumerTests {
     }
 
     @Test
+    @DisplayName("CA-4: un total con mas de dos decimales no se procesa")
+    void rechazaUnTotalConDemasiadosDecimales() {
+        // NUMERIC(12,2) no puede representarlo y el contrato lo declara multiplo de 0.01.
+        // Sin esta comprobacion, el evento reventaria al ajustar la escala y se reintentaria
+        // en vano: nunca va a poder procesarse.
+        consumidor.consumir(registro(eventoValido("PAY-OK").replace("\"total\": 45900.00", "\"total\": 45900.005")),
+                confirmacion);
+
+        verify(pagos, never()).iniciarPago(any());
+        verify(confirmacion, times(1)).acknowledge();
+    }
+
+    @Test
+    @DisplayName("un total con ceros a la derecha si se procesa: 45900.0 son dos decimales validos")
+    void aceptaCerosALaDerecha() {
+        consumidor.consumir(registro(eventoValido("PAY-OK").replace("\"total\": 45900.00", "\"total\": 45900.0")),
+                confirmacion);
+
+        assertThat(ordenCapturada().amount()).isEqualByComparingTo("45900.00");
+    }
+
+    @Test
     @DisplayName("CA-4: una moneda distinta de COP no se procesa")
     void rechazaUnaMonedaFueraDelContrato() {
         consumidor.consumir(registro(eventoValido("PAY-OK").replace("\"COP\"", "\"USD\"")), confirmacion);
