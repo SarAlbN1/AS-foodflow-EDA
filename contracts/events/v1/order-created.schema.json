@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foodflow.local/contracts/events/v1/order-created.schema.json",
+  "title": "OrderCreated v1",
+  "description": "El pedido quedó persistido. Es el hecho que dispara el pago: Payment Service lo consume desde orders.events. Se publica DESPUÉS del commit de la transacción que persiste el pedido (ADR-08); no hay Outbox. Productor: Order Service. Tópico: orders.events. Fuente de verdad: docs/wiki/03-contratos/eventos.md.",
+  "allOf": [
+    {
+      "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "const": "OrderCreated"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "orderId",
+            "customerReference",
+            "total",
+            "currency",
+            "paymentToken",
+            "notificationContact"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "orderId": {
+              "description": "Identificador del pedido. Coincide con aggregateId.",
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/uuid"
+            },
+            "customerReference": {
+              "description": "Referencia del cliente que hizo el pedido.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 60
+            },
+            "total": {
+              "description": "Total del pedido.",
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/importe"
+            },
+            "currency": {
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/moneda"
+            },
+            "paymentToken": {
+              "description": "Pago determinista (ADR-10): PAY-OK produce PaymentApproved y PAY-FAIL produce PaymentRejected.",
+              "type": "string",
+              "enum": [
+                "PAY-OK",
+                "PAY-FAIL"
+              ]
+            },
+            "notificationContact": {
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/notificationContact"
+            }
+          }
+        }
+      },
+      "required": [
+        "eventType",
+        "payload"
+      ]
+    }
+  ]
+}

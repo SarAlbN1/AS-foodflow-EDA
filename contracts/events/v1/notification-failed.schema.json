@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foodflow.local/contracts/events/v1/notification-failed.schema.json",
+  "title": "NotificationFailed v1",
+  "description": "El proveedor externo falló tras sus reintentos; la notificación pasó de PENDIENTE a FALLIDA. Es un fallo de NEGOCIO: el offset se confirma y el evento NO va a DLQ (regla 10). Un fallo de Notification Service no impide que Order Service registre el resultado del pago (regla 12). Productor: Notification Service. Tópico: notifications.events. Fuente de verdad: docs/wiki/03-contratos/eventos.md.",
+  "allOf": [
+    {
+      "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "const": "NotificationFailed"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "notificationId",
+            "orderId",
+            "paymentId",
+            "channel",
+            "failureCode",
+            "attempts"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "notificationId": {
+              "description": "Identificador de la notificación.",
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/uuid"
+            },
+            "orderId": {
+              "description": "Pedido cuya notificación falló. Coincide con aggregateId.",
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/uuid"
+            },
+            "paymentId": {
+              "description": "Pago cuyo resultado se intentaba notificar.",
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/uuid"
+            },
+            "channel": {
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/canal"
+            },
+            "failureCode": {
+              "description": "Código del fallo del proveedor. Sin enum: el catálogo no está fijado en la wiki, se define en HU-302.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50
+            },
+            "attempts": {
+              "description": "Intentos realizados contra el proveedor. Política: 3 intentos, espera inicial 500 ms que se duplica.",
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      },
+      "required": [
+        "eventType",
+        "payload"
+      ]
+    }
+  ]
+}

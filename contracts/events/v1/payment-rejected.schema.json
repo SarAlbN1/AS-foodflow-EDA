@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foodflow.local/contracts/events/v1/payment-rejected.schema.json",
+  "title": "PaymentRejected v1",
+  "description": "El pago del pedido fue rechazado (paymentToken PAY-FAIL, ADR-10). Lo consumen Order Service y Notification Service de forma independiente (regla 6). Productor: Payment Service. Tópico: payments.events. Fuente de verdad: docs/wiki/03-contratos/eventos.md.",
+  "allOf": [
+    {
+      "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "const": "PaymentRejected"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "paymentId",
+            "orderId",
+            "amount",
+            "currency",
+            "reasonCode",
+            "notificationContact"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "paymentId": {
+              "description": "Identificador del pago.",
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/uuid"
+            },
+            "orderId": {
+              "description": "Pedido rechazado. Coincide con aggregateId.",
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/uuid"
+            },
+            "amount": {
+              "description": "Importe que se intentó cobrar.",
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/importe"
+            },
+            "currency": {
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/moneda"
+            },
+            "reasonCode": {
+              "description": "Motivo del rechazo. Sin enum: el catálogo de motivos no está fijado en la wiki, se define en HU-202.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50
+            },
+            "notificationContact": {
+              "description": "Snapshot copiado por Payment Service desde OrderCreated (ADR-11, supuesto A-2).",
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/notificationContact"
+            }
+          }
+        }
+      },
+      "required": [
+        "eventType",
+        "payload"
+      ]
+    }
+  ]
+}
