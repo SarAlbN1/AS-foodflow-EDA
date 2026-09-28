@@ -3,20 +3,21 @@ package com.foodflow.payment.infrastructure.messaging;
 import java.math.BigDecimal;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 
-import tools.jackson.databind.ObjectMapper;
 import com.foodflow.payment.application.PaymentApplicationService;
 import com.foodflow.payment.application.StartPaymentCommand;
+import com.foodflow.payment.config.EventJsonConfig;
 import com.foodflow.payment.domain.NotificationChannel;
 import com.foodflow.payment.domain.NotificationContact;
-import com.foodflow.payment.config.EventJsonConfig;
 import com.foodflow.payment.domain.PaymentToken;
+
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Consume {@code orders.events} y convierte cada {@code OrderCreated} en una orden de pago

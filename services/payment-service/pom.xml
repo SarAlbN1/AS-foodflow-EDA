@@ -31,6 +31,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+<<<<<<< HEAD
         <!-- Payment DB (HU-202). Regla 2: es la unica base que este servicio toca. -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -42,9 +43,15 @@
             <scope>runtime</scope>
         </dependency>
         <!-- Consumo de orders.events (HU-201). Solo infrastructure.messaging lo usa. -->
+=======
+        <!-- Consumo de orders.events (HU-201). Solo infrastructure.messaging lo usa.
+             Es el starter y no spring-kafka a secas: en Spring Boot 4 la configuracion
+             automatica de Kafka vive en su propio modulo, y sin ella el @KafkaListener
+             nunca se registra y las propiedades spring.kafka.* se ignoran. -->
+>>>>>>> feat/HU-201-consumir-ordercreated-iniciar-pago
         <dependency>
-            <groupId>org.springframework.kafka</groupId>
-            <artifactId>spring-kafka</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-kafka</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

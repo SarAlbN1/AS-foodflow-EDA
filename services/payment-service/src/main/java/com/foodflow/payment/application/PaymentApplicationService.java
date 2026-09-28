@@ -52,7 +52,8 @@ public class PaymentApplicationService {
      * escrito y volveria por la rama de arriba.
      *
      * <p>El contacto es dato personal y se registra enmascarado
-     * ({@code docs/wiki/04-implementacion/convenciones.md}).
+     * ({@code docs/wiki/04-implementacion/convenciones.md}); el resto de la linea son los campos
+     * de correlacion y el importe, que es lo que hace util la traza del pago.
      */
     @Transactional
     public Payment iniciarPago(StartPaymentCommand orden) {
