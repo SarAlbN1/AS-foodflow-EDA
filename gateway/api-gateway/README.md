@@ -1,6 +1,6 @@
 # gateway/api-gateway — API Gateway
 
-> **Estado:** HU-401 en revisión: enruta `POST /orders` y `GET /orders/{id}` a Order Service. La consulta de notificaciones (HU-402) y el `correlationId` y CORS (HU-403) los añaden sus historias.
+> **Estado:** HU-401 y HU-403 en revisión: enruta `POST /orders` y `GET /orders/{id}` a Order Service, resuelve y propaga `X-Correlation-Id` y aplica CORS. La consulta de notificaciones la añade HU-402.
 
 **Responsabilidad:** Punto de entrada REST. Enruta hacia el servicio propietario sin aplicar reglas de negocio.
 
@@ -12,7 +12,20 @@
 
 Paquete base `com.foodflow.gateway`. El gateway no tiene dominio ni persistencia: enruta sin reglas de negocio ([ADR-07](../../docs/wiki/02-arquitectura/adr/ADR-07-api-gateway-como-entrada-sincrona.md)).
 
-- `config`: rutas de Spring Cloud Gateway Server MVC (`OrderRoutesConfig`) y la respuesta `503` cuando el destino no responde (`DependencyUnavailable`).
+- `config`: rutas de Spring Cloud Gateway Server MVC (`OrderRoutesConfig`), la respuesta `503` cuando el destino no responde (`DependencyUnavailable`), el filtro de correlación (`CorrelationIdFilter`) y CORS (`CorsConfig`).
+
+## Correlación y CORS (HU-403)
+
+**`X-Correlation-Id`.** El gateway es el punto único donde nace:
+
+| Llega del cliente | Qué hace el gateway |
+|---|---|
+| UUID válido | Lo conserva |
+| Ausente, vacío o con otro formato | Genera un UUID nuevo; el valor original no pasa |
+
+El valor resuelto se reenvía al servicio destino en la misma cabecera, vuelve al cliente en la respuesta (incluidas las respuestas propias del gateway: `404` de ruta, `503` y rechazo CORS) y queda en el MDC como `correlationId` para los registros.
+
+**CORS.** Solo los orígenes de `GATEWAY_CORS_ALLOWED_ORIGINS` pueden llamar desde el navegador. Se permiten `GET` y `POST` con `Content-Type`, `Idempotency-Key` y `X-Correlation-Id`, y se exponen `Location` y `X-Correlation-Id` para que Angular pueda leerlas. Un origen no listado recibe `403` y la solicitud no llega a ningún servicio. Sin credenciales.
 
 ## Rutas
 
@@ -33,6 +46,7 @@ Paquete base `com.foodflow.gateway`. El gateway no tiene dominio ni persistencia
 |---|---|---|
 | `GATEWAY_PORT` | `8080` | Puerto del borde, el del servidor de `contracts/api/openapi.yaml` |
 | `ORDER_SERVICE_URL` | `http://localhost:8081` | Ubicación interna de Order Service. En Compose será `http://order-service:8081` |
+| `GATEWAY_CORS_ALLOWED_ORIGINS` | `http://localhost:4200` | Orígenes autorizados por CORS, separados por comas. El valor por omisión es el de `ng serve` |
 | `GATEWAY_CONNECT_TIMEOUT` | `2s` | Tiempo máximo para establecer la conexión con el servicio destino |
 | `GATEWAY_READ_TIMEOUT` | `10s` | Tiempo máximo de espera de la respuesta. Spring Boot no trae valor por omisión: sin él, un servicio atascado dejaría al cliente colgado |
 
@@ -58,6 +72,6 @@ curl -i -X POST http://localhost:8080/orders \
        "notificationChannel":"EMAIL","total":45000.00,"paymentToken":"PAY-OK"}'
 ```
 
-Las pruebas (`OrderRoutesTests`, `DependencyUnavailableTests`) levantan el gateway en un puerto aleatorio frente a un Order Service simulado con el servidor HTTP del JDK: no necesitan Docker ni el servicio real.
+Las pruebas (`OrderRoutesTests`, `DependencyUnavailableTests`, `CorrelationIdAndCorsTests`) levantan el gateway en un puerto aleatorio frente a un Order Service simulado con el servidor HTTP del JDK: no necesitan Docker ni el servicio real.
 
 Referencias: [`CLAUDE.md`](../../CLAUDE.md) · [Wiki](../../docs/wiki/Home.md)
