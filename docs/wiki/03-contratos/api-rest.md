@@ -54,7 +54,7 @@ Cada servicio Spring Boot publica su estado con Spring Boot Actuator. `health` e
 | `GET /actuator/health/liveness` | La aplicación arrancó y su contexto está vivo | `200` | `503` |
 | `GET /actuator/health/readiness` | El servicio puede atender tráfico: sus dependencias responden | `200` | `503` |
 
-La separación entre `liveness` y `readiness` es la que distingue una aplicación iniciada de una dependencia esencial no disponible. A medida que cada servicio adquiere su base PostgreSQL o su cliente Kafka, Actuator registra por sí solo los contribuyentes `db` y `kafka`, que pasan a formar parte del estado agregado y de `readiness`.
+La separación entre `liveness` y `readiness` es la que distingue una aplicación iniciada de una dependencia esencial no disponible. Cuando un servicio adquiera su base PostgreSQL, Actuator registra por sí solo el contribuyente `db`, que pasa a formar parte del estado agregado. Para Kafka no hay indicador automático: Spring Boot solo aporta uno para Kafka Streams, así que si se quiere reflejar el broker en el health habrá que añadir un `HealthIndicator` propio en la HU que lo justifique.
 
 **El cuerpo no revela credenciales.** Se publica el estado por componente (`show-components=always`) pero nunca su detalle (`show-details=never`), que es donde Actuator incluiría la URL JDBC, el usuario o la versión del motor:
 
