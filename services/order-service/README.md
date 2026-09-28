@@ -1,6 +1,6 @@
 # services/order-service — Order Service
 
-> **Estado:** esqueleto compilable (HU-001), sin funcionalidad de negocio. La funcionalidad la construyen las historias indicadas.
+> **Estado:** HU-101 en revisión: `POST /orders` crea y persiste el pedido en estado `CREADO`. El resto de la funcionalidad la construyen las historias indicadas.
 
 **Responsabilidad:** Crea y consulta pedidos; publica `OrderCreated` y `OrderStatusChanged`; consume `PaymentApproved` y `PaymentRejected`. Único propietario de Order DB.
 
@@ -33,18 +33,47 @@ Desde `services/order-service/`:
 | Ejecutar | `./mvnw spring-boot:run` | `mvnw.cmd spring-boot:run` |
 | Detener | `Ctrl+C` en la terminal | `Ctrl+C` en la terminal |
 
-> Desde HU-604 el servicio arranca un servidor web y `spring-boot:run` queda en ejecución. Todavía no se conecta a Kafka ni a PostgreSQL: esas conexiones las añaden sus HU.
+### Ejecutar con su base de datos
+
+`spring-boot:run` necesita Order DB en marcha, porque Hibernate valida el mapeo contra el esquema
+(`spring.jpa.hibernate.ddl-auto=validate`). Desde la raíz del repositorio:
+
+```bash
+cp .env.example .env            # una sola vez; reemplaza las contraseñas
+docker compose --env-file .env -f infrastructure/compose/docker-compose.yml up -d order-db
+set -a && . ./.env && set +a    # exporta ORDER_DB_URL, ORDER_DB_USER y ORDER_DB_PASSWORD
+cd services/order-service && ./mvnw spring-boot:run
+```
+
+Queda escuchando en `ORDER_SERVICE_PORT` (8081 por defecto). Prueba rápida:
+
+```bash
+curl -i -X POST http://localhost:8081/orders \
+  -H 'Content-Type: application/json' \
+  -d '{"customerReference":"PED-0001","customerContact":"ana@foodflow.test",
+       "notificationChannel":"EMAIL","total":45000.00,"paymentToken":"PAY-OK"}'
+```
+
+### Qué cubren las pruebas
+
+`./mvnw verify` corre sin infraestructura: valida las reglas de entrada, el caso de uso con el
+repositorio simulado y el contrato HTTP con MockMvc. La prueba de persistencia real
+(`OrderServiceApplicationTests`) **se omite** si no está definida `ORDER_DB_URL`; para ejecutarla,
+levanta Order DB y exporta las variables como arriba.
+
+> Kafka todavía no se usa: `OrderCreated` se publica en HU-103. Order Service nunca llama a
+> Payment Service por REST (regla arquitectónica 8).
 
 ## Health check (HU-604)
 
-Con el servicio en ejecución (`./mvnw spring-boot:run`):
+Con el servicio en ejecución (`./mvnw spring-boot:run`, puerto `ORDER_SERVICE_PORT`):
 
 | Comprobación | Comando |
 |---|---|
-| Estado agregado | `curl -i http://localhost:8080/actuator/health` |
-| La aplicación arrancó | `curl -i http://localhost:8080/actuator/health/liveness` |
-| Puede atender tráfico | `curl -i http://localhost:8080/actuator/health/readiness` |
+| Estado agregado | `curl -i http://localhost:8081/actuator/health` |
+| La aplicación arrancó | `curl -i http://localhost:8081/actuator/health/liveness` |
+| Puede atender tráfico | `curl -i http://localhost:8081/actuator/health/readiness` |
 
-`200` con `"status":"UP"` cuando está disponible; `503` con `"status":"DOWN"` cuando una dependencia esencial no responde. Es el único grupo de endpoints de Actuator expuesto y no publica detalles ni credenciales. Contrato completo: [api-rest.md](../../docs/wiki/03-contratos/api-rest.md).
+`200` con `"status":"UP"` cuando está disponible; `503` con `"status":"DOWN"` cuando una dependencia esencial no responde; `readiness` incluye Order DB (`db`). Es el único grupo de endpoints de Actuator expuesto y no publica detalles ni credenciales. Contrato completo: [api-rest.md](../../docs/wiki/03-contratos/api-rest.md).
 
 Referencias: [`CLAUDE.md`](../../CLAUDE.md) · [Wiki](../../docs/wiki/Home.md)

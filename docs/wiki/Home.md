@@ -1,6 +1,6 @@
 # FoodFlow EDA — Wiki del proyecto
 
-> **Fuente de verdad** del **diseño**, los **procesos de Git** y el **backlog** de FoodFlow. Todo cambio a estas páginas se propone mediante pull request, igual que el código.
+> El **diseño** lo fija el informe técnico ([`docs/informe/main.tex`](../informe/README.md)). Esta wiki **lo describe, lo explica y deriva de él** los procesos de Git, los contratos operativos y el backlog. Todo cambio a estas páginas se propone mediante pull request, igual que el código.
 > Los asistentes de IA no leen esta wiki completa: parten de [`CLAUDE.md`](../../CLAUDE.md), que la referencia.
 
 **FoodFlow en una frase:** recibe comandos HTTP en el borde, mantiene el estado local de cada dominio en una PostgreSQL exclusiva y coordina Pedido → Pago → Notificación mediante eventos Kafka coreografiados, idempotentes y trazables.
@@ -18,14 +18,16 @@
 
 ## Jerarquía de fuentes
 
-Si dos fuentes se contradicen, prevalece la de menor número:
+**El informe técnico es la fuente de verdad del diseño.** Esta wiki es su descripción operativa: traduce lo que el informe decide a reglas, contratos, procesos e historias ejecutables. Si dos fuentes se contradicen, prevalece la de menor número:
 
-1. Las [reglas arquitectónicas](02-arquitectura/reglas-arquitectonicas.md) y las [decisiones ADR](02-arquitectura/decisiones-adr.md) aprobadas.
-2. Los contratos versionados en [`contracts/`](../../contracts/api/README.md) (OpenAPI y JSON Schema).
-3. Esta wiki y el [backlog](06-backlog/README.md).
-4. El informe técnico ([`docs/informe/`](../informe/README.md)) y los diagramas.
+1. El informe técnico ([`docs/informe/main.tex`](../informe/README.md)) y sus [diagramas](02-arquitectura/diagramas/README.md).
+2. Las [reglas arquitectónicas](02-arquitectura/reglas-arquitectonicas.md) y las [decisiones ADR](02-arquitectura/decisiones-adr.md) aprobadas, que desarrollan lo que fija el informe.
+3. Los contratos versionados en [`contracts/`](../../contracts/api/README.md) (OpenAPI y JSON Schema).
+4. El resto de esta wiki y el [backlog](06-backlog/README.md).
 
-Una contradicción no se resuelve en silencio: se reporta y se propone su corrección.
+`main.tex` lo edita únicamente Sara: una corrección al informe **se propone, no se aplica**.
+
+Una contradicción no se resuelve en silencio. Si la wiki se desvía del informe, se corrige la wiki; si parece que el equivocado es el informe, se anota en [Divergencias informe–wiki](02-arquitectura/divergencias-informe-wiki.md) y decide Sara.
 
 ## Qué leer según la tarea
 
@@ -39,6 +41,8 @@ Una contradicción no se resuelve en silencio: se reporta y se propone su correc
 | Pruebas y calidad | [Atributos de calidad](02-arquitectura/atributos-de-calidad.md) y [DoR y DoD](05-proceso/dor-y-dod.md) |
 | Saber qué está hecho | [Estado](06-backlog/estado.md) |
 | Duda de alcance | [Visión y alcance](01-producto/vision-y-alcance.md) y [puntos abiertos](02-arquitectura/puntos-abiertos.md) |
+| El informe y la wiki no coinciden | [Divergencias informe–wiki](02-arquitectura/divergencias-informe-wiki.md) |
+| Ver un diagrama | [Diagramas](02-arquitectura/diagramas/README.md) |
 
 ## Convenciones de esta wiki
 

@@ -7,6 +7,12 @@
 ## Cuándo usarlo
 Antes y durante la sustentación, para reproducir el flujo completo.
 
+## Qué se levanta
+
+![Vista de despliegue de FoodFlow en el entorno de desarrollo](../02-arquitectura/diagramas/c4-deployment-development.png)
+
+> Imagen exportada del informe técnico (`docs/informe/main.tex`), que es la fuente de verdad del diseño. Su fuente (`.puml`) la versiona HU-704.
+
 ## Prerrequisitos
 Docker o Podman con Compose; el repositorio clonado; `.env` creado desde `.env.example`.
 
