@@ -32,7 +32,7 @@ Regla: **implementado ⊆ diseñado ⊆ investigado**. Se implementa un subconju
 
 | Elemento | Investigado | Diseñado | Implementado |
 |---|:---:|:---:|:---:|
-| Pub-Sub y Event Streaming (3 tópicos) | Sí | Sí | Sí |
+| Publish-Subscribe y Event Streaming (3 tópicos) | Sí | Sí | Sí |
 | Database per Service | Sí | Sí | Sí |
 | API Gateway (ruteo mínimo) | Sí | Sí | Sí |
 | Repository y validación con Bean Validation | Sí | Sí | Sí |
@@ -41,7 +41,8 @@ Regla: **implementado ⊆ diseñado ⊆ investigado**. Se implementa un subconju
 | Timeout y Retry hacia el proveedor | Sí | Sí | Sí |
 | `correlationId` y logs estructurados | Sí | Sí | Sí |
 | Health checks | Sí | Sí | Sí |
-| Strategy (canal) y Adapter (proveedor) | Sí | Sí | Sí, un canal |
+| Strategy (canal de notificación) | Sí | Sí | Un canal |
+| Adapter (proveedor externo) | Sí | Sí | Sí |
 | OpenAPI y Problem Details | Sí | Sí | Sí |
 | Flyway, Testcontainers, CI automático | Sí | Sí | Opcional |
 | Transactional Outbox | Sí | Documentado (ADR-08) | **No** |
@@ -52,3 +53,5 @@ Regla: **implementado ⊆ diseñado ⊆ investigado**. Se implementa un subconju
 | Seguridad completa (JWT, RBAC, TLS, ACL de Kafka) | Sí | Requisito de producción | **No** |
 
 Los asistentes de IA no implementan ninguna fila marcada **No** salvo que un ADR nuevo cambie la decisión.
+
+Esta misma matriz, con el motivo de cada nivel alcanzado, está en el informe técnico (HU-703), junto con la tabla de antipatrones evitados y la táctica que previene cada uno.

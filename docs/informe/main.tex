@@ -703,6 +703,7 @@ En el caso práctico se aplica la regla \textbf{implementado $\subseteq$ diseña
 \textbf{Patrón / práctica} & \textbf{Riesgo que mitiga} & \textbf{Aplicación en FoodFlow} & \textbf{Nivel} \\
 \midrule
 \endhead
+Publish-Subscribe sobre Kafka & Acoplamiento punto a punto / orquestador central & Order, Payment y Notification se coordinan publicando y consumiendo en \texttt{orders.events}, \texttt{payments.events} y \texttt{notifications.events}; ningún servicio llama a otro para avanzar el flujo. & Implementar \\
 Database per Service & Shared Database / Database-as-IPC & Order, Payment y Notification poseen PostgreSQL independiente. & Implementar \\
 API Gateway & Acoplamiento del cliente a múltiples servicios & Punto de entrada HTTP y enrutamiento de contratos REST. & Implementar \\
 Event Envelope versionado & Lack of Versioning / Tight Coupling & \texttt{eventId}, \texttt{eventType}, \texttt{schemaVersion}, \texttt{correlationId} y \texttt{orderId}. & Implementar \\
@@ -725,6 +726,81 @@ Kubernetes & Complejidad operativa & Docker Compose satisface el entorno contene
 \end{longtable}
 \setlength{\tabcolsep}{6pt}
 \normalsize
+
+\subsubsection{Antipatrones evitados y la táctica que los previene}
+
+La tabla anterior nombra el riesgo que mitiga cada patrón. Esta lo mira desde el otro lado: parte del antipatrón, explica por qué es un riesgo real en un sistema con estas características y señala la táctica concreta que lo previene en FoodFlow y dónde se comprueba. Un antipatrón que solo se nombra no queda evitado; lo que lo evita es la táctica, y lo que lo demuestra es la comprobación.
+
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{P{0.17\textwidth} P{0.26\textwidth} P{0.30\textwidth} P{0.17\textwidth}}
+\toprule
+\textbf{Antipatrón} & \textbf{Por qué es un riesgo aquí} & \textbf{Táctica que lo previene} & \textbf{Dónde se comprueba} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Antipatrón} & \textbf{Por qué es un riesgo aquí} & \textbf{Táctica que lo previene} & \textbf{Dónde se comprueba} \\
+\midrule
+\endhead
+Shared Database & Tres servicios sobre un mismo esquema volverían el despliegue solidario y cualquier cambio de tabla afectaría a los tres. & Una PostgreSQL por servicio, con usuario y credenciales propios, y cada servicio recibe únicamente la URL de su base. & Guarda ejecutable: comprueba que ningún servicio recibe variables de otra base. \\
+Database-as-IPC & Comunicar servicios escribiendo en la tabla del otro reintroduce el acoplamiento que el estilo busca evitar, sin que se note en el código. & La coordinación viaja solo por eventos; ninguna base publica ni consume, y Kafka nunca escribe en PostgreSQL. & Prueba de arquitectura: el dominio no depende de infraestructura ajena. \\
+Orquestador central & Un coordinador que decide los pasos concentra el conocimiento del flujo y se convierte en punto único de fallo y de cambio. & Coreografía: cada servicio reacciona a los hechos que le interesan. El cliente solo crea el pedido. & Ausencia de llamadas REST entre servicios, verificada por la guarda de arquitectura. \\
+Duplicación por entrega \textit{at-least-once} & Kafka puede reentregar un evento, y un segundo pago o una segunda notificación son errores visibles para el cliente. & \textit{Idempotent Consumer}: \texttt{eventId} único en \texttt{processed\_events}, escrito en la misma transacción local que el efecto de negocio. & Pruebas que entregan dos veces el mismo evento a cada consumidor. \\
+Pedido duplicado por reintento HTTP & Un doble clic o un reintento de red crearía dos pedidos indistinguibles, y cada uno arrastraría su pago. & \texttt{Idempotency-Key} obligatoria, con la huella de la solicitud almacenada: misma clave y mismo cuerpo devuelven el pedido original; cuerpo distinto produce \texttt{409}. & Prueba con clave repetida y prueba de dos solicitudes simultáneas. \\
+Poison Message & Un mensaje que nunca se puede procesar bloquearía la partición y con ella todos los eventos posteriores del mismo pedido. & Reintentos finitos y \textit{Dead Letter Queue} por tópico; los fallos de negocio no van a DLQ. & Inyección controlada de un evento no procesable. \\
+Fat Controller & Las reglas dispersas en el adaptador HTTP no se pueden probar sin levantar el servidor ni reutilizar desde un consumidor de eventos. & Validación y casos de uso fuera del controlador; el adaptador solo traduce HTTP. & Prueba de arquitectura: el dominio no depende de \texttt{api}. \\
+Vendor Lock-in & Acoplar el dominio a la API del proveedor de notificaciones obligaría a tocar reglas de negocio para cambiar de proveedor. & \textit{Adapter}: solo el adaptador de Notification Service habla con el proveedor, detrás de una interfaz propia. & Prueba de arquitectura: ningún otro paquete usa clientes HTTP salientes. \\
+Hardcoding de configuración & URLs, credenciales y nombres de tópico incrustados obligan a recompilar para cambiar de entorno y acaban filtrando secretos al repositorio. & Toda configuración por variables de entorno documentadas; los tópicos se leen de configuración. & Guarda que busca literales de tópico en el código de producción. \\
+Lack of Observability & Sin correlación, reconstruir el recorrido de un pedido por tres servicios y un broker exige adivinar. & \texttt{correlationId} que nace en el borde y viaja en los eventos, logs estructurados y \textit{health checks} por servicio. & Un \texttt{correlationId} permite seguir el pedido en los tres servicios. \\
+Lack of Versioning & Cambiar la forma de un evento sin versión rompe a los consumidores en producción y sin aviso. & Envelope con \texttt{eventVersion} y esquemas versionados; un consumidor descarta las versiones que no entiende. & Validación de los esquemas y sus ejemplos en cada integración. \\
+Works on my machine & Un entorno que solo funciona en un portátil no es verificable por quien evalúa. & Entorno contenerizado reproducible con Docker Compose y un comando documentado. & Ejecución del flujo completo desde cero. \\
+\bottomrule
+\end{longtable}
+\setlength{\tabcolsep}{6pt}
+\normalsize
+
+\subsubsection{Matriz Investigado, Diseñado, Implementado}
+
+El prototipo estudia más de lo que diseña y diseña más de lo que implementa, de forma deliberada: se cumple \textbf{implementado $\subseteq$ diseñado $\subseteq$ investigado}. Esta matriz separa las tres cosas para que no se confunda haber analizado un patrón con haberlo construido. Las filas marcadas \textbf{No} son decisiones de alcance con su motivo, no omisiones.
+
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{P{0.26\textwidth} P{0.08\textwidth} P{0.13\textwidth} P{0.12\textwidth} P{0.29\textwidth}}
+\toprule
+\textbf{Elemento} & \textbf{Inv.} & \textbf{Diseñado} & \textbf{Impl.} & \textbf{Motivo del nivel alcanzado} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Elemento} & \textbf{Inv.} & \textbf{Diseñado} & \textbf{Impl.} & \textbf{Motivo del nivel alcanzado} \\
+\midrule
+\endhead
+Publish-Subscribe y \textit{event streaming} (tres tópicos) & Sí & Sí & Sí & Es el estilo del sistema: sin él no hay arquitectura orientada a eventos que demostrar. \\
+Database per Service & Sí & Sí & Sí & Una base por servicio, con credenciales propias. \\
+API Gateway con ruteo mínimo & Sí & Sí & Sí & Punto de entrada único; sin reglas de negocio (ADR-07). \\
+Repository y validación de entrada & Sí & Sí & Sí & Reglas fuera de los controladores. \\
+\textit{Idempotent Consumer} e \texttt{Idempotency-Key} & Sí & Sí & Sí & Cubre las dos idempotencias: la de eventos (ADR-09) y la de la entrada HTTP (ADR-12). \\
+\textit{Retry} y \textit{Dead Letter Queue} & Sí & Sí & Sí & Un mensaje no procesable no puede bloquear el flujo. \\
+\textit{Timeout} y \textit{retry} hacia el proveedor & Sí & Sí & Sí & Límites finitos y configurables; sin \textit{Circuit Breaker}. \\
+\texttt{correlationId} y logs estructurados & Sí & Sí & Sí & Trazabilidad mínima suficiente para seguir un pedido. \\
+\textit{Health checks} por componente & Sí & Sí & Sí & Distinguen la aplicación iniciada de una dependencia caída. \\
+\textit{Adapter} del proveedor externo & Sí & Sí & Sí & Aísla al único tercero del sistema. \\
+OpenAPI y \textit{Problem Details} & Sí & Sí & Sí & Contrato versionado y errores uniformes. \\
+\textit{Strategy} de canal de notificación & Sí & Sí & Un canal & El prototipo implementa solo correo electrónico: con una única variante, la abstracción no se puede justificar todavía. \\
+Flyway, \textit{Testcontainers} y CI automático & Sí & Sí & Opcional & Aportan rigor pero no son necesarios para demostrar el estilo; se dejan como mejora si sobra capacidad. \\
+\textit{Transactional Outbox} & Sí & Documentado en ADR-08 & \textbf{No} & Se acepta de forma explícita la ventana de escritura dual: añadirlo duplicaría el esfuerzo de persistencia sin cambiar lo que el prototipo demuestra. Es la limitación conocida del entregable. \\
+\textit{Circuit Breaker} & Sí & Evolución futura & \textbf{No} & Con un único proveedor simulado no hay riesgo real de fallo en cascada que justifique la complejidad. \\
+\textit{Distributed tracing} completo & Sí & Evolución futura & \textbf{No} & La correlación por logs cubre la necesidad de diagnóstico a esta escala. \\
+\textit{Saga}, CQRS y \textit{Event Sourcing} & Sí & No (YAGNI) & \textbf{No} & Resuelven problemas que este flujo de tres entidades no tiene; añadirlos sería complejidad sin causa. \\
+Kubernetes & Sí & Evolución futura & \textbf{No} & Docker Compose satisface el entorno contenerizado exigido; la orquestación a escala queda fuera del alcance. \\
+Seguridad completa (JWT, RBAC, TLS, ACL de Kafka) & Sí & Requisito de producción & \textbf{No} & Fuera del alcance académico declarado. Se asume como deuda explícita y no como diseño terminado. \\
+\bottomrule
+\end{longtable}
+\setlength{\tabcolsep}{6pt}
+\normalsize
+
+La misma matriz vive en la wiki del repositorio, en su página de trazabilidad, junto con la correspondencia entre cada regla arquitectónica y las historias que la implementan o verifican. Ninguna fila marcada \textbf{No} se implementa salvo que una decisión nueva cambie el alcance.
+
+\textbf{Riesgos aceptados de forma explícita.} Dos consecuencias del alcance se declaran aquí para que no se lean como descuidos. La primera es la ventana de escritura dual de ADR-08: un pedido puede quedar persistido sin que su evento llegue al broker, y ningún mecanismo lo reconcilia; la recuperabilidad del prototipo es \textbf{parcial} por decisión. La segunda es que \texttt{GET /orders/\{id\}} devuelve el correo del cliente sobre un endpoint sin autenticación: el identificador es un UUID versión 4, no adivinable, y la autenticación está fuera del alcance declarado, así que el riesgo se acota pero no desaparece. En un despliegue real ambas cosas exigirían \textit{Outbox} y control de acceso.
 
 \subsection{Diagrama de Alto Nivel (HLD)}
 
