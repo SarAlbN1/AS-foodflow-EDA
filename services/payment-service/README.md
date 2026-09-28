@@ -1,6 +1,6 @@
 # services/payment-service — Payment Service
 
-> **Estado:** esqueleto compilable (HU-001), sin funcionalidad de negocio. La funcionalidad la construyen las historias indicadas.
+> **Estado:** consume `OrderCreated` desde `orders.events` (HU-201). Todavía no crea ni persiste el pago (HU-202) ni publica su resultado (HU-203, HU-204).
 
 **Responsabilidad:** Consume `OrderCreated`, decide el pago de forma determinista (`PAY-OK` / `PAY-FAIL`) y publica `PaymentApproved` o `PaymentRejected`. Único propietario de Payment DB.
 
@@ -45,5 +45,34 @@ Con el servicio en ejecución (`./mvnw spring-boot:run`):
 | Puede atender tráfico | `curl -i http://localhost:8080/actuator/health/readiness` |
 
 `200` con `"status":"UP"` cuando está disponible; `503` con `"status":"DOWN"` cuando una dependencia esencial no responde. Es el único grupo de endpoints de Actuator expuesto y no publica detalles ni credenciales. Contrato completo: [api-rest.md](../../docs/wiki/03-contratos/api-rest.md).
+
+## Consumo de `orders.events` (HU-201)
+
+Payment Service se suscribe a `orders.events` en su propio grupo `payment-service.orders`. El pago lo dispara el evento: **nunca** consulta Order DB ni llama por REST a Order Service (reglas arquitectónicas 2, 4 y 5).
+
+| Situación | Qué hace |
+|---|---|
+| `OrderCreated` v1 válido | Extrae `orderId`, `total`, `currency`, `paymentToken`, `correlationId` y el snapshot `notificationContact`, y entrega la orden a la capa de aplicación |
+| `OrderStatusChanged` u otro tipo | Lo ignora con `DEBUG` y confirma el offset, sin error y sin DLQ |
+| JSON ilegible, envelope incompleto, `eventVersion` no soportada, payload fuera de contrato (moneda, `paymentToken`, `aggregateId`, más de dos decimales en `total`) | Lo registra como no procesable y **no** inicia ningún pago |
+
+> **Dependencia.** El servicio usa `spring-boot-starter-kafka`, no `spring-kafka` a secas. En Spring Boot 4 la configuración automática de Kafka vive en su propio módulo: sin ella el `@KafkaListener` no se registra y las propiedades `spring.kafka.*` se ignoran, así que el servicio arrancaría sin consumir nada. `OrderCreatedListenerRegistrationTest` lo comprueba mirando el registro de contenedores.
+
+El `notificationContact` no se guarda en Payment DB —la tabla `payments` no tiene columnas de contacto—: solo viaja del evento de entrada al evento de pago (ADR-11, supuesto A-2).
+
+### Deuda conocida hasta HU-602
+
+Un evento no procesable debería ir a `orders.events.dlq` sin reintentos ([comportamiento del flujo](../../docs/wiki/02-arquitectura/comportamiento-del-flujo.md)). HU-201 todavía no publica en la DLQ: registra el fallo y confirma el offset, porque dejar de confirmarlo bloquearía la partición y con ella todos los eventos posteriores del mismo pedido. Los reintentos y la DLQ los añade HU-602.
+
+## Configuración
+
+Variables en [`.env.example`](../../.env.example):
+
+| Variable | Por defecto | Para qué |
+|---|---|---|
+| `PAYMENT_SERVICE_PORT` | `8082` | Puerto HTTP local; solo sirve al health check |
+| `KAFKA_BOOTSTRAP_SERVERS` | `localhost:29092` | Broker |
+| `PAYMENT_ORDERS_CONSUMER_GROUP` | `payment-service.orders` | Grupo de consumidores propio del servicio |
+| `ORDERS_TOPIC` | `orders.events` | Tópico de entrada; los tópicos se leen de configuración, nunca como literales |
 
 Referencias: [`CLAUDE.md`](../../CLAUDE.md) · [Wiki](../../docs/wiki/Home.md)
