@@ -38,7 +38,7 @@ El valor resuelto se reenvía al servicio destino en la misma cabecera, vuelve a
 **Códigos HTTP** (criterio 4 de HU-401):
 
 - Se **preservan** tal cual el código, las cabeceras (incluida `Location`) y el cuerpo de Order Service, incluidos sus `400`, `404` y `409` en Problem Details.
-- **Única transformación:** si Order Service no responde (conexión rechazada o sin respuesta), el gateway contesta `503` en Problem Details con `code: DEPENDENCY_UNAVAILABLE`. No incluye la dirección interna del servicio ni trazas.
+- **Única transformación:** si Order Service no responde, el gateway contesta `503` en Problem Details con `code: DEPENDENCY_UNAVAILABLE`. Cubre la conexión rechazada, la conexión que no se establece en `GATEWAY_CONNECT_TIMEOUT` y la conexión aceptada sin respuesta en `GATEWAY_READ_TIMEOUT`. No incluye la dirección interna del servicio ni trazas.
 
 ## Configuración
 
@@ -47,6 +47,8 @@ El valor resuelto se reenvía al servicio destino en la misma cabecera, vuelve a
 | `GATEWAY_PORT` | `8080` | Puerto del borde, el del servidor de `contracts/api/openapi.yaml` |
 | `ORDER_SERVICE_URL` | `http://localhost:8081` | Ubicación interna de Order Service. En Compose será `http://order-service:8081` |
 | `GATEWAY_CORS_ALLOWED_ORIGINS` | `http://localhost:4200` | Orígenes autorizados por CORS, separados por comas. El valor por omisión es el de `ng serve` |
+| `GATEWAY_CONNECT_TIMEOUT` | `2s` | Tiempo máximo para establecer la conexión con el servicio destino |
+| `GATEWAY_READ_TIMEOUT` | `10s` | Tiempo máximo de espera de la respuesta. Spring Boot no trae valor por omisión: sin él, un servicio atascado dejaría al cliente colgado |
 
 ## Construir, ejecutar y probar
 

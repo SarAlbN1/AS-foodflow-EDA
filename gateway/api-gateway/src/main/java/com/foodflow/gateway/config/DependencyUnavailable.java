@@ -1,6 +1,8 @@
 package com.foodflow.gateway.config;
 
 import java.net.URI;
+import java.util.Objects;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +26,10 @@ final class DependencyUnavailable {
     }
 
     static ServerResponse response(Throwable error, ServerRequest request) {
-        // CorrelationIdFilter ya resolvio el valor (recibido o generado) antes de llegar aqui.
-        String correlationId = request.headers().firstHeader(CorrelationIdFilter.CABECERA);
+        // CorrelationIdFilter ya resolvio el valor antes de llegar aqui; el respaldo solo protege
+        // ante un cambio futuro en el orden de los filtros.
+        String correlationId = Objects.requireNonNullElseGet(
+                request.headers().firstHeader(CorrelationIdFilter.CABECERA), () -> UUID.randomUUID().toString());
         log.warn("Servicio destino no disponible correlationId={} metodo={} ruta={} causa={}",
                 correlationId, request.method(), request.path(), error.getMessage());
 

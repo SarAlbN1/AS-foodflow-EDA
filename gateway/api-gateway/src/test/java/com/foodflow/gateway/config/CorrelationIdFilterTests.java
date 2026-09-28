@@ -12,12 +12,12 @@ class CorrelationIdFilterTests {
             "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$";
 
     @Test
-    @DisplayName("un UUID recibido se conserva, sin espacios alrededor")
+    @DisplayName("un UUID recibido se conserva sin espacios y en minusculas")
     void conservaUuid() {
         assertThat(CorrelationIdFilter.resolver("11111111-2222-4333-8444-555555555555"))
                 .isEqualTo("11111111-2222-4333-8444-555555555555");
         assertThat(CorrelationIdFilter.resolver("  AAAAAAAA-2222-4333-8444-555555555555 "))
-                .isEqualTo("AAAAAAAA-2222-4333-8444-555555555555");
+                .isEqualTo("aaaaaaaa-2222-4333-8444-555555555555");
     }
 
     @Test

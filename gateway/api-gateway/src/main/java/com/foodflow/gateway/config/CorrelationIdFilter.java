@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -25,7 +26,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * Punto unico donde nace el {@code correlationId} (HU-403, ADR-07).
  *
  * <ul>
- *   <li>Si la solicitud trae un {@code X-Correlation-Id} con formato UUID, se conserva.</li>
+ *   <li>Si la solicitud trae un {@code X-Correlation-Id} con formato UUID, se conserva, en
+ *       minusculas: el valor sirve para cruzar registros y eventos por igualdad exacta, y los
+ *       generados ya son minusculas.</li>
  *   <li>Si falta o no es un UUID, se genera uno nuevo: el contrato
  *       ({@code contracts/api/openapi.yaml}) lo tipa como UUID, y un valor arbitrario del cliente
  *       no debe llegar a los registros ni a los eventos.</li>
@@ -54,7 +57,7 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         String recibido = request.getHeader(CABECERA);
         String correlationId = resolver(recibido);
-        if (recibido != null && !recibido.equals(correlationId)) {
+        if (recibido != null && !recibido.strip().equalsIgnoreCase(correlationId)) {
             log.debug("X-Correlation-Id invalido reemplazado por {}", correlationId);
         }
 
@@ -67,10 +70,10 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
         }
     }
 
-    /** Conserva el valor recibido si es un UUID; si no, genera uno. */
+    /** Conserva el valor recibido si es un UUID, normalizado a minusculas; si no, genera uno. */
     static String resolver(String recibido) {
         if (recibido != null && UUID_VALIDO.matcher(recibido.strip()).matches()) {
-            return recibido.strip();
+            return recibido.strip().toLowerCase(Locale.ROOT);
         }
         return UUID.randomUUID().toString();
     }
