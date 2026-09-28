@@ -11,6 +11,7 @@
 | Java (LTS) | `25` | [api.adoptium.net/v3/info/available_releases](https://api.adoptium.net/v3/info/available_releases) (`most_recent_lts: 25`) | LTS vigente. Imagen sugerida `eclipse-temurin:25-jdk` |
 | Spring Boot | `4.1.1` | [spring.io/projects/spring-boot](https://spring.io/projects/spring-boot) | GA vigente. Compatible con Spring for Apache Kafka 4.1.x |
 | Spring for Apache Kafka | `4.1.1` | [spring.io/projects/spring-kafka](https://spring.io/projects/spring-kafka) | Matriz oficial: Spring Kafka 4.1.x ↔ Spring Boot 4.1.x ↔ `kafka-clients` 4.2.x. Es la línea 4.x que cita el informe |
+| Spring Cloud (release train) | `2025.1.3` (*Oakwood*) | [spring.io/projects/spring-cloud](https://spring.io/projects/spring-cloud) (tabla de compatibilidad) · [Maven Central `spring-cloud-dependencies`](https://repo1.maven.org/maven2/org/springframework/cloud/spring-cloud-dependencies/maven-metadata.xml) | Verificado el 2026-09-28 (HU-401). Solo lo usa el API Gateway (`spring-cloud-starter-gateway-server-webmvc`, Spring Cloud Gateway 5.0.3). La línea 2025.1.x soporta Spring Boot 4.1.x desde la 2025.1.2 |
 | Herramienta de build | Maven `3.9.14` | [maven.apache.org/download.cgi](https://maven.apache.org/download.cgi) | Fijada por el *wrapper* de cada proyecto en HU-001 (`.mvn/wrapper/maven-wrapper.properties`, script del wrapper 3.3.4) |
 | Angular | `22.2.0` | [registry.npmjs.org/@angular/core/latest](https://registry.npmjs.org/@angular/core/latest) · [angular.dev/reference/versions](https://angular.dev/reference/versions) | Línea con soporte activo |
 | Node.js | `24.21.0` | [nodejs.org/en/about/previous-releases](https://nodejs.org/en/about/previous-releases) · [nodejs.org/dist/index.json](https://nodejs.org/dist/index.json) | Active LTS (*Krypton*). Cumple el rango de Angular 22 (`^22.22.3 \|\| ^24.15.0 \|\| ^26.0.0`) |
@@ -23,6 +24,7 @@
 - **Java 25 ↔ Spring Boot 4.1.1:** Spring Boot 4.x tiene línea base Java 17, por lo que Java 25 (LTS) queda dentro del rango soportado.
 - **Spring Boot 4.1.1 ↔ Spring for Apache Kafka 4.1.1:** pareja declarada en la matriz oficial de Spring for Apache Kafka.
 - **Spring for Apache Kafka 4.1.1 ↔ broker Kafka 4.3.1:** el cliente gestionado es `kafka-clients` 4.2.x; Kafka mantiene compatibilidad bidireccional cliente/broker, así que un cliente 4.2.x opera contra un broker 4.3.1.
+- **Spring Boot 4.1.1 ↔ Spring Cloud 2025.1.3:** la tabla oficial de Spring Cloud declara 2025.1.x compatible con Spring Boot 4.1.x a partir de 2025.1.2. Comprobado además por ejecución: `./mvnw verify` del gateway arranca el contexto completo con ambas versiones.
 - **Angular 22.2.0 ↔ Node.js 24.21.0:** `@angular/core@22.2.0` declara `engines.node = ^22.22.3 || ^24.15.0 || >=26.0.0`; Node 24.21.0 lo cumple y es la Active LTS. Angular 22 exige además TypeScript `>=6.0.0 <6.1.0`.
 
 ## Reglas
