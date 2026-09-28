@@ -73,7 +73,7 @@ Actualiza cuando corresponda: contratos, OpenAPI, ADR, README del componente y `
 
 ## 7. PR
 
-Usa `.github/pull_request_template.md`, con `Closes #<n>`, las etiquetas del issue más `ai-assisted`, y el milestone del sprint. **No fusiones el PR.**
+Usa `.github/pull_request_template.md`, con `Closes #<n>`, las etiquetas del issue y el milestone del sprint. **No fusiones el PR.**
 
 ## 8. Reporte
 
