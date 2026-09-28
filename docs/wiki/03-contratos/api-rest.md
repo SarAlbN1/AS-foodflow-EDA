@@ -27,7 +27,9 @@ No existe un endpoint de consulta de pagos: el resultado del pago es visible med
 
 `paymentToken` es el punto de entrada del pago determinista (supuesto A-1). Cualquier otro valor produce `400`.
 
-**Idempotency-Key.** Encabezado opcional para clientes, siempre enviado por Angular. Misma clave y mismo cuerpo: se devuelve la respuesta original sin crear otro pedido. Misma clave y cuerpo distinto: `409`.
+**Idempotency-Key.** Encabezado **obligatorio** en `POST /orders` (el informe técnico lo exige: «Requiere la cabecera `Idempotency-Key`»). Una solicitud sin la cabecera se rechaza con `400`. Misma clave y mismo cuerpo: se devuelve la respuesta original sin crear otro pedido. Misma clave y cuerpo distinto: `409`. Angular la genera por intento de creación.
+
+Esta idempotencia protege la **entrada síncrona** ante doble clic o reintento del cliente y es distinta de la idempotencia de consumidores de ADR-09, que evita procesar dos veces el mismo evento. La exigencia la implementa HU-107; hasta entonces la cabecera se acepta y no tiene efecto.
 
 **Errores (RFC 9457 Problem Details):**
 

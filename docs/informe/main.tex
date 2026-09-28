@@ -1,0 +1,1043 @@
+\documentclass[12pt,a4paper]{article}
+
+% ============================================================
+% PAQUETES
+% ============================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{xurl}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{microtype}
+
+\geometry{top=2.5cm,bottom=2.5cm,left=2.7cm,right=2.7cm}
+\setlength{\headheight}{15pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\setlength{\emergencystretch}{2.5em}
+\renewcommand{\arraystretch}{1.25}
+\setcounter{tocdepth}{2}
+\setcounter{secnumdepth}{3}
+
+\definecolor{azuljaveriana}{HTML}{003B70}
+\definecolor{grisclaro}{HTML}{F3F4F6}
+\definecolor{gristexto}{HTML}{444444}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=azuljaveriana,
+    urlcolor=azuljaveriana,
+    citecolor=azuljaveriana,
+    pdftitle={Documento Técnico - Arquitectura Orientada a Eventos (EDA)},
+    pdfauthor={Sara Albarracin y Juan Diego Rojas}
+}
+
+\titleformat{\section}{\Large\bfseries\color{azuljaveriana}}{\thesection.}{0.6em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{0.6em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Documento Técnico - EDA}
+\rhead{Grupo 1}
+\cfoot{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{grisclaro},
+    frame=single,
+    breaklines=true,
+    columns=fullflexible,
+    showstringspaces=false
+}
+
+% ============================================================
+% MACRO PARA ESPACIOS DE DIAGRAMAS
+% ============================================================
+\newcommand{\diagramplaceholder}[4]{%
+\begin{figure}[H]
+    \centering
+    \IfFileExists{#3}{%
+        \includegraphics[width=#4\textwidth]{#3}%
+    }{%
+        \fbox{%
+            \parbox[c][0.29\textheight][c]{0.91\textwidth}{%
+                \centering
+                \textbf{#1}\\[0.8em]
+                #2\\[0.8em]
+                \texttt{\detokenize{#3}}
+            }%
+        }%
+    }
+    \caption{#1}
+\end{figure}
+}
+
+\begin{document}
+
+% ============================================================
+% PORTADA
+% ============================================================
+\begin{titlepage}
+    \centering
+
+    % Suba el logo con el nombre: logo-javeriana.png
+    \IfFileExists{logo-javeriana.png}{%
+        \includegraphics[width=0.30\textwidth]{logo-javeriana.png}
+    }{%
+        \fbox{\parbox[c][3.3cm][c]{0.36\textwidth}{\centering
+        \textbf{ESPACIO PARA EL LOGO}\\
+        Pontificia Universidad Javeriana\\
+        Archivo sugerido: \texttt{logo-javeriana.png}}}
+    }
+
+    \vspace{1.5cm}
+
+    {\Huge\bfseries Documento Técnico\\[0.25cm]
+    Arquitectura Orientada a Eventos (EDA)\par}
+
+    \vspace{0.8cm}
+    {\Large Grupo 1\par}
+
+    \vspace{1.2cm}
+    \rule{0.85\textwidth}{0.5pt}
+    \vspace{0.7cm}
+
+    {\large
+    \textbf{Stack asignado}\\[0.3cm]
+    Frontend: Angular + TypeScript\\
+    Backend: Spring Boot + Java\\
+    Persistencia: PostgreSQL\\
+    Protocolo de integración en el borde: REST/JSON sobre HTTPS\\
+    Integración asíncrona interna: Apache Kafka + eventos JSON
+    \par}
+
+    \vspace{1.0cm}
+
+    {\large
+    \textbf{Integrantes}\\[0.3cm]
+    Sara Albarracin\\
+    Juan Diego Rojas
+    \par}
+
+    \vfill
+
+    {\large Pontificia Universidad Javeriana\par}
+    {\large Arquitectura de Software\par}
+    {\large 2026\par}
+\end{titlepage}
+
+% ============================================================
+% TABLA DE CONTENIDO
+% ============================================================
+\thispagestyle{empty}
+\begin{center}
+    {\LARGE\bfseries Tabla de Contenido}
+\end{center}
+\vspace{0.5cm}
+\tableofcontents
+\clearpage
+\setcounter{page}{1}
+
+% ============================================================
+% 1. INVESTIGACION
+% ============================================================
+\section{Investigación}
+
+\subsection{Estilo Arquitectónico: Event-Driven Architecture (EDA)}
+
+\subsubsection{Definición}
+
+\textbf{Qué es:} un estilo arquitectónico en el que los componentes de software se comunican produciendo y consumiendo eventos ---hechos inmutables que ya ocurrieron, por ejemplo \texttt{OrderCreated}--- de forma asíncrona, mediante un intermediario como un broker o event bus, en lugar de invocarse directamente.
+
+\textbf{Qué no es:} no es simplemente ``usar una cola de mensajes''; tampoco es sinónimo de microservicios, ya que EDA puede aplicarse dentro de un monolito y también pueden existir microservicios que se comuniquen únicamente mediante REST síncrono. No es un patrón puntual de integración, sino un estilo que estructura el sistema alrededor del flujo de eventos.
+
+\subsubsection{Clasificación}
+
+EDA pertenece a la familia de estilos de comunicación asíncrona y desacoplada, junto con las arquitecturas orientadas a mensajes. Puede combinarse con estilos estructurales como microservicios, SOA o serverless.
+
+Se consideran tres topologías principales:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Mediator:} un mediador central coordina el flujo de eventos entre los pasos del proceso.
+    \item \textbf{Broker:} los eventos fluyen por un bus o broker y cada servicio reacciona de forma autónoma, sin un orquestador central. FoodFlow utiliza principalmente este modelo de coreografía.
+    \item \textbf{Streaming:} los eventos se conservan en un log distribuido y duradero; no se descartan al consumirse, lo que habilita replay y procesamiento continuo. FoodFlow también se apoya en esta variante mediante Kafka.
+\end{itemize}
+
+\subsubsection{Características principales}
+
+\begin{itemize}[leftmargin=*]
+    \item Comunicación asíncrona productor/consumidor, desacoplada en tiempo, espacio y sincronización.
+    \item Los eventos son inmutables y representan hechos del pasado.
+    \item Alto desacoplamiento: el productor no conoce a sus consumidores.
+    \item Escalabilidad horizontal natural de productores y consumidores de forma independiente.
+    \item Consistencia habitualmente eventual, no inmediata.
+\end{itemize}
+
+\subsubsection{Historia y evolución}
+
+Las raíces de EDA se encuentran en sistemas de colas de mensajes como IBM MQSeries durante los años 1990 y en Complex Event Processing (CEP) durante los años 2000 para detectar patrones sobre flujos de eventos. La adopción masiva aumentó con Apache Kafka, creado en LinkedIn alrededor de 2010--2011, que popularizó el log distribuido como abstracción de eventos duraderos y reproducibles. Con la expansión de microservicios y cloud-native, EDA se consolidó como una estrategia para desacoplar servicios y evolucionó hacia Event Streaming y patrones como Event Sourcing y CQRS.
+
+\subsubsection{Ventajas y desventajas}
+
+\begin{longtable}{P{0.45\textwidth} P{0.45\textwidth}}
+\toprule
+\textbf{Ventajas} & \textbf{Desventajas} \\
+\midrule
+Alto desacoplamiento entre servicios. & Consistencia eventual: mayor complejidad de razonamiento. \\
+Escalabilidad independiente por servicio. & Depuración y trazabilidad end-to-end más difíciles. \\
+Resiliencia: un consumidor caído no bloquea al productor. & Requiere infraestructura adicional: broker y monitoreo. \\
+Extensibilidad: agregar un nuevo consumidor no modifica al productor. & Riesgo de eventos duplicados o fuera de orden. \\
+Buen ajuste a picos de carga debido al buffer natural en el broker. & Curva de aprendizaje y necesidad de gobierno de esquemas de eventos. \\
+\bottomrule
+\end{longtable}
+
+\subsubsection{Problemas comunes y patrones asociados}
+
+\begin{longtable}{P{0.30\textwidth} P{0.25\textwidth} P{0.35\textwidth}}
+\toprule
+\textbf{Problema} & \textbf{Patrón} & \textbf{Cuándo usarlo} \\
+\midrule
+Transacciones distribuidas entre servicios. & Saga coreografiada u orquestada. & Cuando una operación de negocio cruza varios servicios, por ejemplo pago e inventario. \\
+Pérdida de eventos o inconsistencia entre base de datos y publicación. & Transactional Outbox. & Cuando se debe garantizar que persistir el cambio y registrar el evento sean atómicos. \\
+Necesidad de reconstruir el estado a partir del historial. & Event Sourcing. & Cuando se requiere auditoría completa o replay del estado. \\
+Separar lecturas de escrituras con modelos distintos. & CQRS. & Cuando consultas y comandos tienen requisitos de escala muy diferentes. \\
+Un consumidor recibe eventos que no puede procesar. & Dead Letter Queue (DLQ). & Para aislar mensajes fallidos sin bloquear el procesamiento principal. \\
+Eventos duplicados por reintentos. & Idempotent Consumer. & Siempre que el broker trabaje con garantías at-least-once. \\
+\bottomrule
+\end{longtable}
+
+\subsubsection{Casos de uso: cuándo sí y cuándo no}
+
+\textbf{Usar EDA cuando:} existen múltiples servicios que reaccionan a los mismos hechos; se necesita alta escalabilidad y desacoplamiento; el dominio es naturalmente basado en estados o eventos, como pedidos, pagos, IoT o logística; o se necesita auditar el historial de cambios.
+
+\textbf{Evitar EDA cuando:} el sistema es pequeño y no justifica la infraestructura adicional; se requieren respuestas síncronas inmediatas y consistencia fuerte; o el equipo no posee experiencia suficiente operando brokers y flujos asíncronos.
+
+\subsubsection{Casos de aplicación reales en la industria}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Uber:} emplea Kafka en flujos asociados a viajes, ubicación de conductores y procesamiento en tiempo real.
+    \item \textbf{Netflix:} utiliza Kafka en flujos de telemetría, reproducción y personalización.
+    \item \textbf{LinkedIn:} creador de Kafka; lo usa para actividad de usuarios, métricas y procesamiento de streams.
+    \item \textbf{Amazon:} utiliza servicios orientados a eventos y mensajería para desacoplar procesos de e-commerce como inventario, envíos y notificaciones.
+\end{itemize}
+
+\subsection{Investigación de las Tecnologías del Stack}
+
+\subsubsection{Angular + TypeScript (Frontend)}
+
+\textbf{Definición clara --- qué es y qué no es.} Angular es un framework web mantenido por Google para construir aplicaciones cliente escalables. Proporciona componentes, enrutamiento, formularios, inyección de dependencias, herramientas de compilación y un modelo reactivo integrado. El proyecto utilizará TypeScript como lenguaje de desarrollo. Angular no es únicamente una librería visual, no es un framework backend y tampoco sustituye a HTML, CSS o los protocolos de integración del sistema. \cite{angular-overview}
+
+\textbf{Características principales.} Arquitectura basada en componentes, TypeScript, Angular CLI, inyección de dependencias, routing, formularios reactivos, soporte para Signals y compatibilidad con RxJS. Para FoodFlow, Angular concentra la interacción del cliente y envía solicitudes REST/JSON al API Gateway; RxJS puede utilizarse para coordinar flujos asíncronos de la interfaz sin alterar el modelo de eventos del backend.
+
+\textbf{Historia y evolución.} Angular tiene sus raíces en AngularJS, publicado por Google en 2010. A partir de Angular 2 se produjo una reescritura orientada a componentes y TypeScript. La evolución reciente del framework ha incorporado componentes standalone, Signals, mejoras en SSR/hydration y un pipeline moderno de construcción basado en herramientas como Vite y esbuild. \cite{angular-overview}
+
+\textbf{Ventajas.} Ofrece una arquitectura opinada y homogénea, tipado estático con TypeScript, herramientas integradas, buen soporte para equipos grandes, separación clara de responsabilidades y mecanismos reactivos adecuados para interfaces empresariales.
+
+\textbf{Desventajas.} Su curva de aprendizaje puede ser mayor que la de alternativas más ligeras; introduce conceptos propios del framework y requiere disciplina para evitar módulos o componentes excesivamente grandes. En aplicaciones pequeñas, su conjunto de capacidades puede resultar sobredimensionado.
+
+\textbf{Cuándo usarlo.} Es apropiado para aplicaciones empresariales con múltiples pantallas, formularios, autenticación, navegación compleja, equipos de desarrollo numerosos y necesidad de mantener convenciones comunes. En FoodFlow se justifica porque el cliente requiere una interfaz estructurada para crear pedidos, proporcionar los datos de pago simulados del escenario de demostración, consultar el estado del pedido y visualizar las notificaciones asociadas al proceso.
+
+\textbf{Cuándo no usarlo.} No es la opción más conveniente para una landing page estática, un micrositio de pocas vistas, un prototipo extremadamente pequeño o escenarios en los que se necesite minimizar al máximo la carga de framework en el cliente.
+
+\textbf{Casos de aplicación reales.} La documentación oficial de Angular señala que productos de gran escala de Google se construyen sobre Angular y menciona de forma explícita \textbf{Google Fonts} y \textbf{Google Cloud}. Estos casos son relevantes porque evidencian el uso del framework en interfaces de larga vida, con equipos grandes y necesidades de escalabilidad organizacional. \cite{angular-overview}
+
+\subsubsection{Spring Boot + Java (Backend)}
+
+\textbf{Definición clara --- qué es y qué no es.} Spring Boot facilita la creación de aplicaciones Spring autónomas y listas para producción mediante autoconfiguración, dependencias starter, servidores embebidos y configuración externa. No es un lenguaje de programación, no reemplaza a Java y no obliga por sí mismo a utilizar microservicios; una aplicación Spring Boot también puede implementarse como monolito modular. \cite{spring-boot}
+
+El grupo utilizará \textbf{Java} como lenguaje principal del backend, aunque el ecosistema Spring también puede ejecutarse con Kotlin o Groovy sobre la JVM.
+
+\textbf{Características principales.} Autoconfiguración, starters, servidores embebidos, Spring Data, Spring Security, Actuator para métricas y health checks, configuración externa y una integración madura con Apache Kafka mediante Spring for Apache Kafka. En FoodFlow se emplea para implementar tres servicios de negocio acotados: Order Service, Payment Service y Notification Service. \cite{spring-boot,spring-kafka}
+
+\textbf{Historia y evolución.} Spring Framework surgió a comienzos de los años 2000 como una alternativa más simple para el desarrollo empresarial Java. Spring Boot apareció públicamente en 2013 y alcanzó su primera versión estable en 2014, con el objetivo de reducir configuración y acelerar la creación de aplicaciones Spring ejecutables. \cite{spring-boot-history}
+
+\textbf{Ventajas.} Ecosistema maduro, fuerte integración con seguridad, persistencia y mensajería, tipado estático de Java, alta disponibilidad de bibliotecas, herramientas de observabilidad y capacidad de empaquetar servicios independientes.
+
+\textbf{Desventajas.} Un servicio Spring Boot suele consumir más memoria y tener mayor tiempo de arranque que runtimes minimalistas; el ecosistema es amplio y puede incrementar la curva de aprendizaje. También existe riesgo de dependencia excesiva de autoconfiguraciones que el equipo no comprenda.
+
+\textbf{Cuándo usarlo.} Sistemas empresariales con lógica de negocio compleja, transacciones, seguridad, integración con bases de datos, APIs y mensajería. En FoodFlow resulta adecuado porque cada servicio debe aplicar reglas de negocio, persistir información y producir o consumir eventos Kafka.
+
+\textbf{Cuándo no usarlo.} Puede no ser la mejor elección para scripts pequeños, funciones efímeras donde el tiempo de cold start sea crítico, dispositivos con recursos muy limitados o servicios extremadamente simples que no aprovechen el ecosistema Spring.
+
+\textbf{Casos de aplicación reales.} Netflix documentó que más de \textbf{300 aplicaciones basadas en Spring} habían entrado en producción en un solo año dentro de su plataforma de ingeniería. El propio sitio \textbf{spring.io} también ha sido documentado como una aplicación de referencia en producción construida con Spring Boot. Estos ejemplos muestran su uso real en plataformas con exigencias de productividad, despliegue continuo y operación empresarial. \cite{spring-netflix,spring-sagan}
+
+\subsubsection{PostgreSQL (Persistencia)}
+
+\textbf{Definición clara --- qué es y qué no es.} PostgreSQL es un sistema gestor de bases de datos relacional y objeto-relacional, libre y de código abierto, orientado a integridad, extensibilidad y cumplimiento del estándar SQL. No es una base NoSQL, aunque incorpora tipos de documentos como JSON/JSONB y admite extensiones para casos especializados. \cite{postgres-about}
+
+\textbf{Características principales.} Transacciones ACID, claves y restricciones, MVCC, múltiples tipos de índices, particionamiento, replicación, recuperación punto en el tiempo, JSON/JSONB, extensibilidad y soporte de extensiones. Para FoodFlow se emplean bases lógicas separadas para Pedido, Pago y Notificación, cada una accedida únicamente por su servicio propietario. \cite{postgres-about}
+
+\textbf{Historia y evolución.} Se originó en 1986 como el proyecto POSTGRES de la Universidad de California en Berkeley. En 1996 adoptó el nombre PostgreSQL al incorporar SQL y desde entonces mantiene un desarrollo abierto y continuo. En septiembre de 2025 se publicó PostgreSQL 18, y durante 2026 continúa recibiendo actualizaciones de mantenimiento. \cite{postgres-about,postgres-release}
+
+\textbf{Ventajas.} Integridad referencial, consistencia transaccional, SQL avanzado, extensibilidad, ausencia de licenciamiento propietario y una amplia comunidad. En FoodFlow es especialmente valioso para Pedido y Pago, donde se requiere persistencia confiable.
+
+\textbf{Desventajas.} El sharding horizontal requiere más diseño que en algunas bases distribuidas nativas; una mala configuración de conexiones, índices o consultas puede afectar el rendimiento; y la operación de alta disponibilidad exige conocimiento especializado.
+
+\textbf{Cuándo usarlo.} Dominios transaccionales, sistemas de pedidos, pagos, inventarios, backoffice y aplicaciones que necesiten relaciones, restricciones y consultas complejas. También es adecuado cuando se desea combinar SQL tradicional con datos JSONB.
+
+\textbf{Cuándo no usarlo.} Puede no ser la opción principal cuando el problema exige una base distribuida global con escrituras masivas sin relaciones, cuando los datos son exclusivamente objetos efímeros de caché o cuando un almacén especializado de series de tiempo, grafos o búsqueda cubre mejor el caso dominante.
+
+\textbf{Casos de aplicación reales.} Afilias migró la operación del registro \textbf{.ORG} desde Oracle hacia PostgreSQL; además, el proyecto oficial de PostgreSQL documenta el caso de \textbf{Vanten Inc.}, que utilizó PostgreSQL para soportar grandes conjuntos de datos de usuarios de un ISP. Son casos puntuales de uso transaccional y escalabilidad en producción. \cite{postgres-afilias,postgres-vanten}
+
+\subsubsection{Apache Kafka (Integración / Event Streaming)}
+
+\textbf{Definición clara --- qué es y qué no es.} Apache Kafka es una plataforma distribuida de event streaming que permite publicar, almacenar durablemente, consumir y procesar flujos de eventos. Sus eventos se organizan en tópicos particionados y se conservan durante un tiempo configurable. No es simplemente una cola tradicional, porque un registro no desaparece al ser consumido y distintos grupos pueden releerlo de forma independiente. \cite{kafka-intro}
+
+\textbf{Características principales.} Productores y consumidores desacoplados, tópicos particionados, retención, replay, orden dentro de una partición, grupos de consumidores, replicación, Kafka Streams y Kafka Connect. En FoodFlow se utilizan los tópicos \texttt{orders.events}, \texttt{payments.events} y \texttt{notifications.events}; los tres servicios Spring Boot publican y consumen eventos directamente desde Kafka. \cite{kafka-intro}
+
+\textbf{Historia y evolución.} Kafka fue desarrollado en LinkedIn y liberado como proyecto de Apache en 2011. Su evolución lo llevó de un sistema de commit log distribuido a una plataforma de event streaming con APIs de productores, consumidores, Streams y Connect. \cite{linkedin-kafka,kafka-intro}
+
+\textbf{Ventajas.} Alto throughput, escalabilidad horizontal, persistencia de eventos, replay, desacoplamiento entre productores y consumidores y capacidad para que múltiples consumidores reaccionen al mismo hecho sin modificar al productor.
+
+\textbf{Desventajas.} Exige diseño correcto de particiones, claves, retención, consumer groups y contratos; requiere monitoreo y gobierno de esquemas; y añade complejidad operacional que no siempre está justificada en sistemas pequeños.
+
+\textbf{Cuándo usarlo.} Flujos de eventos de alto volumen, integración asíncrona entre servicios, auditoría/replay, pipelines de datos, telemetría, logística, pagos y sistemas donde varios consumidores necesiten reaccionar de forma independiente.
+
+\textbf{Cuándo no usarlo.} No es necesario para una aplicación pequeña con pocas integraciones, cuando una petición síncrona simple resuelve el problema, cuando el equipo no puede operar la infraestructura requerida o cuando se necesita una transacción ACID distribuida inmediata entre todos los participantes.
+
+\textbf{Casos de aplicación reales.} LinkedIn documentó Kafka como backbone de mensajería para actividad, intercambio de mensajes y métricas, llegando a operar a escala de billones de eventos diarios. Uber lo utiliza como pieza central de su plataforma de streaming para eventos de las aplicaciones de conductores y pasajeros, analítica en tiempo real y changelogs; en 2026 reportó más de mil servicios consumidores incorporados a su infraestructura de colas asíncronas sobre Kafka. \cite{linkedin-kafka-scale,uber-kafka,uber-kafka-2026}
+
+
+\subsection{Protocolo de Integración: REST/JSON sobre HTTPS y API Gateway}
+
+\textbf{Definición clara --- qué es y qué no es.} \textbf{HTTP/HTTPS} proporciona el protocolo de transporte para el intercambio de solicitudes y respuestas; \textbf{REST} es un estilo arquitectónico para diseñar APIs orientadas a recursos; y \textbf{JSON} es un formato de representación de datos ampliamente utilizado en APIs web. Estos conceptos son complementarios, pero no equivalentes. REST no sustituye mecanismos de mensajería asíncrona como Kafka: REST está orientado principalmente a interacciones request/response, mientras que una plataforma de eventos permite comunicar cambios de estado de forma desacoplada. Los errores HTTP pueden representarse mediante \textit{Problem Details} con el tipo \texttt{application/problem+json}, estandarizado por RFC 9457 \cite{rfc9457}.
+
+\textbf{Características principales.} Una API REST sobre HTTP suele diseñarse como \textit{stateless}, emplea recursos identificables mediante URI, métodos HTTP con semántica definida, códigos de estado para expresar el resultado de las operaciones y representaciones como JSON para solicitudes y respuestas. HTTPS añade confidencialidad e integridad en tránsito. Un \textbf{API Gateway} actúa como punto de entrada común hacia múltiples servicios y puede centralizar preocupaciones transversales como enrutamiento, autenticación, observabilidad, límites de tráfico y políticas de seguridad. Spring Cloud Gateway está orientado precisamente a este tipo de enrutamiento y preocupaciones transversales \cite{spring-cloud-gateway}.
+
+\textbf{Historia y evolución.} REST fue formulado como un estilo arquitectónico para sistemas distribuidos sobre la Web y se apoya en las restricciones y semánticas del ecosistema HTTP. Con la expansión de las APIs web surgieron especificaciones como OpenAPI, que permiten describir de manera independiente del lenguaje la superficie HTTP de un servicio y generar documentación, clientes, validaciones y pruebas a partir del contrato \cite{openapi-spec}.
+
+\textbf{Ventajas.} Interoperabilidad amplia, baja barrera de adopción para clientes web y móviles, compatibilidad con herramientas maduras, facilidad de inspección y prueba, y capacidad de separar claramente la interfaz síncrona de otros mecanismos internos de procesamiento.
+
+\textbf{Desventajas.} El uso intensivo de cadenas de llamadas REST entre servicios puede introducir acoplamiento temporal, propagación de fallos y dependencia de disponibilidad simultánea. En arquitecturas distribuidas conviene evitar usar REST como sustituto indiscriminado de la comunicación asíncrona cuando el caso de uso requiere desacoplamiento, tolerancia a fallos o procesamiento diferido.
+
+\textbf{Cuándo usarlo.} Creación, consulta, actualización o eliminación de recursos desde clientes externos; operaciones que requieren una respuesta inmediata; integraciones públicas o privadas basadas en HTTP; y escenarios donde un API Gateway aporta control centralizado sobre el acceso a múltiples servicios.
+
+\textbf{Cuándo no usarlo.} No es la opción principal para propagar grandes volúmenes de eventos, coordinar procesos asíncronos de larga duración, desacoplar productores de múltiples consumidores o manejar flujos donde los participantes no necesitan estar disponibles al mismo tiempo. En esos escenarios pueden ser más apropiados brokers de eventos, colas o plataformas de streaming.
+
+\textbf{Casos de aplicación reales.} GitHub publica una REST API versionada para automatizar integraciones, consultar recursos y operar repositorios; su documentación describe métodos HTTP, rutas, cabeceras, parámetros y cuerpos JSON, y mantiene una descripción compatible con OpenAPI. Este caso ilustra el uso de REST como interfaz de integración externa y de OpenAPI como contrato legible por personas y herramientas \cite{github-rest-api}.
+
+\subsection{Relación entre el Estilo y las Tecnologías Seleccionadas}
+
+La relación entre el estilo Event-Driven Architecture y el stack seleccionado se entiende como una combinación de responsabilidades complementarias. Cada tecnología cubre una necesidad distinta dentro de una solución distribuida y, en conjunto, permiten separar la interacción síncrona, el procesamiento de negocio, la persistencia transaccional y la comunicación asíncrona.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Angular + TypeScript + RxJS} aporta la capa de interacción con el usuario. Angular estructura aplicaciones web empresariales, TypeScript añade tipado estático y RxJS facilita el manejo de flujos reactivos y asíncronos en el cliente. Esta capa no implementa EDA por sí sola, pero se integra con sistemas orientados a eventos al consumir APIs y representar cambios de estado producidos por procesos asíncronos.
+    \item \textbf{Spring Boot + Java} proporciona el runtime y framework para construir servicios de negocio independientes. Su ecosistema facilita exponer APIs REST, aplicar validaciones, gestionar transacciones locales y utilizar clientes de Kafka para publicar o consumir eventos. Esta combinación encaja con EDA porque permite encapsular responsabilidades y desplegar productores y consumidores como procesos separados.
+    \item \textbf{PostgreSQL} aporta persistencia relacional y transaccional para el estado local de cada servicio. En una arquitectura orientada a eventos, la base de datos mantiene el estado del dominio que pertenece al servicio, mientras la comunicación entre servicios se realiza mediante contratos explícitos. PostgreSQL no actúa como broker ni debe utilizarse como mecanismo de integración entre servicios.
+    \item \textbf{Apache Kafka} proporciona el backbone asíncrono. Productores publican hechos de negocio y uno o varios consumidores los procesan de manera independiente. Su modelo de log persistente, particiones, consumer groups y retención de mensajes favorece desacoplamiento temporal, escalabilidad, replay y procesamiento distribuido.
+    \item \textbf{REST/JSON sobre HTTPS + API Gateway} cubre el borde síncrono de la arquitectura. REST resulta adecuado para solicitudes que requieren respuesta inmediata desde clientes web, móviles o integraciones externas, mientras el API Gateway centraliza el punto de entrada y el enrutamiento. En una solución EDA, REST y Kafka son complementarios: REST atiende interacciones request/response y Kafka propaga cambios de estado de forma asíncrona.
+\end{itemize}
+
+La combinación de estas tecnologías permite construir una arquitectura en la que las interfaces externas permanecen simples e interoperables, los servicios de negocio conservan autonomía sobre su lógica y persistencia, y los cambios relevantes se distribuyen mediante eventos. Para que esta relación sea técnicamente sólida, suelen complementarse con prácticas como contratos de eventos versionados, consumidores idempotentes, reintentos controlados, DLQ, observabilidad distribuida y una estrategia explícita para tratar la consistencia entre la persistencia local y la publicación de eventos.
+
+\subsubsection{Qué tan común es el stack designado}
+
+La combinación es representativa del desarrollo empresarial moderno. En septiembre de 2026 Java ocupa el cuarto lugar del índice TIOBE; GitHub Octoverse 2025 también ubicó Java entre los lenguajes de mayor actividad y reportó a TypeScript como el lenguaje con más contribuidores mensuales en agosto de 2025. PostgreSQL fue la base de datos más admirada y deseada de su categoría en la encuesta de Stack Overflow 2025. Estas métricas no prueban que todas las tecnologías se utilicen juntas, pero sí muestran que los bloques principales del stack tienen adopción amplia y vigente. \cite{tiobe-2026,github-octoverse,so-2025}
+
+En el mercado colombiano también aparecen vacantes que combinan Java/Spring Boot con Angular, PostgreSQL y tecnologías de mensajería o Kafka, lo que confirma que la relación entre estas herramientas no es únicamente académica. \cite{job-java-angular,job-java-kafka}
+
+% ============================================================
+% 2. ANALISIS ARQUITECTONICO
+% ============================================================
+\section{Análisis Arquitectónico}
+
+El análisis de esta sección se realiza sobre el \textbf{estilo Event-Driven Architecture (EDA)} y sobre el \textbf{stack tecnológico seleccionado} ---Spring Boot + Java, Angular + TypeScript, PostgreSQL, Apache Kafka y REST/JSON sobre HTTPS--- de forma general. El objetivo es identificar fortalezas, limitaciones, principios, tácticas y patrones aplicables antes de particularizar estas decisiones en un caso de estudio concreto.
+
+\subsection{Matriz de Atributos de Calidad vs Estilo y Stack}
+
+La matriz describe cómo EDA y el stack seleccionado pueden favorecer o limitar distintos atributos de calidad. Las valoraciones representan \textbf{capacidades potenciales del estilo y de las tecnologías}, no resultados de una implementación específica. La verificación de cada atributo debe realizarse posteriormente mediante métricas observables en el sistema que adopte estas decisiones.
+
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{P{0.15\textwidth} P{0.15\textwidth} P{0.31\textwidth} P{0.30\textwidth}}
+\toprule
+\textbf{Atributo} & \textbf{Soporte general} & \textbf{Relación con EDA y el stack} & \textbf{Indicadores o criterios de verificación} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Atributo} & \textbf{Soporte general} & \textbf{Relación con EDA y el stack} & \textbf{Indicadores o criterios de verificación} \\
+\midrule
+\endhead
+Escalabilidad & Potencial alto & EDA desacopla productores y consumidores; Kafka permite particionar tópicos y distribuir consumidores dentro de grupos. Spring Boot permite escalar procesos de manera independiente. & Throughput, eventos/segundo, consumer lag, tiempo de procesamiento y comportamiento al aumentar consumidores. \\
+Disponibilidad & Potencial alto para fallos parciales & Los consumidores pueden fallar temporalmente sin detener necesariamente a los productores. Kafka conserva eventos publicados según su política de retención. & Tiempo de recuperación, porcentaje de eventos procesados tras reinicios, lag acumulado y disponibilidad de productores/consumidores. \\
+Modificabilidad & Alto & Los contratos de eventos permiten incorporar nuevos consumidores sin modificar al productor. REST y API Gateway desacoplan la interfaz externa de la topología interna. & Tiempo/costo de incorporar un consumidor o endpoint, número de componentes afectados por un cambio y compatibilidad de contratos. \\
+Consistencia de datos & Limitado entre servicios & EDA favorece consistencia eventual entre dominios distribuidos. PostgreSQL ofrece consistencia transaccional local, pero no resuelve por sí solo transacciones distribuidas entre servicios y broker. & Tiempo de convergencia, número de inconsistencias detectadas, compensaciones requeridas y éxito de reconciliación. \\
+Testabilidad & Medio & La asincronía aumenta la complejidad de las pruebas, aunque Spring Boot, contratos versionados, entornos contenerizados y herramientas de prueba permiten aislar componentes y reproducir escenarios. & Cobertura de flujos síncronos/asíncronos, pruebas de contrato, pruebas de integración y reproducibilidad de escenarios. \\
+Observabilidad / Trazabilidad & Medio, requiere diseño explícito & Los flujos distribuidos necesitan identificadores de correlación, logs estructurados y métricas del broker para reconstruir una operación completa. & Cobertura de \texttt{correlationId}/\texttt{eventId}, trazabilidad de extremo a extremo, métricas de lag y calidad de logs. \\
+Rendimiento & Potencial alto & Kafka está diseñado para alto throughput y procesamiento secuencial por partición; PostgreSQL y Spring Boot ofrecen rendimiento sólido si se dimensionan y configuran correctamente. & Latencia p50/p95/p99, throughput, uso de CPU/memoria, lag y tiempo de acceso a datos. \\
+Recuperabilidad & Alta para eventos publicados, condicionada por la integración & Kafka facilita replay de eventos ya persistidos en el log. Sin un patrón como Transactional Outbox puede existir una ventana entre el commit en la base y la publicación en el broker. & Capacidad de replay, RTO/RPO, pérdida de eventos, recuperación tras fallos y tratamiento de escritura dual. \\
+Seguridad & Dependiente de configuración & EDA no garantiza seguridad por sí mismo. HTTPS, autenticación, autorización, ACL de Kafka, gestión de secretos y validación de entradas deben diseñarse explícitamente. & Cobertura TLS, control de acceso, gestión de secretos, auditoría y validación de datos. \\
+\bottomrule
+\end{longtable}
+\setlength{\tabcolsep}{6pt}
+\normalsize
+
+\subsection{Matriz de Principios vs Estilo}
+
+\begin{longtable}{P{0.32\textwidth} P{0.60\textwidth}}
+\toprule
+\textbf{Principio} & \textbf{Cómo se cumple o limita en EDA} \\
+\midrule
+SOLID - Single Responsibility & Favorece separar responsabilidades de negocio en servicios y consumidores con funciones claramente delimitadas. \\
+SOLID - Open/Closed & Un nuevo consumidor puede suscribirse a un evento existente sin modificar al productor, siempre que el contrato se mantenga compatible. \\
+SOLID - Liskov Substitution & No es un principio propio de EDA, pero puede aplicarse dentro de cada servicio mediante puertos, adaptadores, repositorios o publicadores sustituibles sin romper contratos. \\
+SOLID - Interface Segregation & Promueve contratos pequeños y específicos para publicación, persistencia, validación y consumo, evitando interfaces monolíticas. \\
+SOLID - Dependency Inversion & Los componentes pueden depender de abstracciones y contratos de eventos en lugar de implementaciones concretas de otros servicios. \\
+KISS & EDA introduce infraestructura, reintentos, contratos, observabilidad y consistencia eventual; puede ser innecesariamente complejo en dominios pequeños o puramente síncronos. \\
+DRY & Puede existir duplicación de validaciones o esquemas entre consumidores; se mitiga mediante contratos versionados y utilidades compartidas sin acoplar dominios. \\
+YAGNI & Recomienda no incorporar Saga, CQRS, Event Sourcing, Outbox, tracing distribuido u orquestadores complejos si el problema no los necesita. \\
+PoLA & Eventos nombrados como hechos en pasado, por ejemplo \texttt{EntityCreated} o \texttt{PaymentApproved}, reducen ambigüedad y expresan resultados ya ocurridos. \\
+Ley de Demeter & Los servicios no deberían navegar estructuras internas de otros servicios; la interacción se realiza mediante APIs o eventos publicados. \\
+STUPID & EDA ayuda a reducir Tight Coupling y Rigidity, aunque puede introducir nombres ambiguos, acoplamiento semántico o exceso de infraestructura si no existe gobierno de contratos. \\
+Composición sobre Herencia & Compatible con servicios construidos mediante composición de handlers, estrategias, adaptadores, repositorios y políticas. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Matriz de Tácticas vs Estilo y Stack}
+
+La siguiente matriz identifica tácticas arquitectónicas que pueden justificarse mediante ADR cuando se adopta EDA con Spring Boot, Kafka, PostgreSQL y REST/JSON. La columna \textbf{Justificación posible en un ADR} expresa el razonamiento general que puede utilizarse para tomar una decisión concreta en un sistema, mientras la columna de consideraciones resume sus principales consecuencias.
+
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{P{0.16\textwidth} P{0.18\textwidth} P{0.36\textwidth} P{0.20\textwidth}}
+\toprule
+\textbf{Táctica} & \textbf{Estilo / tecnología} & \textbf{Justificación posible en un ADR} & \textbf{Consideración / trade-off} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Táctica} & \textbf{Estilo / tecnología} & \textbf{Justificación posible en un ADR} & \textbf{Consideración / trade-off} \\
+\midrule
+\endhead
+Desacoplamiento temporal & EDA + Kafka & Adoptar un broker para evitar que productores y consumidores deban estar disponibles simultáneamente y permitir procesamiento asíncrono. & Añade consistencia eventual, operación del broker y necesidad de observabilidad. \\
+Separación de responsabilidades & Spring Boot + servicios & Separar capacidades de negocio cuando cambian, escalan o fallan de forma independiente. & Demasiados servicios pueden aumentar complejidad operacional. \\
+Persistencia por servicio & PostgreSQL & Dar autonomía de datos a cada contexto y evitar Shared Database/Database-as-IPC. & Complica consultas transversales y exige sincronización mediante eventos o APIs. \\
+Orden por agregado & Kafka + clave de partición & Utilizar una clave estable, por ejemplo un identificador de entidad, para mantener orden relativo dentro de una partición. & El orden global no está garantizado entre particiones. \\
+Retry + DLQ & Kafka / Spring Kafka & Reintentar fallos transitorios y aislar mensajes persistentes o inválidos para evitar bloquear consumidores. & Requiere definir backoff, límites y proceso de re-procesamiento. \\
+Idempotent Consumer & \texttt{eventId} + PostgreSQL & Registrar identificadores procesados para tolerar entrega at-least-once sin duplicar efectos de negocio. & Introduce almacenamiento técnico y disciplina transaccional local. \\
+Versionado de eventos & Envelope JSON + \texttt{schemaVersion} & Hacer evolucionables los contratos y reducir acoplamiento semántico entre productores y consumidores. & Requiere compatibilidad hacia atrás/adelante y gobierno de esquemas. \\
+API Gateway & REST/JSON sobre HTTPS & Centralizar el acceso síncrono, el enrutamiento y preocupaciones transversales del borde. & Puede convertirse en cuello de botella o punto crítico si concentra lógica de negocio. \\
+Problem Details + OpenAPI & HTTP APIs & Estandarizar errores y documentar contratos de forma consumible por personas y herramientas. & Requiere mantener documentación y comportamiento alineados. \\
+Transactional Outbox & PostgreSQL + Kafka & Evitar pérdida de eventos cuando una transacción local y la publicación al broker deben comportarse de manera confiable. & Añade tabla outbox, relay/CDC y mayor complejidad operativa. \\
+Circuit Breaker / Timeout & Integraciones HTTP externas & Evitar que la indisponibilidad de un proveedor externo propague bloqueos o saturación. & Debe calibrarse para no ocultar fallos persistentes. \\
+Logs estructurados y correlación & Spring Boot + Kafka & Permitir reconstruir un flujo distribuido mediante \texttt{correlationId}, \texttt{eventId} y métricas. & Exige disciplina de instrumentación y almacenamiento de telemetría. \\
+Configuración externa & Contenedores / variables de entorno & Evitar hardcoding y separar configuración del artefacto desplegable. & Requiere manejo adecuado de secretos y configuración por entorno. \\
+\bottomrule
+\end{longtable}
+\setlength{\tabcolsep}{6pt}
+\normalsize
+
+\subsection{Patrones y Antipatrones Relacionados con el Estilo y el Stack}
+
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{P{0.18\textwidth} P{0.20\textwidth} P{0.34\textwidth} P{0.17\textwidth}}
+\toprule
+\textbf{Patrón / práctica} & \textbf{Antipatrón o riesgo que mitiga} & \textbf{Aplicación general} & \textbf{Nivel de recomendación} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Patrón / práctica} & \textbf{Antipatrón o riesgo que mitiga} & \textbf{Aplicación general} & \textbf{Nivel de recomendación} \\
+\midrule
+\endhead
+Database per Service & Shared Database / Database-as-IPC & Mantener propiedad de datos por contexto y coordinar cambios entre dominios mediante eventos o APIs. & Alta cuando existen servicios autónomos. \\
+API Gateway & Acoplamiento del cliente a múltiples servicios & Proporcionar un punto de entrada, enrutamiento y políticas comunes para clientes externos. & Alta en sistemas con múltiples APIs. \\
+Event Envelope versionado & Lack of Versioning / Tight Coupling & Incluir \texttt{eventId}, \texttt{type}, \texttt{schemaVersion}, \texttt{correlationId} e identificador del agregado. & Alta en EDA. \\
+Idempotent Consumer & Duplicación por entrega at-least-once & Detectar eventos repetidos antes de volver a aplicar un efecto de negocio. & Alta para consumidores con efectos laterales. \\
+Retry + DLQ & Poison Message / bloqueo del consumidor & Reintentar fallos transitorios y aislar mensajes persistentes. & Alta cuando existen consumidores asíncronos. \\
+Migraciones versionadas & Esquema manual / drift de base & Versionar cambios de esquema mediante herramientas como Flyway o Liquibase. & Recomendable. \\
+Health checks + logs estructurados & Lack of Observability & Exponer salud, métricas y logs correlacionados para operación y diagnóstico. & Recomendable. \\
+Configuración externa & Hardcoding / secretos en código & Gestionar URLs, credenciales, tópicos y parámetros fuera del artefacto compilado. & Alta. \\
+Repository + dominio & Fat Controller / acceso a datos disperso & Aislar persistencia y mantener reglas de negocio fuera de controladores. & Recomendable. \\
+Adapter & Vendor Lock-in & Encapsular APIs o proveedores externos detrás de una interfaz propia. & Alta para dependencias externas. \\
+Strategy & God Object / condicionales crecientes & Encapsular variantes de comportamiento, por ejemplo múltiples canales o políticas. & Aplicar cuando existan variantes reales. \\
+Testcontainers & Works on my machine & Ejecutar pruebas con dependencias reales efímeras como PostgreSQL y Kafka. & Útil para integración automatizada. \\
+Docker Compose & Entorno no reproducible & Describir un entorno local multi-contenedor de forma repetible. & Adecuado para prototipos y desarrollo. \\
+Circuit Breaker & Cascada de fallos & Cortar temporalmente llamadas a dependencias externas degradadas. & Aplicar cuando exista riesgo real de cascada. \\
+Distributed Tracing & Lack of Observability & Seguir una operación a través de múltiples procesos y saltos de red. & Útil en sistemas distribuidos con mayor escala. \\
+Transactional Outbox & Escritura dual DB--broker & Coordinar persistencia local y publicación confiable de eventos. & Recomendable cuando la pérdida de eventos no es aceptable. \\
+Saga & Transacción distribuida de larga duración & Coordinar pasos y compensaciones entre múltiples servicios. & Aplicar solo en procesos distribuidos complejos. \\
+CQRS / Event Sourcing & Modelos de lectura/escritura o auditoría complejos & Separar modelos o reconstruir estado desde eventos cuando el dominio lo justifica. & Especializado; no usar por defecto. \\
+Kubernetes & Complejidad operativa / necesidades de orquestación & Automatizar despliegue, recuperación y escalado de contenedores a mayor escala. & Adecuado cuando Docker Compose deja de ser suficiente. \\
+\bottomrule
+\end{longtable}
+\setlength{\tabcolsep}{6pt}
+\normalsize
+
+\subsection{Matriz de Mercado Laboral vs Estilo y Stack}
+
+La matriz utiliza dos tipos de evidencia complementaria: \textbf{(1) señales de demanda}, medidas mediante búsquedas comparables de ofertas publicadas en Colombia durante el último mes, y \textbf{(2) referencias salariales}, contrastando vacantes reales de 2026 con bandas del \textit{Informe de análisis de la empleabilidad y talento digital en Colombia} de CENISOFT/Fedesoft. Los resultados deben interpretarse como una fotografía del mercado y no como un censo oficial de todas las vacantes del país.
+
+Para mantener comparabilidad, el conteo de demanda utiliza LinkedIn con ubicación Colombia y filtro ``Mes pasado'', consultado el 22 de septiembre de 2026. La búsqueda registró 238 ofertas para \textit{Java Spring Boot}, 260 para \textit{Angular}, 574 para \textit{PostgreSQL} y 192 para \textit{Kafka}. \cite{linkedin-java-spring-jobs,linkedin-angular-jobs,linkedin-postgresql-jobs,linkedin-kafka-jobs}
+
+\scriptsize
+\setlength{\tabcolsep}{2.5pt}
+\begin{longtable}{P{0.10\textwidth} P{0.15\textwidth} P{0.14\textwidth} P{0.19\textwidth} P{0.20\textwidth}}
+\toprule
+\textbf{Tecnología / perfil} & \textbf{Demanda / adopción} & \textbf{Salario observado Colombia} & \textbf{Contraste de mercado} & \textbf{Proyección sustentada} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Tecnología / perfil} & \textbf{Demanda / adopción} & \textbf{Salario observado Colombia} & \textbf{Contraste de mercado} & \textbf{Proyección sustentada} \\
+\midrule
+\endhead
+Java / Spring Boot & 238 ofertas en LinkedIn Colombia durante el último mes. GitHub Octoverse 2025 reportó para Java crecimiento interanual de contribuidores y lo ubicó entre los lenguajes de mayor actividad. \cite{linkedin-java-spring-jobs,github-octoverse} & Vacante Java + Spring Boot: COP 8.1 M/mes; otras ofertas revisadas: aprox. COP 4.5--10 M según seniority. \cite{job-java-81,job-java-kafka} & CENISOFT/Fedesoft: Senior Tipo I COP 6.7--9.1 M/mes. La oferta de 8.1 M está dentro de la banda. \cite{cenisoft-talento-digital} & \textbf{Estable/positiva.} GitHub reporta crecimiento sostenido de Java (+20.73\% interanual de contribuidores en 2025) y JetBrains describe una comunidad Java global y madura; no se proyecta reemplazo abrupto del stack empresarial. \cite{github-octoverse,jetbrains-java-2025} \\
+Angular / TypeScript & 260 ofertas en LinkedIn. Angular permanece en el conjunto de frameworks empresariales relevantes y TypeScript alcanzó el primer lugar por contribuidores mensuales en GitHub en 2025. \cite{linkedin-angular-jobs,github-octoverse} & Vacantes revisadas: aprox. COP 5.5--6.7 M/mes. \cite{job-angular-1,job-angular-2} & CENISOFT/Fedesoft: Frontend Senior Tipo II COP 9.34--12 M/mes; la diferencia refleja seniority/alcance distintos. \cite{cenisoft-talento-digital} & \textbf{Estable con soporte fuerte del ecosistema TypeScript.} GitHub reportó +66.63\% de contribuidores TypeScript en 2025 y JetBrains lo señala entre los lenguajes con mayor potencial de crecimiento; esto respalda el ecosistema, aunque no constituye una predicción específica de cuota para Angular. \cite{github-octoverse,jetbrains-ecosystem-2025} \\
+PostgreSQL & 574 ofertas, mayor conteo del conjunto. Stack Overflow 2025 mantiene PostgreSQL como la base de datos más deseada y admirada de su categoría desde 2023. \cite{linkedin-postgresql-jobs,so-2025} & Java + Angular + PostgreSQL: COP 7.2 M/mes; DBA PostgreSQL: aprox. COP 6--8 M/mes en ofertas consultadas. \cite{job-postgres-fullstack,job-dba-postgresql-2026} & CENISOFT/Fedesoft muestra bandas amplias para liderazgo DBA, coherentes con el uso tanto de desarrollo como especializado. \cite{cenisoft-talento-digital} & \textbf{Favorable.} La combinación de alto volumen de vacantes observado y liderazgo sostenido en deseo/admiración de Stack Overflow sugiere continuidad de demanda, sin convertir esa señal en una predicción causal. \cite{so-2025} \\
+Kafka / EDA & 192 ofertas en LinkedIn; habilidad especializada asociada a backend, integración, data engineering y sistemas distribuidos. \cite{linkedin-kafka-jobs} & Ofertas revisadas: COP 6 M/mes para soporte Kafka y hasta COP 9 M/mes en perfil Java/Kafka. \cite{job-kafka-manpower-2026,job-kafka-9m} & CENISOFT/Fedesoft ubica roles senior/arquitectura en bandas superiores; Kafka puede aparecer tanto como habilidad de desarrollo como de plataforma. \cite{cenisoft-talento-digital} & \textbf{Favorable pero especializada.} El Data Streaming Report 2025 reporta que 90\% de los líderes TI encuestados planeaban aumentar inversión en plataformas de streaming. Es una encuesta patrocinada por un proveedor y mide data streaming en general, por lo que se usa como señal, no como proyección exclusiva de Kafka. \cite{confluent-dsr-2025} \\
+\bottomrule
+\end{longtable}
+\setlength{\tabcolsep}{6pt}
+\normalsize
+
+\textbf{Interpretación salarial.} La comparación muestra que las ofertas puntuales consultadas son coherentes con el orden de magnitud de las bandas sectoriales, pero no deben confundirse con un salario promedio nacional. CENISOFT/Fedesoft agrupa por nivel y responsabilidad del rol, mientras que las vacantes específicas pueden mezclar seniority, inglés, modalidad, sector y beneficios diferentes.
+
+\textbf{Promedio de demanda del stack.} Los cuatro conteos de LinkedIn suman 1.264 publicaciones durante el último mes. El promedio aritmético es de \textbf{316 ofertas por tecnología/palabra clave}. PostgreSQL se encuentra por encima de este promedio; Java + Spring Boot, Angular y Kafka se ubican por debajo. Este promedio sirve únicamente como referencia comparativa interna del stack, porque una misma vacante puede mencionar varias tecnologías y los resultados de búsquedas por palabra clave no son mutuamente excluyentes.
+
+\diagramplaceholder
+{Mercado laboral - salarios mensuales observados en Colombia (2026)}
+{Inserte aquí la gráfica de demanda laboral exportada en formato PNG.}
+{figuras/mercado-laboral.png}
+{0.88}
+
+\diagramplaceholder
+{Mercado laboral - ofertas publicadas durante el último mes}
+{Conteo de ofertas en LinkedIn Colombia por palabra clave. La línea de referencia corresponde al promedio del stack: 316 ofertas.}
+{figuras/ofertas-mercado-laboral.png}
+{0.90}
+
+% ============================================================
+% 3. DISENO EJEMPLO PRACTICO
+% ============================================================
+\section{Diseño del Ejemplo Práctico}
+
+El diseño utiliza el modelo C4 como mecanismo principal de comunicación arquitectónica y un único modelo Structurizr DSL como fuente consistente para C1, C2, C3, Dynamic, Deployment y System Landscape \cite{c4model,structurizr}. El nivel de código se presenta como una vista opcional generada bajo demanda a partir de la implementación real y se mantiene como un artefacto UML independiente del modelo Structurizr DSL.
+
+\subsection{Caso de Estudio: FoodFlow}
+
+\textbf{FoodFlow} se plantea como una plataforma de pedidos de comida basada en Event-Driven Architecture. Para el prototipo de la actividad se acota deliberadamente el alcance al flujo mínimo necesario para demostrar el estilo y el stack: \textbf{crear un pedido, procesar su pago y notificar el resultado al cliente}. Esta reducción evita introducir módulos que no son obligatorios para la evaluación y permite concentrar la implementación en tres entidades de negocio interrelacionadas.
+
+El cliente es el actor principal del sistema. La aplicación web se implementa con Angular + TypeScript, el acceso síncrono al backend pasa por un API Gateway, los servicios de negocio se construyen con Spring Boot + Java, la persistencia se realiza con PostgreSQL y la coordinación asíncrona se implementa mediante Apache Kafka.
+
+\subsubsection{Entidades de negocio}
+
+El prototipo utiliza exactamente tres entidades principales, suficientes para cumplir el mínimo exigido por la actividad:
+
+\begin{longtable}{P{0.18\textwidth} P{0.43\textwidth} P{0.27\textwidth}}
+\toprule
+\textbf{Entidad} & \textbf{Descripción} & \textbf{Relación} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Entidad} & \textbf{Descripción} & \textbf{Relación} \\
+\midrule
+\endhead
+Pedido & Representa la solicitud realizada por el cliente. Mantiene datos básicos del pedido, total y estado, por ejemplo \texttt{CREADO}, \texttt{PAGADO} o \texttt{PAGO\_RECHAZADO}. & 1 Pedido se asocia con 1 Pago y puede originar N Notificaciones. \\
+Pago & Registra el intento de pago asociado a un pedido, su monto y resultado, por ejemplo \texttt{APROBADO} o \texttt{RECHAZADO}. & Cada Pago pertenece a 1 Pedido. \\
+Notificación & Registra el mensaje que debe enviarse al cliente y su estado de entrega, por ejemplo \texttt{PENDIENTE}, \texttt{ENVIADA} o \texttt{FALLIDA}. & Cada Notificación se relaciona con 1 Pedido y puede informar el resultado de su Pago. \\
+\bottomrule
+\end{longtable}
+
+\textbf{Nota de alcance.} Cliente se modela como actor del sistema y no se cuenta dentro de las tres entidades exigidas para el prototipo. La finalidad del ejemplo no es construir todo el dominio de una plataforma de delivery, sino evidenciar EDA con un flujo funcional pequeño, persistente y verificable.
+
+\subsubsection{Flujo funcional end-to-end}
+
+El caso de uso principal se limita a \textbf{crear un pedido, procesar automáticamente un pago simulado y notificar el resultado}. El Cliente no invoca Payment Service directamente. En la pantalla de creación del pedido selecciona datos de contacto y un token de prueba para que la demo sea reproducible.
+
+\begin{enumerate}[leftmargin=*,label=\arabic*.]
+    \item El Cliente crea un pedido en Angular e informa \texttt{total}, \texttt{notificationChannel}, al menos un destino de contacto y un \texttt{payment\-Test\-Token}. Para la demo se aceptan únicamente \texttt{PAY-OK} y \texttt{PAY-FAIL}.
+    \item Angular envía \texttt{POST /orders} al API Gateway, que enruta la solicitud hacia Order Service.
+    \item Order Service valida el monto, el canal, el dato de contacto y el token de pago de prueba. Si la entrada es inválida responde con error 4xx y no persiste ni publica eventos.
+    \item Order Service persiste el Pedido en Order DB con estado \texttt{CREADO} y luego intenta publicar \texttt{OrderCreated}. El evento contiene identificadores de trazabilidad, total, token de prueba y snapshot de contacto. La separación commit--publish constituye el riesgo aceptado de ADR-08.
+    \item Payment Service consume \texttt{OrderCreated} de forma idempotente. La regla es determinista: el token \texttt{PAY-OK} genera un Pago \texttt{APROBADO}; el token \texttt{PAY-FAIL} genera un Pago \texttt{RECHAZADO}. Después publica el evento de aprobación o de rechazo correspondiente.
+    \item Order Service consume el resultado del pago de forma idempotente, actualiza el Pedido a \texttt{PAGADO} o \texttt{PAGO\_RECHAZADO} y publica \texttt{OrderStatusChanged}.
+    \item Notification Service consume \texttt{OrderStatusChanged} de forma idempotente, crea una Notificación en Notification DB y utiliza el snapshot de contacto contenido en el evento para construir el destino.
+    \item Notification Service invoca al Proveedor de Notificaciones mediante HTTPS/REST. En la demo se envía \texttt{notificationId} como clave de idempotencia al adaptador/mock del proveedor para que un reintento no genere un segundo envío con la misma clave.
+    \item Notification Service actualiza el estado de la Notificación y publica \texttt{NotificationSent} o \texttt{NotificationFailed}.
+\end{enumerate}
+
+\textbf{Robustez mínima.} Los consumidores identifican cada mensaje por \texttt{eventId}; el procesamiento y el registro en \texttt{processed\_events} se ejecutan dentro de la misma transacción local. Los errores transitorios se reintentan hasta 3 veces y, si persisten, el evento se envía a DLQ. Los errores de validación no se reintentan indefinidamente. Estas medidas reducen duplicados y bloqueos, pero no eliminan la ventana de escritura dual DB--Kafka aceptada en ADR-08.
+
+\subsubsection{Integración síncrona y contrato HTTP del caso práctico}
+
+En FoodFlow, la comunicación síncrona se concentra en el borde del sistema. Angular envía solicitudes REST/JSON sobre HTTPS al API Gateway, que enruta las operaciones hacia el servicio correspondiente. La coordinación del flujo principal entre Order Service, Payment Service y Notification Service no utiliza llamadas REST directas; los cambios de estado se propagan mediante eventos en Apache Kafka.
+
+El contrato HTTP mínimo del prototipo es el siguiente:
+
+\begin{itemize}[leftmargin=*]
+    \item \texttt{POST /orders}: crea el pedido. Requiere la cabecera \texttt{Idempotency-Key}; responde \texttt{201 Created}, \texttt{400 Bad Request} por validación o \texttt{409 Conflict} si una clave idempotente se reutiliza con un contenido incompatible.
+    \item \texttt{GET /orders/\{id\}}: consulta el estado actual del pedido.
+    \item \texttt{GET /orders/\{id\}/notifications}: consulta las notificaciones asociadas al pedido; el API Gateway enruta esta operación a Notification Service.
+    \item Los errores HTTP se representan mediante RFC 9457 y el contrato se documenta con OpenAPI.
+\end{itemize}
+
+La cabecera \texttt{Idempotency-Key} protege la entrada síncrona ante doble clic o reintentos del cliente. Esta medida es distinta de la idempotencia de consumidores Kafka definida en ADR-09: la primera evita crear dos pedidos a partir de la misma solicitud HTTP, mientras que la segunda evita procesar dos veces el mismo evento asíncrono.
+
+
+\subsection{Aplicación de la Relación entre EDA y el Stack en FoodFlow}
+
+En el caso práctico, la relación general entre el estilo y las tecnologías se concreta de la siguiente manera:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Angular + TypeScript + RxJS} implementa la interfaz web utilizada por el cliente para crear pedidos, aportar datos de contacto y consultar su estado. Los datos necesarios para la simulación del pago se envían junto con la creación del pedido, pero el procesamiento del pago ocurre posteriormente de forma asíncrona.
+    \item \textbf{Spring Boot + Java} implementa \textit{Order Service}, \textit{Payment Service} y \textit{Notification Service}. Cada servicio concentra una responsabilidad de negocio, aplica sus validaciones, accede exclusivamente a su persistencia propietaria y participa en Kafka como productor y/o consumidor de eventos.
+    \item \textbf{PostgreSQL} mantiene el estado transaccional local de las tres entidades del prototipo: Pedido, Pago y Notificación. Las bases de datos no publican ni consumen eventos; la integración asíncrona pertenece a los servicios.
+    \item \textbf{Apache Kafka} materializa la coordinación asíncrona del caso de uso. Los servicios publican y consumen eventos de negocio en los tópicos correspondientes sin establecer llamadas REST directas para coordinar el flujo principal.
+    \item \textbf{REST/JSON sobre HTTPS + API Gateway} define el borde síncrono. Angular utiliza el gateway para crear y consultar pedidos y para consultar notificaciones, mientras la coordinación interna entre los servicios de negocio permanece orientada a eventos.
+\end{itemize}
+
+El prototipo mantiene deliberadamente un alcance reducido: tres entidades de negocio, un flujo end-to-end, persistencia real, validaciones y manejo de errores. La robustez se apoya en transacciones locales, validación de entradas, idempotencia de consumidores, reintentos y DLQ. La separación entre el commit en PostgreSQL y la publicación en Kafka se documenta más adelante como un riesgo aceptado del caso práctico, en lugar de presentarse como una garantía general del estilo o del stack.
+
+
+\subsection{Decisiones Arquitectónicas y Riesgos del Caso Práctico}
+
+Las decisiones generales analizadas en la sección anterior se concretan en FoodFlow mediante ADRs específicos. Esta subsección delimita qué decisiones forman parte del prototipo, qué riesgos se aceptan conscientemente y qué mecanismos se dejan como evolución para un escenario productivo.
+
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{P{0.14\textwidth} P{0.20\textwidth} P{0.42\textwidth} P{0.13\textwidth}}
+\toprule
+\textbf{ADR} & \textbf{Decisión} & \textbf{Aplicación en FoodFlow} & \textbf{Estado} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ADR} & \textbf{Decisión} & \textbf{Aplicación en FoodFlow} & \textbf{Estado} \\
+\midrule
+\endhead
+ADR-01 & Desacoplamiento temporal con Kafka & Order, Payment y Notification coordinan el flujo mediante eventos; no existe llamada REST directa entre los servicios de negocio para avanzar el caso de uso. & Implementar \\
+ADR-02 & Separación en tres servicios & El prototipo se limita a Order Service, Payment Service y Notification Service, alineados con Pedido, Pago y Notificación. & Implementar \\
+ADR-03 & Base propietaria por servicio & Cada servicio mantiene su PostgreSQL y ninguna base se conecta directamente con Kafka. & Implementar \\
+ADR-04 & Orden por \texttt{orderId} & \texttt{orderId} se utiliza como clave de partición para conservar orden relativo por pedido. & Implementar \\
+ADR-05 & Retry + DLQ & Los errores transitorios se reintentan hasta 3 veces con backoff; los fallos persistentes o mensajes inválidos se envían a DLQ. & Implementar \\
+ADR-06 & Validación y eventos explícitos & Se validan las entradas y se utilizan \texttt{PaymentApproved}, \texttt{PaymentRejected}, \texttt{OrderStatusChanged}, \texttt{NotificationSent} y \texttt{NotificationFailed}. & Implementar \\
+ADR-07 & Entrada síncrona controlada & El flujo principal entra por \texttt{POST /orders}; Payment Service se activa al consumir \texttt{OrderCreated}. & Implementar \\
+ADR-08 & Escritura dual aceptada & Se acepta la ventana entre commit en PostgreSQL y publicación en Kafka para mantener el alcance acotado. Transactional Outbox se deja como evolución. & Riesgo aceptado \\
+ADR-09 & Idempotencia de consumidores & Cada consumidor registra \texttt{eventId} de forma única en \texttt{processed\_events} dentro de la misma transacción local del efecto de negocio. & Implementar \\
+ADR-10 & Pago simulado reproducible & \texttt{PAY-OK} genera \texttt{PaymentApproved} y \texttt{PAY-FAIL} genera \texttt{PaymentRejected}. & Implementar \\
+ADR-11 & Snapshot de contacto & El pedido captura canal/destino y Order Service lo propaga hasta \texttt{OrderStatusChanged}; Notification Service no consulta otra base. & Implementar \\
+ADR-12 & Contrato HTTP & Se documentan los endpoints mínimos, errores \texttt{application/problem+json}, OpenAPI e idempotencia de \texttt{POST /orders}. & Implementar \\
+\bottomrule
+\end{longtable}
+\setlength{\tabcolsep}{6pt}
+\normalsize
+
+\subsubsection{Riesgo aceptado de escritura dual}
+
+FoodFlow no garantiza atomicidad entre PostgreSQL y Kafka. El flujo realiza primero una transacción local en la base propietaria y posteriormente intenta publicar el evento. Si el proceso falla después del commit y antes de que Kafka confirme la publicación, el cambio puede quedar persistido sin que exista el evento correspondiente. Kafka permite replay de eventos que ya alcanzaron el broker, pero no puede recuperar un evento que nunca fue publicado.
+
+Para el prototipo este comportamiento se registra como un riesgo aceptado de ADR-08. Transactional Outbox se mantiene como alternativa de evolución para un escenario donde la pérdida de eventos no sea tolerable, evitando incorporarlo al flujo mínimo implementado.
+
+\subsubsection{Contrato mínimo de eventos}
+
+Todos los eventos del flujo principal utilizan un envelope común con los campos de trazabilidad y versionado necesarios. El contrato mínimo queda definido así:
+
+\begin{itemize}[leftmargin=*]
+    \item Campos comunes: \texttt{eventId}, \texttt{correlationId}, \texttt{orderId}, \texttt{eventType}, \texttt{occurredAt} y \texttt{schemaVersion}.
+    \item \texttt{OrderCreated}: añade \texttt{total}, el token de pago de prueba, el canal de notificación y el snapshot de contacto.
+    \item \texttt{PaymentApproved} y \texttt{PaymentRejected}: incluyen \texttt{paymentId} y el resultado del pago.
+    \item Después de actualizar Order DB, Order Service publica \texttt{OrderStatusChanged}; Notification Service consume ese evento para generar la notificación.
+\end{itemize}
+
+\subsubsection{Criterios de verificación del prototipo}
+
+Las siguientes métricas transforman los atributos de calidad generales de la sección 2 en verificaciones concretas para FoodFlow. Son criterios de aceptación del prototipo y deben completarse con resultados medidos durante las pruebas.
+
+\footnotesize
+\begin{longtable}{P{0.20\textwidth} P{0.68\textwidth}}
+\toprule
+\textbf{Atributo} & \textbf{Criterio de verificación en FoodFlow} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Atributo} & \textbf{Criterio de verificación en FoodFlow} \\
+\midrule
+\endhead
+Escalabilidad & Ejecutar al menos 100 eventos, reportar eventos/segundo y repetir con dos instancias de un consumidor verificando ausencia de efectos de negocio duplicados. \\
+Disponibilidad & Detener Notification Service durante 30 s, completar un pedido y comprobar que Order/Payment continúan; tras reiniciar Notification, verificar procesamiento del evento retenido. \\
+Modificabilidad & Agregar un consumidor de prueba de \texttt{OrderCreated} sin modificar ni recompilar Order Service. \\
+Consistencia eventual & Medir desde \texttt{OrderCreated} hasta el estado final del pedido y reportar p95; objetivo de demostración: convergencia p95 menor o igual a 5 s en al menos 20 ejecuciones locales. \\
+Testabilidad & Probar automáticamente \texttt{PAY-OK} y \texttt{PAY-FAIL} y verificar el estado final esperado de Pedido, Pago y Notificación. \\
+Observabilidad / Trazabilidad & El 100\% de los eventos del flujo principal debe contener \texttt{eventId}, \texttt{correlationId} y \texttt{orderId}; los logs deben registrar esos identificadores. \\
+Rendimiento & Ejecutar una prueba controlada y reportar throughput y latencia p95, sin extrapolar el resultado a producción. \\
+Recuperabilidad & Reiniciar un consumidor y comprobar replay de eventos ya publicados; documentar que ADR-08 no cubre eventos nunca publicados por fallo DB--Kafka. \\
+Seguridad & No almacenar secretos reales en el repositorio; usar variables de entorno y HTTPS para el borde y la integración externa. \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsubsection{Trazabilidad de patrones y alcance de implementación}
+
+En el caso práctico se aplica la regla \textbf{implementado $\subseteq$ diseñado $\subseteq$ investigado}. Esto permite distinguir los mecanismos necesarios para demostrar el flujo de aquellos patrones que se conocen y justifican, pero no se incorporan por no aportar valor proporcional al alcance del prototipo.
+
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{P{0.19\textwidth} P{0.22\textwidth} P{0.36\textwidth} P{0.13\textwidth}}
+\toprule
+\textbf{Patrón / práctica} & \textbf{Riesgo que mitiga} & \textbf{Aplicación en FoodFlow} & \textbf{Nivel} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Patrón / práctica} & \textbf{Riesgo que mitiga} & \textbf{Aplicación en FoodFlow} & \textbf{Nivel} \\
+\midrule
+\endhead
+Database per Service & Shared Database / Database-as-IPC & Order, Payment y Notification poseen PostgreSQL independiente. & Implementar \\
+API Gateway & Acoplamiento del cliente a múltiples servicios & Punto de entrada HTTP y enrutamiento de contratos REST. & Implementar \\
+Event Envelope versionado & Lack of Versioning / Tight Coupling & \texttt{eventId}, \texttt{eventType}, \texttt{schemaVersion}, \texttt{correlationId} y \texttt{orderId}. & Implementar \\
+Idempotent Consumer & Efectos duplicados por entrega at-least-once & \texttt{processed\_events} con unicidad por \texttt{eventId}. & Implementar \\
+Retry + DLQ & Poison Message / bloqueo de consumidor & Hasta 3 intentos y DLQ para fallos persistentes. & Implementar \\
+Health checks + logs estructurados & Lack of Observability & Actuator y logs con \texttt{correlationId}/\texttt{eventId}. & Implementar \\
+Configuración externa & Hardcoding / secretos & URLs, credenciales y tópicos mediante variables de entorno. & Implementar \\
+Repository + dominio & Fat Controller / acceso disperso a datos & Repositorios por servicio y reglas fuera de controladores. & Implementar \\
+Adapter del proveedor & Vendor Lock-in & Notification Service encapsula al proveedor externo detrás de un adaptador. & Implementar \\
+Docker Compose & Entorno no reproducible & Levanta frontend, gateway, servicios, Kafka y PostgreSQL del prototipo. & Implementar \\
+Migraciones con Flyway & Esquema manual / drift & Puede incorporarse para versionar cada PostgreSQL si el tiempo de implementación lo permite. & Opcional \\
+Testcontainers & Pruebas irreales / entorno inconsistente & Útil para integración automatizada con PostgreSQL y Kafka reales. & Opcional \\
+Strategy por múltiples canales & God Object / condicionales crecientes & Se justifica solo si se implementan realmente múltiples canales; la demo puede limitarse a uno. & Diseñado condicional \\
+Circuit Breaker & Cascada de fallos del proveedor & Aplicable a Notification Service en un escenario productivo. & Evolución \\
+Distributed Tracing & Trazabilidad insuficiente & Evolución sobre la correlación mediante logs. & Evolución \\
+Transactional Outbox & Escritura dual DB--Kafka & Identificado en ADR-08, pero no se implementa en el prototipo. & Investigado / no implementar \\
+Saga, CQRS, Event Sourcing & Complejidad desproporcionada & Se conocen y analizan, pero no son necesarios para el flujo mínimo de tres entidades. & Investigado / no implementar \\
+Kubernetes & Complejidad operativa & Docker Compose satisface el entorno contenerizado del prototipo. & No implementar \\
+\bottomrule
+\end{longtable}
+\setlength{\tabcolsep}{6pt}
+\normalsize
+
+\subsection{Diagrama de Alto Nivel (HLD)}
+
+El HLD presenta las capas estructurales de FoodFlow: Cliente, presentación con Angular/Nginx, API Gateway, tres servicios Spring Boot, persistencia PostgreSQL por servicio, Apache Kafka y Proveedor de Notificaciones. \textbf{El flujo principal entra únicamente por Order Service}. Payment Service no recibe una orden de pago directa del Cliente: reacciona a \texttt{OrderCreated}. Notification Service tampoco se dispara por una llamada del Cliente: reacciona a \texttt{OrderStatusChanged}.
+
+Cada base PostgreSQL está conectada exclusivamente con su servicio propietario. Kafka se relaciona con los servicios de negocio, nunca con las bases. La dirección lógica de eventos es la siguiente: Order Service publica \texttt{OrderCreated} y \texttt{OrderStatusChanged}; Payment Service consume \texttt{OrderCreated} y publica el resultado del pago; Order Service consume ese resultado; Notification Service consume \texttt{OrderStatusChanged} y publica el resultado de la notificación.
+
+El HLD representa que el Cliente \textbf{no realiza el pago mediante una llamada directa}. En la demo proporciona un token de pago de prueba junto con el pedido y el procesamiento ocurre después, de forma asíncrona. Cualquier relación del API Gateway hacia Payment o Notification corresponde a endpoints auxiliares de consulta o diagnóstico y no forma parte del flujo principal.
+
+\diagramplaceholder
+{Diagrama de Alto Nivel (HLD) - FoodFlow}
+{Inserte aquí el HLD de FoodFlow, donde el Cliente crea pedidos y consulta su estado; el flujo principal del API Gateway entra por Order Service y Payment/Notification se activan mediante eventos.}
+{diagramas/hld-foodflow.png}
+{0.98}
+
+\subsection{Diagrama de Contexto - C4 Nivel 1}
+
+El C1 muestra FoodFlow como un único sistema. El Cliente crea pedidos y consulta su estado; no se representa una llamada directa al pago porque ese procesamiento ocurre internamente cuando Payment Service reacciona al evento \texttt{OrderCreated}. FoodFlow utiliza al Proveedor de Notificaciones para entregar el resultado al Cliente.
+
+No aparecen Angular, Nginx, API Gateway, Spring Boot, PostgreSQL ni Kafka porque son detalles internos. Esta vista delimita responsabilidades: el grupo implementa FoodFlow; el Proveedor de Notificaciones permanece fuera de su límite.
+
+\diagramplaceholder
+{C4 - System Context Diagram (Nivel 1)}
+{Inserte aquí la exportación de la vista \texttt{C1\_Context} desde Structurizr.}
+{diagramas/c4-c1-contexto.png}
+{0.95}
+
+\subsection{Diagrama de Contenedores - C4 Nivel 2}
+
+El C2 conserva Angular, Nginx, API Gateway, los tres servicios Spring Boot, Kafka y tres bases PostgreSQL. Para el caso de uso principal, Angular envía \texttt{POST /orders} al API Gateway y este enruta la operación a Order Service. Las consultas \texttt{GET /orders/\{id\}} también se dirigen a Order Service y \texttt{GET /orders/\{id\}/notifications} se enruta a Notification Service. Payment y Notification siguen siendo activados por eventos para el procesamiento del caso de uso; los endpoints GET no disparan el flujo asíncrono.
+
+\textbf{Order Service} gestiona Pedido y Order DB. Publica \texttt{OrderCreated}; consume \texttt{PaymentApproved}/\texttt{PaymentRejected}; tras actualizar el pedido publica \texttt{OrderStatusChanged}. \textbf{Payment Service} gestiona Pago y Payment DB, consume \texttt{OrderCreated} y publica el resultado determinista del pago. \textbf{Notification Service} gestiona Notificación y Notification DB, consume exclusivamente \texttt{OrderStatusChanged} en el flujo principal y publica \texttt{NotificationSent}/\texttt{NotificationFailed}.
+
+Las relaciones con Kafka son entre broker y servicios. Las bases PostgreSQL solo se relacionan con su servicio propietario. Los consumidores usan \texttt{eventId} para idempotencia; la implementación técnica se apoya en una tabla local \texttt{processed\_events}, que no se cuenta como entidad de negocio.
+
+La vista también hace visible la limitación de ADR-08: la publicación ocurre después de la transacción local. El C2 no pretende representar atomicidad DB--Kafka y el documento no atribuye esa garantía al prototipo.
+
+\diagramplaceholder
+{C4 - Container Diagram (Nivel 2)}
+{Inserte aquí la exportación de la vista \texttt{C2\_Containers} desde Structurizr.}
+{diagramas/c4-c2-contenedores.png}
+{0.98}
+
+\subsection{Diagrama de Componentes - C4 Nivel 3}
+
+El C3 hace zoom sobre Order Service. \textbf{OrderController} recibe \texttt{POST /orders} desde el API Gateway y delega en \textbf{OrderApplicationService}; \textbf{OrderValidator} valida total, canal, contacto y \texttt{payment\-Test\-Token}. \textbf{OrderRepository} persiste Pedido en Order DB. \textbf{OrderEventPublisher} publica \texttt{OrderCreated} y, después de un resultado de pago, \texttt{OrderStatusChanged}.
+
+Para el consumo se modela \textbf{OrderEventConsumer}, que recibe únicamente \texttt{PaymentApproved}/\texttt{PaymentRejected}. Antes de aplicar un cambio consulta \textbf{ProcessedEventRepository}; si el \texttt{eventId} ya existe, el evento se considera duplicado y no vuelve a modificar el Pedido. El registro del \texttt{eventId} y la actualización del Pedido se realizan en la misma transacción local de Order DB. Payment Service y Notification Service deben aplicar el mismo principio de idempotencia en sus propias bases.
+
+El componente de idempotencia evita duplicar efectos al reprocesar eventos, pero no soluciona la escritura dual entre PostgreSQL y Kafka. Esa limitación permanece documentada como riesgo aceptado en ADR-08.
+
+\diagramplaceholder
+{C4 - Component Diagram - Order Service (Nivel 3)}
+{Inserte aquí la exportación de la vista \texttt{C3\_OrderService} desde Structurizr.}
+{diagramas/c4-c3-order-service.png}
+{0.96}
+
+\subsection{Diagrama de Código - C4 Code Diagram (opcional)}
+
+El C4 Code Diagram realiza el último nivel de zoom sobre \textbf{un único componente}. Para FoodFlow, el alcance de esta vista es \texttt{OrderApplicationService}, ya que este componente coordina la creación del Pedido y la aplicación del resultado del pago sin mezclar en una misma vista todos los detalles internos de Order Service. De acuerdo con C4, este nivel es opcional y debe utilizarse únicamente cuando ayuda a explicar una parte importante o compleja de la implementación \cite{c4-code}.
+
+A diferencia de C1, C2, C3, Dynamic, Deployment y System Landscape, \textbf{el diagrama de código no forma parte del modelo Structurizr DSL}. Se mantiene como un \textbf{diagrama UML de clases independiente}. Esto evita forzar clases, interfaces y objetos Java dentro del modelo estructural C4 y permite actualizar la vista de código a medida que avance la implementación.
+
+El UML muestra la interfaz \texttt{OrderApplicationService} y su implementación \texttt{OrderApplicationServiceImpl}. La implementación depende de puertos para validación, persistencia y publicación de eventos, y recibe objetos explícitos del caso de uso:
+
+\begin{itemize}[leftmargin=1.6em,itemsep=0.15em,topsep=0.2em]
+    \item \textbf{OrderValidatorPort}: valida total, contacto, canal de notificación y \texttt{payment\-Test\-Token}.
+    \item \textbf{OrderRepositoryPort}: guarda y consulta la entidad \texttt{Order} sin acoplar la lógica de aplicación a PostgreSQL.
+    \item \textbf{OrderEventPublisherPort}: publica \texttt{OrderCreated} y \texttt{OrderStatusChanged} sin acoplar la lógica de aplicación directamente a Kafka.
+    \item \textbf{CreateOrderCommand}: transporta los datos necesarios para crear el Pedido, incluido el snapshot de contacto y el token de pago de prueba.
+    \item \textbf{PaymentResultEvent}: representa el resultado consumido desde Kafka y permite actualizar el estado del Pedido.
+    \item \textbf{Order} y \textbf{OrderStatus}: representan el agregado y sus estados \texttt{CREADO}, \texttt{PAGADO} y \texttt{PAGO\_RECHAZADO}.
+\end{itemize}
+
+La idempotencia del consumidor por \texttt{eventId} se implementa fuera de este componente. \texttt{OrderEventConsumer} recibe el evento y \texttt{ProcessedEventRepository} registra los identificadores procesados, tal como se documenta en el C3 y en ADR-09. Por ello esa responsabilidad no se incluye dentro de este Code Diagram, cuyo alcance se limita a \texttt{OrderApplicationService}.
+
+\diagramplaceholder
+{C4 Code Diagram - OrderApplicationService (UML)}
+{Inserte aquí la exportación PNG del diagrama UML de clases correspondiente a \texttt{OrderApplicationService}.}
+{diagramas/c4-code-order-application-service.png}
+{0.90}
+
+\subsection{Diagrama Dinámico - C4 Dynamic View}
+
+El diagrama dinámico forma parte del modelo Structurizr DSL. En C4 esta vista describe cómo elementos ya definidos en el modelo estático colaboran en tiempo de ejecución para implementar una historia o caso de uso. Structurizr permite modelarla con la palabra clave \texttt{dynamic}, reutilizando personas, contenedores y relaciones del C2 \cite{c4-dynamic,structurizr-dynamic-view}. En el renderer de Structurizr esta vista se presenta de forma nativa con estilo de colaboración y numeración explícita de las interacciones; la semántica es la misma que una representación secuencial del mismo flujo.
+
+La vista \texttt{Dynamic\_OrderFlow} representa el \textbf{happy path reproducible} del caso de uso con \texttt{PAY-OK}. El Cliente confirma el pedido; Angular invoca \texttt{POST /orders} con \texttt{Idempotency-Key}; el API Gateway enruta la solicitud a Order Service; Order Service persiste el Pedido y publica \texttt{OrderCreated}; Payment Service consume el evento, registra el Pago y publica \texttt{PaymentApproved}; Order Service actualiza el Pedido y publica \texttt{OrderStatusChanged}; Notification Service consume ese cambio, persiste la Notificación, invoca al proveedor y finalmente publica \texttt{NotificationSent}.
+
+El diagrama mantiene la regla arquitectónica principal: \textbf{las bases de datos solo se comunican con su servicio propietario}. Kafka recibe/publica eventos a través de los servicios, nunca directamente desde PostgreSQL. La rama \texttt{PAY-FAIL} se prueba como escenario alternativo de robustez, pero no se duplica en el diagrama para mantenerlo enfocado; sustituye \texttt{PaymentApproved} por \texttt{PaymentRejected} y el Pedido converge a \texttt{PAGO\_RECHAZADO}.
+
+\diagramplaceholder
+{C4 Dynamic View - Flujo principal de FoodFlow}
+{Inserte aquí la exportación de la vista \texttt{Dynamic\_OrderFlow} desde Structurizr.}
+{diagramas/c4-dynamic-order-flow.png}
+{0.98}
+
+\subsection{Diagrama de Despliegue - C4 Deployment View}
+
+El Deployment View forma parte del modelo C4 y muestra cómo las instancias de los contenedores definidos en el modelo estático se asignan a nodos de infraestructura dentro de un entorno concreto \cite{c4-deployment}. Para FoodFlow se define el entorno \textbf{Development}, coherente con el prototipo académico que será ejecutado mediante contenedores.
+
+En el \textbf{Dispositivo del Cliente} existe un nodo anidado \textbf{Navegador Web}, donde se ejecuta una instancia de la Aplicación Angular. En el \textbf{Servidor FoodFlow} se modela un \textbf{Docker Engine} y, dentro de este, nodos de despliegue independientes para Nginx, API Gateway, Order Service, Payment Service, Notification Service, Apache Kafka y las tres bases PostgreSQL. Cada nodo contiene una \texttt{containerInstance} del contenedor correspondiente del C2, de manera que el despliegue no redefine la arquitectura lógica sino que reutiliza el mismo modelo.
+
+La vista aplica la regla arquitectónica central: \textbf{Order DB, Payment DB y Notification DB solo se comunican con su servicio propietario}; Apache Kafka se relaciona con los servicios de negocio para publicación y consumo de eventos, pero nunca directamente con PostgreSQL. El Proveedor de Notificaciones se representa mediante una instancia del sistema externo en un nodo de infraestructura administrado por el tercero.
+
+Esta vista se define directamente en el modelo Structurizr DSL. El modelo utiliza \texttt{deploymentEnvironment} y \texttt{deploymentNode} para representar la infraestructura, mientras que las instancias de los contenedores y del sistema externo se declaran dentro de esos nodos. La vista resultante se identifica como \texttt{Deployment\_Development}. De esta forma C1, C2, C3, Dynamic, Deployment y System Landscape comparten una única fuente de verdad arquitectónica \cite{structurizr-deployment-view}.
+
+\diagramplaceholder
+{C4 Deployment View - FoodFlow - Development}
+{Inserte aquí la exportación de la vista \texttt{Deployment\_Development} desde Structurizr.}
+{diagramas/c4-deployment-development.png}
+{0.98}
+
+\subsection{Diagrama de System Landscape}
+
+El System Landscape y el C4 Nivel 1 tienen alcances diferentes. El C1 tiene como alcance \textbf{un único sistema de software}: FoodFlow y sus dependencias externas directas. En cambio, el System Landscape amplía el alcance a la \textbf{Organización FoodFlow} y representa un mapa de las personas y sistemas de software que forman parte de ese contexto organizacional, sin fijar el foco en un único sistema \cite{c4-landscape}.
+
+En el centro del paisaje se encuentra \textbf{FoodFlow}, que es el sistema implementado en el prototipo. A su alrededor se representan el \textbf{Cliente} y el \textbf{Proveedor de Notificaciones}, porque participan en el funcionamiento actual. También se representan elementos de nivel organizacional para que la vista muestre un verdadero portafolio de sistemas: \textbf{Personal de Operaciones}, \textbf{Analista de Negocio}, \textbf{Backoffice Operativo} y \textbf{Analítica y Reportes}. Los dos últimos se documentan explícitamente como \textbf{sistemas de contexto fuera del alcance de implementación del prototipo}; por tanto, su aparición en esta vista no modifica el HLD ni introduce nuevos contenedores o dependencias de ejecución en FoodFlow.
+
+Las relaciones del paisaje cuentan historias distintas de la ejecución interna del sistema. El Cliente utiliza FoodFlow para crear pedidos y consultar su seguimiento; el pago se procesa internamente de forma asíncrona; FoodFlow solicita al Proveedor de Notificaciones la entrega de mensajes y el proveedor los entrega al Cliente. En el contexto organizacional, el Cliente puede solicitar soporte al Personal de Operaciones, quien utiliza el Backoffice Operativo para registrar y consultar incidencias. De forma independiente, el Analista de Negocio utiliza la plataforma de Analítica y Reportes para revisar indicadores. Esta separación permite mostrar el entorno empresarial sin convertir el System Landscape en otro diagrama de contenedores.
+
+La vista utiliza dos agrupaciones visuales: \textbf{Organización FoodFlow}, que contiene personas y sistemas pertenecientes al portafolio interno, y \textbf{Servicios Externos}, que contiene al Proveedor de Notificaciones. Angular, Nginx, API Gateway, Order Service, Payment Service, Notification Service, PostgreSQL y Kafka \textbf{no aparecen} porque son contenedores o tecnologías internas del sistema FoodFlow y corresponden a C2, C3 o al diagrama de despliegue. En Structurizr DSL esta vista se genera con \texttt{systemLandscape}, mientras que \texttt{group} permite representar los límites organizacionales \cite{structurizr-groups}.
+
+\diagramplaceholder
+{C4 - System Landscape - Organización FoodFlow}
+{Inserte aquí la exportación de la vista \texttt{SystemLandscape} desde Structurizr.}
+{diagramas/system-landscape-foodflow.png}
+{0.95}
+
+\subsection{Modelo de Datos}
+
+El modelo de datos representa las tres entidades mínimas del caso práctico: \textbf{Pedido}, \textbf{Pago} y \textbf{Notificación}. Se trata de un \textbf{modelo lógico de dominio}; no implica que las tres tablas se encuentren físicamente en una única base de datos. En la implementación, Order Service mantiene Order DB, Payment Service mantiene Payment DB y Notification Service mantiene Notification DB.
+
+\textbf{Pedido} almacena el identificador, total, estado y un snapshot mínimo de contacto (email/teléfono y canal preferido), además del \texttt{paymentTestToken} usado exclusivamente por la demo. Sus estados principales son \texttt{CREADO}, \texttt{PAGADO} y \texttt{PAGO\_RECHAZADO}. \textbf{Pago} mantiene un único registro por pedido, con monto, resultado y referencia de transacción; sus estados son \texttt{APROBADO} o \texttt{RECHAZADO}. \textbf{Notificación} registra el pedido relacionado, el canal, destino, contenido y estado de entrega \texttt{PENDIENTE}, \texttt{ENVIADA} o \texttt{FALLIDA}.
+
+Las relaciones son: un Pedido tiene un Pago y puede generar múltiples Notificaciones; cada Pago pertenece a un Pedido; y cada Notificación pertenece a un Pedido. Como las entidades se persisten en bases separadas por servicio, las relaciones entre dominios se implementan mediante \textbf{identificadores lógicos y eventos}, no mediante llaves foráneas físicas entre bases PostgreSQL diferentes. Para idempotencia, cada base contiene además una tabla técnica \texttt{processed\_events(event\_id, processed\_at)}, omitida del conteo de entidades de negocio. El diagrama se construye en \textbf{dbdiagram.io} utilizando DBML \cite{dbdiagram}.
+
+\diagramplaceholder
+{Modelo de Datos - FoodFlow}
+{Inserte aquí la exportación PNG del modelo de datos generado en dbdiagram.io.}
+{diagramas/modelo-datos-foodflow.png}
+{0.92}
+
+% ============================================================
+% 4. LECCIONES APRENDIDAS
+% ============================================================
+\section{Lecciones Aprendidas}
+
+Esta sección debe completarse una vez implementado el código funcional, creado el repositorio Git público y realizado el despliegue con contenedores. Se recomienda documentar:
+
+\begin{itemize}[leftmargin=*]
+    \item Dificultades técnicas reales al integrar Spring Boot con Kafka: consumer groups, particiones y serialización.
+    \item Decisiones que cambiaron respecto al diseño inicial y su justificación mediante ADRs, actualizando su estado Diseñado/Implementado.
+    \item Retos de consistencia eventual observados al probar el flujo end-to-end.
+    \item Aprendizajes sobre Docker o Podman y la orquestación del entorno.
+    \item Recomendaciones para un equipo que replique este stack en el futuro.
+\end{itemize}
+
+\section{Referencias}
+
+\begin{thebibliography}{99}
+
+\bibitem{c4model}
+Simon Brown. \textit{The C4 model for visualising software architecture}. Disponible en: \url{https://c4model.com/}. Consultado: 22 de septiembre de 2026.
+
+\bibitem{c4-landscape}
+Simon Brown. \textit{System landscape diagram - C4 model}. Disponible en: \url{https://c4model.com/diagrams/system-landscape}. Consultado: 27 de septiembre de 2026.
+
+
+\bibitem{c4-deployment}
+Simon Brown. \textit{Deployment diagram - C4 model}. Disponible en: \url{https://c4model.com/diagrams/deployment}. Consultado: 27 de septiembre de 2026.
+
+\bibitem{c4-code}
+Simon Brown. \textit{Code diagram - C4 model}. Disponible en: \url{https://c4model.com/diagrams/code}. Consultado: 28 de septiembre de 2026.
+
+
+\bibitem{structurizr}
+Structurizr. \textit{Structurizr DSL documentation}. Disponible en: \url{https://docs.structurizr.com/dsl}. Consultado: 22 de septiembre de 2026.
+
+\bibitem{structurizr-groups}
+Structurizr. \textit{Structurizr DSL Cookbook - Groups}. Disponible en: \url{https://docs.structurizr.com/dsl/cookbook/groups/}. Consultado: 27 de septiembre de 2026.
+
+
+\bibitem{structurizr-deployment-view}
+Structurizr. \textit{Structurizr DSL Cookbook - Deployment view}. Disponible en: \url{https://docs.structurizr.com/dsl/cookbook/deployment-view/}. Consultado: 27 de septiembre de 2026.
+
+
+
+\bibitem{c4-dynamic}
+Simon Brown. \textit{Dynamic diagram - C4 model}. Disponible en: \url{https://c4model.com/diagrams/dynamic}. Consultado: 27 de septiembre de 2026.
+
+\bibitem{structurizr-dynamic-view}
+Structurizr. \textit{Structurizr DSL Cookbook - Dynamic view}. Disponible en: \url{https://docs.structurizr.com/dsl/cookbook/dynamic-view/}. Consultado: 27 de septiembre de 2026.
+
+\bibitem{rfc9457}
+IETF / RFC Editor. \textit{RFC 9457 - Problem Details for HTTP APIs}. Julio de 2023. Disponible en: \url{https://www.rfc-editor.org/rfc/rfc9457.html}.
+
+\bibitem{openapi-spec}
+OpenAPI Initiative. \textit{OpenAPI Specification}. Disponible en: \url{https://spec.openapis.org/oas/}. Consultado: 27 de septiembre de 2026.
+
+\bibitem{spring-cloud-gateway}
+Spring. \textit{Spring Cloud Gateway Reference Documentation}. Disponible en: \url{https://docs.spring.io/spring-cloud-gateway/reference/}. Consultado: 27 de septiembre de 2026.
+
+\bibitem{spring-kafka-retry}
+Spring. \textit{Spring for Apache Kafka - Retry Topic and Dead Letter Topic}. Disponible en: \url{https://docs.spring.io/spring-kafka/reference/retrytopic/how-the-pattern-works.html}. Consultado: 27 de septiembre de 2026.
+
+\bibitem{jetbrains-java-2025}
+JetBrains. \textit{The State of Java 2025}. Disponible en: \url{https://lp.jetbrains.com/the-state-of-java-2025/}. Consultado: 27 de septiembre de 2026.
+
+\bibitem{jetbrains-ecosystem-2025}
+JetBrains. \textit{The State of Developer Ecosystem 2025}. Disponible en: \url{https://blog.jetbrains.com/research/2025/10/state-of-developer-ecosystem-2025/}. Consultado: 27 de septiembre de 2026.
+
+\bibitem{confluent-dsr-2025}
+Confluent. \textit{2025 Data Streaming Report}. Encuesta a 4,175 líderes TI; se utiliza como señal de inversión en data streaming, reconociendo que es una fuente patrocinada por un proveedor. Disponible en: \url{https://www.confluent.io/resources/report/2025-data-streaming-report}. Consultado: 27 de septiembre de 2026.
+
+\bibitem{github-rest-api}
+GitHub Docs. \textit{GitHub REST API documentation}. La API REST de GitHub es versionada y dispone de una descripción compatible con OpenAPI. Disponible en: \url{https://docs.github.com/en/rest}. Consultado: 27 de septiembre de 2026.
+
+\bibitem{angular-overview}
+Angular. \textit{What is Angular?}. Disponible en: \url{https://angular.dev/overview}. Consultado: 22 de septiembre de 2026.
+
+\bibitem{spring-boot}
+Spring. \textit{Spring Boot}. Disponible en: \url{https://spring.io/projects/spring-boot/}. Consultado: 22 de septiembre de 2026.
+
+\bibitem{spring-kafka}
+Spring. \textit{Spring for Apache Kafka 4.1.0, 4.0.6, and 3.3.16 Available}. 9 de junio de 2026. Disponible en: \url{https://spring.io/blog/2026/06/09/spring-kafka-4/}.
+
+\bibitem{spring-boot-history}
+Phil Webb y Dave Syer. \textit{Spring Boot -- Simplifying Spring for Everyone}. Spring, 6 de agosto de 2013. Disponible en: \url{https://spring.io/blog/2013/08/06/spring-boot-simplifying-spring-for-everyone/}.
+
+\bibitem{spring-netflix}
+Spring. \textit{Netflix Built a Spring Application Generator to Boost Dev Productivity}. 24 de febrero de 2020. Disponible en: \url{https://spring.io/blog/2020/02/24/netflix-built-a-spring-application-generator-to-boost-dev-productivity-here-s-how-you-can-too/}.
+
+\bibitem{spring-sagan}
+Spring. \textit{Inside spring.io: a Production Spring Reference Application}. Disponible en: \url{https://spring.io/blog/2015/01/13/springone2gx-2014-replay-inside-spring-io-a-production-spring-reference-application}.
+
+\bibitem{postgres-about}
+PostgreSQL Global Development Group. \textit{About PostgreSQL}. Disponible en: \url{https://www.postgresql.org/about/}. Consultado: 22 de septiembre de 2026.
+
+\bibitem{postgres-release}
+PostgreSQL Global Development Group. \textit{PostgreSQL 18.6 Release Notes}. 13 de agosto de 2026. Disponible en: \url{https://www.postgresql.org/docs/release/18.6/}.
+
+\bibitem{postgres-afilias}
+PostgreSQL. \textit{Open Source Software: Case Studies Examining its Use -- Afilias / .ORG}. Disponible en: \url{https://www.postgresql.org/files/about/casestudies/OpenSourceSoftware_Dravis.pdf}.
+
+\bibitem{postgres-vanten}
+PostgreSQL. \textit{Case Studies: Vanten Inc.}. Disponible en: \url{https://www.postgresql.org/about/casestudies/vanten/}.
+
+\bibitem{kafka-intro}
+Apache Kafka. \textit{Introduction}. Disponible en: \url{https://kafka.apache.org/intro/}. Consultado: 22 de septiembre de 2026.
+
+\bibitem{linkedin-kafka}
+LinkedIn Engineering. \textit{Kafka at LinkedIn: Current and Future}. Disponible en: \url{https://www.linkedin.com/blog/engineering/open-source/kafka-linkedin-current-and-future}.
+
+\bibitem{linkedin-kafka-scale}
+LinkedIn Engineering. \textit{How LinkedIn customizes Apache Kafka for 7 trillion messages per day}. Disponible en: \url{https://www.linkedin.com/blog/engineering/open-source/apache-kafka-trillion-messages}.
+
+\bibitem{uber-kafka}
+Uber Engineering. \textit{Disaster Recovery for Multi-Region Kafka at Uber}. Disponible en: \url{https://www.uber.com/us/en/blog/kafka/}.
+
+\bibitem{uber-kafka-2026}
+Uber Engineering. \textit{Introducing uForwarder: The Consumer Proxy for Kafka Async Queuing}. 5 de febrero de 2026. Disponible en: \url{https://www.uber.com/us/en/blog/introducing-ufowarder/}.
+
+\bibitem{tiobe-2026}
+TIOBE. \textit{TIOBE Index for September 2026}. Disponible en: \url{https://www.tiobe.com/tiobe-index/}. Consultado: 22 de septiembre de 2026.
+
+\bibitem{so-2025}
+Stack Overflow. \textit{2025 Developer Survey -- Technology}. Disponible en: \url{https://survey.stackoverflow.co/2025/technology}. Consultado: 22 de septiembre de 2026.
+
+\bibitem{github-octoverse}
+GitHub. \textit{Octoverse 2025: A new developer joins GitHub every second as AI leads TypeScript to \#1}. Disponible en: \url{https://github.blog/news-insights/octoverse/octoverse-a-new-developer-joins-github-every-second-as-ai-leads-typescript-to-1/}.
+
+\bibitem{job-java-81}
+Servicio Público de Empleo. \textit{Desarrollador de Java (Remoto), Bogotá}. Oferta 361168-153088, 2026. Salario publicado: COP 8.100.000 mensuales. Disponible en: \url{https://personas.serviciodeempleo.gov.co/detalle_oferta.aspx?proceso_id=153088&sede_id=361168}.
+
+\bibitem{job-angular-1}
+Inter Rapidísimo / Computrabajo. \textit{Desarrollador Front end, Bogotá}. 2026. Banda publicada: COP 5.5--6.7 millones mensuales. Disponible en: \url{https://inter-rapidisimo.pandape.computrabajo.com/Detail/11494033}.
+
+\bibitem{job-angular-2}
+Indeed Colombia. \textit{Desarrollador Angular Senior, Bogotá}. 2026. Banda publicada: COP 6.0--6.5 millones mensuales. Disponible en: \url{https://co.indeed.com/viewjob?jk=50f93948cd363681}.
+
+\bibitem{job-postgres-fullstack}
+Agencia de Empleo Colsubsidio. \textit{Desarrollador Full Stack, Bogotá}. 7 de febrero de 2026. Tecnologías: Java, Angular, PostgreSQL, entre otras; salario publicado COP 7.2 millones mensuales.
+
+\bibitem{job-java-kafka}
+ElEmpleo.com. \textit{Vacantes Java / Spring / Kafka / AWS en Colombia}. 2026. Ofertas consultadas con bandas de COP 8--10 millones mensuales para perfiles con experiencia y, en varios casos, inglés B2. Disponible en: \url{https://www.elempleo.com/co/ofertas-empleo/bogota/trabajo-100-remoto-3-anos-como-desarrolladores-java-spring-kafka-aws-cicd-e-ingles-b2-o-superior-modalidad-remoto}.
+
+\bibitem{job-kafka-9m}
+Linexperts Consultoría Empresarial. \textit{Desarrollador Full Stack Java / Apache Kafka, Bogotá}. 2026. Tope publicado: COP 9.000.000 mensuales.
+
+\bibitem{job-java-angular}
+Más Empleo. \textit{Desarrollador Fullstack Java/Angular, Bogotá}. Publicado 14 de agosto de 2026. Incluye Java, Spring Boot, Angular, PostgreSQL, Docker y Kubernetes. Disponible en: \url{https://www.masempleo.t3rsc.co/detalle/6119}.
+
+
+\bibitem{cenisoft-talento-digital}
+CENISOFT / Fedesoft. \textit{Informe de análisis de la empleabilidad y talento Digital en Colombia}. 2025. El informe presenta bandas salariales para desarrollo de software, arquitectura y administración de bases de datos. Disponible en: \url{https://cenisoft.org/wp-content/uploads/2025/12/Informe-de-analisis-de-la-empleabilidad-y-talento-Digital-en-Colombia_VF.pdf}. Consultado: 22 de septiembre de 2026.
+
+\bibitem{linkedin-java-spring-jobs}
+LinkedIn Jobs. \textit{Java Spring Boot en Colombia - filtro Mes pasado}. 238 resultados observados el 22 de septiembre de 2026. Disponible en: \url{https://co.linkedin.com/jobs/search/?keywords=Java%20Spring%20Boot&location=Colombia&f_TPR=r2592000}.
+
+\bibitem{linkedin-angular-jobs}
+LinkedIn Jobs. \textit{Angular en Colombia - filtro Mes pasado}. 260 resultados observados el 22 de septiembre de 2026. Disponible en: \url{https://co.linkedin.com/jobs/search/?keywords=Angular&location=Colombia&f_TPR=r2592000}.
+
+\bibitem{linkedin-postgresql-jobs}
+LinkedIn Jobs. \textit{PostgreSQL en Colombia - filtro Mes pasado}. 574 resultados observados el 22 de septiembre de 2026. Disponible en: \url{https://co.linkedin.com/jobs/search/?keywords=PostgreSQL&location=Colombia&f_TPR=r2592000}.
+
+\bibitem{linkedin-kafka-jobs}
+LinkedIn Jobs. \textit{Kafka en Colombia - filtro Mes pasado}. 192 resultados observados el 22 de septiembre de 2026. Disponible en: \url{https://co.linkedin.com/jobs/search/?keywords=Kafka&location=Colombia&f_TPR=r2592000}.
+
+\bibitem{job-dba-postgresql-2026}
+ElEmpleo.com Colombia. \textit{Ofertas DBA PostgreSQL en Bogotá}. Consulta de septiembre de 2026; una oferta DBA bilingüe con PostgreSQL publica COP 6.0--6.5 millones mensuales y la página muestra vacantes DBA con bandas superiores según responsabilidad. Disponible en: \url{https://www.elempleo.com/co/ofertas-empleo/bogota/trabajo-dba-postgresql}.
+
+\bibitem{job-kafka-manpower-2026}
+MANPOWER / ElEmpleo.com. \textit{Application Support Engineer - Kafka / Middleware - Bogotá}. Publicado 30 de abril de 2026. Salario publicado: COP 6.000.000 mensuales más auxilio de alimentación. Disponible en: \url{https://www.elempleo.com/co/ofertas-trabajo/application-support-engineer-kafka-middleware-bogota-1886705694}.
+
+
+
+\bibitem{dbdiagram}
+dbdiagram.io. \textit{DBML - Database Markup Language}. Disponible en: \url{https://dbml.dbdiagram.io/home/}. Consultado: 22 de septiembre de 2026.
+
+\end{thebibliography}
+
+\end{document}

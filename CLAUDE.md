@@ -6,14 +6,16 @@ Este archivo es corto a propósito. **La fuente de verdad es la wiki del reposit
 
 ## 1. Jerarquía de fuentes
 
-Si dos fuentes se contradicen, prevalece la de menor número:
+**`docs/informe/main.tex` es la fuente de verdad del diseño.** La wiki no decide: **describe, explica y deriva** lo que el informe establece. Si dos fuentes se contradicen, prevalece la de menor número:
 
-1. Las reglas de la sección 3 y las decisiones ADR aprobadas (`docs/wiki/02-arquitectura/decisiones-adr.md`).
-2. Contratos versionados en `contracts/` (OpenAPI y JSON Schema).
-3. La wiki (`docs/wiki/`) y el backlog (`docs/wiki/06-backlog/`).
-4. El informe técnico (`docs/informe/main.tex`) y los diagramas.
+1. El informe técnico (`docs/informe/main.tex`) y sus diagramas (`docs/wiki/02-arquitectura/diagramas/`).
+2. Las reglas de la sección 3 y las decisiones ADR aprobadas (`docs/wiki/02-arquitectura/decisiones-adr.md`), que desarrollan lo que fija el informe.
+3. Contratos versionados en `contracts/` (OpenAPI y JSON Schema).
+4. El resto de la wiki (`docs/wiki/`) y el backlog (`docs/wiki/06-backlog/`).
 
-Una contradicción no se resuelve en silencio: se reporta y se propone su corrección.
+**`main.tex` lo edita únicamente Sara.** Ninguna herramienta ni asistente lo modifica: una corrección al informe **se propone, no se aplica**.
+
+Una contradicción no se resuelve en silencio. Si la wiki se desvía del informe, se corrige la wiki. Si parece que el equivocado es el informe, se registra en [Divergencias informe–wiki](docs/wiki/02-arquitectura/divergencias-informe-wiki.md) y decide Sara.
 
 ## 2. Qué leer según la tarea
 
@@ -29,6 +31,7 @@ Una contradicción no se resuelve en silencio: se reporta y se propone su correc
 | Pruebas y calidad | `docs/wiki/02-arquitectura/atributos-de-calidad.md` y `docs/wiki/05-proceso/dor-y-dod.md` |
 | Qué está hecho | `docs/wiki/06-backlog/estado.md` |
 | Duda de alcance | `docs/wiki/01-producto/vision-y-alcance.md` y `docs/wiki/02-arquitectura/puntos-abiertos.md` |
+| El informe y la wiki no coinciden | `docs/wiki/02-arquitectura/divergencias-informe-wiki.md` |
 
 Índice completo: `docs/wiki/Home.md`.
 
