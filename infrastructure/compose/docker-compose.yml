@@ -96,7 +96,10 @@ services:
       POSTGRES_USER: ${ORDER_DB_USER}
       POSTGRES_PASSWORD: ${ORDER_DB_PASSWORD}
     volumes:
-      - order-db-data:/var/lib/postgresql/data
+      # postgres:18+ guarda los datos en un subdirectorio por versión mayor, así que el
+      # montaje va en /var/lib/postgresql y no en /var/lib/postgresql/data: con el montaje
+      # en .../data el contenedor aborta el arranque.
+      - order-db-data:/var/lib/postgresql
       # Los scripts se ejecutan en orden alfabético la primera vez que se crea el volumen.
       - ../postgres/order-db:/docker-entrypoint-initdb.d:ro
     healthcheck:
@@ -122,7 +125,7 @@ services:
       POSTGRES_USER: ${PAYMENT_DB_USER}
       POSTGRES_PASSWORD: ${PAYMENT_DB_PASSWORD}
     volumes:
-      - payment-db-data:/var/lib/postgresql/data
+      - payment-db-data:/var/lib/postgresql
       - ../postgres/payment-db:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
@@ -147,7 +150,7 @@ services:
       POSTGRES_USER: ${NOTIFICATION_DB_USER}
       POSTGRES_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
     volumes:
-      - notification-db-data:/var/lib/postgresql/data
+      - notification-db-data:/var/lib/postgresql
       - ../postgres/notification-db:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
