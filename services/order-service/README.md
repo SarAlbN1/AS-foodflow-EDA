@@ -1,6 +1,6 @@
 # services/order-service — Order Service
 
-> **Estado:** HU-101 y HU-102 en revisión: `POST /orders` crea y persiste el pedido en estado `CREADO` y `GET /orders/{id}` lo consulta. El resto de la funcionalidad la construyen las historias indicadas.
+> **Estado:** `POST /orders` crea y persiste el pedido en estado `CREADO` (HU-101) y `GET /orders/{id}` lo consulta (HU-102). El resto de la funcionalidad la construyen las historias indicadas.
 
 **Responsabilidad:** Crea y consulta pedidos; publica `OrderCreated` y `OrderStatusChanged`; consume `PaymentApproved` y `PaymentRejected`. Único propietario de Order DB.
 
