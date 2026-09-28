@@ -20,3 +20,4 @@ Jerarquía completa: [`CLAUDE.md`](../../CLAUDE.md) §1 y [Home de la wiki](../w
 | `figuras/` | Gráficas de mercado laboral |
 | `correcciones-propuestas-HU-008.md` | Cambios propuestos al documento, pendientes de que Sara los aplique |
 | `propuesta-HU-702-proyeccion-laboral.md` | Propuesta de texto para la columna «Proyección sustentada» de la matriz de mercado (HU-702): tendencia con regla explícita y datos observados separados de inferencias |
+| `propuesta-D6-quien-dispara-la-notificacion.md` | Propuesta de texto para las seis frases que dicen que Notification consume `OrderStatusChanged` (divergencia D-6, decidida en abanico desde `payments.events`) |
