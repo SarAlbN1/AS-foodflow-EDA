@@ -53,12 +53,25 @@ class HealthEndpointTest {
         assertThat(get("/actuator/health/liveness").getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
-    /** CA-2: readiness se consulta por separado de liveness. */
+    /**
+     * CA-2: readiness responde por las dependencias esenciales, no solo por el estado interno.
+     *
+     * <p>Se afirma que Payment DB figura en el grupo, no un codigo concreto: el estado depende de
+     * si la base esta levantada al correr la prueba, pero que {@code db} aparezca solo puede pasar
+     * si el grupo lo incluye. Sin
+     * {@code management.endpoint.health.group.readiness.include=readinessState,db} el grupo
+     * contiene solo {@code readinessState} y el servicio anunciaria que puede atender trafico con
+     * su base caida.
+     */
     @Test
-    @DisplayName("CA-2: readiness se expone como endpoint propio")
-    void readinessSeExponePorSeparado() {
-        assertThat(get("/actuator/health/readiness").getStatusCode())
-                .isIn(HttpStatus.OK, HttpStatus.SERVICE_UNAVAILABLE);
+    @DisplayName("CA-2: readiness tiene en cuenta Payment DB, no solo el estado interno")
+    void readinessIncluyeLaBase() {
+        ResponseEntity<String> respuesta = get("/actuator/health/readiness");
+
+        assertThat(respuesta.getStatusCode()).isIn(HttpStatus.OK, HttpStatus.SERVICE_UNAVAILABLE);
+        assertThat(respuesta.getBody())
+                .as("si db no aparece, readiness ignora la base y el criterio 2 no se cumple")
+                .contains("\"db\"");
     }
 
     /** CA-3: el cuerpo nombra los componentes pero no expone su detalle. */

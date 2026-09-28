@@ -82,6 +82,8 @@ Dos consumidores del grupo no pueden procesar el mismo pedido a la vez: la clave
 
 El esquema lo crean los scripts de [`infrastructure/postgres/payment-db/`](../../infrastructure/postgres/payment-db) y Hibernate solo lo valida (`ddl-auto=validate`).
 
+**Payment DB entra en `readiness`.** El grupo `readiness` contiene solo `readinessState` por omisión, así que la HU que trae la base añade también `management.endpoint.health.group.readiness.include=readinessState,db`. Sin esa línea el servicio respondería `200` en `/actuator/health/readiness` con su base caída, que es justo lo que un health check de Compose consulta para decidir si el contenedor está listo.
+
 ### Pruebas con la base real
 
 `PaymentServiceApplicationTests` persiste contra Payment DB y solo corre cuando `PAYMENT_DB_URL` está definida, para que `./mvnw verify` funcione sin infraestructura:
