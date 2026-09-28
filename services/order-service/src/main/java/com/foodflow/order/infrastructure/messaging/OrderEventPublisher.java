@@ -23,9 +23,11 @@ import tools.jackson.databind.ObjectMapper;
  * ({@code docs/wiki/04-implementacion/convenciones.md}). Order Service no llama a Payment
  * Service: publica el hecho y Payment lo consume (reglas arquitectonicas 4 y 5).
  *
- * <p><strong>Despues del commit (ADR-08).</strong> La publicacion se registra para ejecutarse
- * cuando la transaccion que persiste el pedido ya ha hecho commit, asi que un pedido que no
- * llega a guardarse nunca produce evento. La contrapartida es la ventana de escritura dual que
+ * <p><strong>Despues del commit (ADR-08), y sin bloquear la respuesta.</strong> La publicacion
+ * se registra para ejecutarse cuando la transaccion que persiste el pedido ya ha hecho commit,
+ * asi que un pedido que no llega a guardarse nunca produce evento. No se espera la
+ * confirmacion del broker: eso ocurriria en el hilo de la peticion HTTP y acoplaria el tiempo
+ * de respuesta de {@code POST /orders} al de Kafka. La contrapartida es la ventana de escritura dual que
  * ADR-08 acepta: si el commit sale bien y la publicacion falla, el pedido queda en
  * {@code CREADO} sin evento. Se registra el fallo y no se hace nada mas: no hay Outbox ni
  * tarea de reconciliacion, y esa es la decision, no un olvido.
@@ -75,21 +77,46 @@ public class OrderEventPublisher {
         }
     }
 
+    /**
+     * Envia el evento <strong>sin esperar</strong> la confirmacion de Kafka.
+     *
+     * <p>Este metodo corre en {@code afterCommit}, es decir en el hilo de la peticion HTTP y
+     * antes de responder. Esperar la confirmacion aqui acoplaria el tiempo de respuesta de
+     * {@code POST /orders} al del broker: con {@code acks=all}, una replica lenta podria
+     * estirar la espera hasta el limite de entrega, el gateway cortaria primero y el cliente
+     * recibiria un {@code 503} por un pedido que <strong>si</strong> se creo.
+     *
+     * <p>El resultado se registra en {@code whenComplete}, asi que el criterio 5 se sigue
+     * cumpliendo: un fallo de publicacion deja su {@code ERROR} con {@code correlationId} y
+     * {@code orderId}, y el pedido permanece en {@code CREADO}.
+     */
     private void enviar(EventEnvelope<OrderCreatedPayload> evento) {
         // La clave es el orderId: es la clave de particion (regla 11, ADR-04), lo que
         // garantiza que todos los eventos de un pedido van a la misma particion y en orden.
         String clave = evento.aggregateId().toString();
         try {
-            kafka.send(ordersTopic, clave, jackson.writeValueAsString(evento)).join();
-            log.info("Evento publicado eventType={} eventId={} orderId={} correlationId={} topic={}",
-                    evento.eventType(), evento.eventId(), evento.aggregateId(),
-                    evento.correlationId(), ordersTopic);
+            kafka.send(ordersTopic, clave, jackson.writeValueAsString(evento))
+                    .whenComplete((resultado, fallo) -> {
+                        if (fallo == null) {
+                            log.info("Evento publicado eventType={} eventId={} orderId={} correlationId={} topic={}",
+                                    evento.eventType(), evento.eventId(), evento.aggregateId(),
+                                    evento.correlationId(), ordersTopic);
+                        } else {
+                            registrarFallo(evento, fallo);
+                        }
+                    });
         } catch (Exception e) {
-            // CA5 y ADR-08: el pedido permanece en CREADO y nadie lo reconcilia.
-            log.error("No se pudo publicar {} tras el commit. El pedido queda sin evento y en CREADO. "
-                            + "eventId={} orderId={} correlationId={} topic={} causa={}",
-                    evento.eventType(), evento.eventId(), evento.aggregateId(),
-                    evento.correlationId(), ordersTopic, e.toString());
+            // Un fallo sincrono de send: serializacion, o metadatos no disponibles al agotarse
+            // max.block.ms con el broker caido.
+            registrarFallo(evento, e);
         }
+    }
+
+    /** CA5 y ADR-08: el pedido permanece en {@code CREADO} y nadie lo reconcilia. */
+    private void registrarFallo(EventEnvelope<OrderCreatedPayload> evento, Throwable causa) {
+        log.error("No se pudo publicar {} tras el commit. El pedido queda sin evento y en CREADO. "
+                        + "eventId={} orderId={} correlationId={} topic={} causa={}",
+                evento.eventType(), evento.eventId(), evento.aggregateId(),
+                evento.correlationId(), ordersTopic, causa.toString());
     }
 }
