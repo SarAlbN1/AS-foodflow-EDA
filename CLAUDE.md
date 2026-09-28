@@ -97,6 +97,7 @@ Flyway, Testcontainers y CI son **opcionales**: no los conviertas en requisito.
 | Levantar / detener entorno | `scripts/up.sh` / `scripts/down.sh` | HU-607 |
 | Prueba de humo E2E | `scripts/smoke-test.sh` | HU-607 |
 | Validar contratos de eventos | `bash scripts/validate-events.sh` | HU-003 |
+| Validar el contrato REST | `bash scripts/validate-openapi.sh` | HU-404 |
 | Verificar arquitectura | `scripts/verify-architecture.sh` | HU-006 |
 | Construir y probar un servicio | `./mvnw verify` (en `services/<servicio>` o `gateway/api-gateway`; Windows: `mvnw.cmd verify`) | HU-001 |
 | Construir y probar el frontend | `npm ci && npm run build && npm test -- --watch=false` (en `frontend/foodflow-web`) | HU-001 |
