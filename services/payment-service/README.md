@@ -54,7 +54,7 @@ Payment Service se suscribe a `orders.events` en su propio grupo `payment-servic
 |---|---|
 | `OrderCreated` v1 válido | Extrae `orderId`, `total`, `currency`, `paymentToken`, `correlationId` y el snapshot `notificationContact`, y entrega la orden a la capa de aplicación |
 | `OrderStatusChanged` u otro tipo | Lo ignora con `DEBUG` y confirma el offset, sin error y sin DLQ |
-| JSON ilegible, envelope incompleto, `eventVersion` no soportada, payload fuera de contrato | Lo registra como no procesable y **no** inicia ningún pago |
+| JSON ilegible, envelope incompleto, `eventVersion` no soportada, payload fuera de contrato (moneda, `paymentToken`, `aggregateId`, más de dos decimales en `total`) | Lo registra como no procesable y **no** inicia ningún pago |
 
 > **Dependencia.** El servicio usa `spring-boot-starter-kafka`, no `spring-kafka` a secas. En Spring Boot 4 la configuración automática de Kafka vive en su propio módulo: sin ella el `@KafkaListener` no se registra y las propiedades `spring.kafka.*` se ignoran, así que el servicio arrancaría sin consumir nada. `OrderCreatedListenerRegistrationTest` lo comprueba mirando el registro de contenedores.
 

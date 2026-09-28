@@ -146,6 +146,13 @@ public class OrderCreatedEventConsumer {
                         .formatted(envelope.aggregateId(), payload.orderId()));
 
         exigir(payload.total().compareTo(BigDecimal.ZERO) > 0, "payload.total debe ser mayor que cero");
+
+        // El contrato declara el importe como multiplo de 0.01 y Payment DB lo guarda como
+        // NUMERIC(12,2). Un total con mas decimales no es un fallo transitorio: no se puede
+        // representar, y reintentarlo no lo arregla. Se descarta aqui en vez de dejar que
+        // reviente al ajustar la escala mas adelante.
+        exigir(payload.total().stripTrailingZeros().scale() <= 2,
+                "payload.total %s tiene mas de dos decimales".formatted(payload.total().toPlainString()));
         exigir(MONEDA_SOPORTADA.equals(payload.currency()),
                 "moneda %s no soportada: el prototipo solo opera en %s"
                         .formatted(payload.currency(), MONEDA_SOPORTADA));
