@@ -17,6 +17,8 @@ import com.foodflow.payment.domain.NotificationChannel;
 import com.foodflow.payment.domain.NotificationContact;
 import com.foodflow.payment.domain.PaymentToken;
 
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
@@ -52,6 +54,10 @@ public class OrderCreatedEventConsumer {
     /** Moneda unica del prototipo ({@code envelope.schema.json#/$defs/moneda}). */
     private static final String MONEDA_SOPORTADA = "COP";
 
+    /** El envelope de entrada se enlaza con el payload sin interpretar, como arbol JSON. */
+    private static final TypeReference<EventEnvelope<JsonNode>> TIPO_ENVELOPE = new TypeReference<>() {
+    };
+
     private final ObjectMapper jackson;
     private final PaymentApplicationService pagos;
 
@@ -81,7 +87,7 @@ public class OrderCreatedEventConsumer {
     }
 
     private void procesar(ConsumerRecord<String, String> registro) {
-        EventEnvelope envelope = leerEnvelope(registro);
+        EventEnvelope<JsonNode> envelope = leerEnvelope(registro);
 
         if (!TIPO_SOPORTADO.equals(envelope.eventType())) {
             log.debug("Evento ignorado por tipo. eventType={} eventId={} aggregateId={}",
@@ -100,13 +106,13 @@ public class OrderCreatedEventConsumer {
         pagos.iniciarPago(orden);
     }
 
-    private EventEnvelope leerEnvelope(ConsumerRecord<String, String> registro) {
+    private EventEnvelope<JsonNode> leerEnvelope(ConsumerRecord<String, String> registro) {
         String valor = registro.value();
         if (valor == null || valor.isBlank()) {
             throw new UnsupportedEventException("el registro no tiene cuerpo");
         }
         try {
-            return jackson.readValue(valor, EventEnvelope.class);
+            return jackson.readValue(valor, TIPO_ENVELOPE);
         } catch (Exception e) {
             throw new UnsupportedEventException("el cuerpo no es un envelope v1 legible: " + e.getMessage(), e);
         }
@@ -117,7 +123,7 @@ public class OrderCreatedEventConsumer {
      * cuando el evento es de un tipo que este servicio procesa: un evento ajeno y mal formado
      * se ignora por tipo, no se convierte en un fallo de Payment Service.
      */
-    private void exigirEnvelopeCompleto(EventEnvelope envelope) {
+    private void exigirEnvelopeCompleto(EventEnvelope<JsonNode> envelope) {
         exigir(envelope.eventId() != null, "eventId es obligatorio");
         exigir(envelope.eventVersion() != null, "eventVersion es obligatorio");
         exigir(envelope.occurredAt() != null, "occurredAt es obligatorio");
@@ -126,7 +132,7 @@ public class OrderCreatedEventConsumer {
         exigir(envelope.payload() != null && envelope.payload().isObject(), "payload es obligatorio");
     }
 
-    private StartPaymentCommand aOrdenDePago(EventEnvelope envelope) {
+    private StartPaymentCommand aOrdenDePago(EventEnvelope<JsonNode> envelope) {
         OrderCreatedPayload payload;
         try {
             payload = jackson.treeToValue(envelope.payload(), OrderCreatedPayload.class);

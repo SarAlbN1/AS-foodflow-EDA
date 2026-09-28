@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.foodflow.payment.domain.Payment;
+import com.foodflow.payment.infrastructure.messaging.PaymentEventPublisher;
 import com.foodflow.payment.infrastructure.persistence.PaymentRepository;
 
 /**
@@ -20,8 +21,8 @@ import com.foodflow.payment.infrastructure.persistence.PaymentRepository;
  * independiente del estado del pedido: Order Service se entera por el evento de pago, nunca
  * leyendo esta tabla.
  *
- * <p><strong>Alcance de HU-202.</strong> Crea y persiste el pago. La publicacion de
- * {@code PaymentApproved} y {@code PaymentRejected} es HU-203 y HU-204; el registro en
+ * <p>Tras el commit publica el resultado en {@code payments.events} (HU-203), y Order Service
+ * y Notification Service reaccionan cada uno por su cuenta. El registro en
  * {@code processed_events} por {@code eventId} (ADR-09) es HU-601.
  */
 @Service
@@ -31,10 +32,13 @@ public class PaymentApplicationService {
 
     private final PaymentRepository repositorio;
     private final TransactionReferences referencias;
+    private final PaymentEventPublisher publicador;
 
-    public PaymentApplicationService(PaymentRepository repositorio, TransactionReferences referencias) {
+    public PaymentApplicationService(PaymentRepository repositorio, TransactionReferences referencias,
+            PaymentEventPublisher publicador) {
         this.repositorio = repositorio;
         this.referencias = referencias;
+        this.publicador = publicador;
     }
 
     /**
@@ -60,7 +64,9 @@ public class PaymentApplicationService {
         Optional<Payment> yaCobrado = repositorio.findByOrderId(orden.orderId());
         if (yaCobrado.isPresent()) {
             Payment pago = yaCobrado.get();
-            log.info("El pedido ya tenia pago, no se cobra de nuevo. orderId={} paymentId={} status={} eventId={} correlationId={}",
+            // Tampoco se vuelve a publicar: el resultado ya se anuncio cuando el pago se creo,
+            // y repetirlo haria que Order y Notification lo procesaran dos veces.
+            log.info("El pedido ya tenia pago, no se cobra ni se publica de nuevo. orderId={} paymentId={} status={} eventId={} correlationId={}",
                     orden.orderId(), pago.id(), pago.status(), orden.eventId(), orden.correlationId());
             return pago;
         }
@@ -72,6 +78,7 @@ public class PaymentApplicationService {
                 referencias.nueva(orden.orderId(), Instant.now()));
 
         Payment guardado = repositorio.saveAndFlush(pago);
+        publicador.publicarResultado(guardado, orden);
         log.info("Pago resuelto. orderId={} paymentId={} status={} amount={} {} reasonCode={} transactionReference={} eventId={} correlationId={} contacto={}",
                 guardado.orderId(), guardado.id(), guardado.status(), guardado.amount(),
                 orden.currency(), guardado.reasonCode(), guardado.transactionReference(),

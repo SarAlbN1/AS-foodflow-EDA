@@ -21,6 +21,7 @@ import com.foodflow.payment.domain.Payment;
 import com.foodflow.payment.domain.PaymentStatus;
 import com.foodflow.payment.domain.PaymentToken;
 import com.foodflow.payment.domain.RejectionReason;
+import com.foodflow.payment.infrastructure.messaging.PaymentEventPublisher;
 import com.foodflow.payment.infrastructure.persistence.PaymentRepository;
 
 /**
@@ -32,6 +33,7 @@ class PaymentApplicationServiceTests {
     private static final UUID ORDER_ID = UUID.fromString("3f8b1c2e-5a47-4d9b-8e10-7c2a6b4f9d31");
 
     private PaymentRepository repositorio;
+    private PaymentEventPublisher publicador;
     private PaymentApplicationService servicio;
 
     @BeforeEach
@@ -39,7 +41,8 @@ class PaymentApplicationServiceTests {
         repositorio = mock(PaymentRepository.class);
         when(repositorio.findByOrderId(any())).thenReturn(Optional.empty());
         when(repositorio.saveAndFlush(any())).thenAnswer(invocacion -> invocacion.getArgument(0));
-        servicio = new PaymentApplicationService(repositorio, new TransactionReferences());
+        publicador = mock(PaymentEventPublisher.class);
+        servicio = new PaymentApplicationService(repositorio, new TransactionReferences(), publicador);
     }
 
     @Test
@@ -92,6 +95,29 @@ class PaymentApplicationServiceTests {
 
         assertThat(pago).isSameAs(existente);
         verify(repositorio, never()).saveAndFlush(any());
+    }
+
+    @Test
+    @DisplayName("HU-203: al resolver el pago se publica su resultado")
+    void publicaElResultadoDelPago() {
+        StartPaymentCommand orden = orden("45900.00", PaymentToken.PAY_OK);
+
+        Payment pago = servicio.iniciarPago(orden);
+
+        verify(publicador).publicarResultado(pago, orden);
+    }
+
+    @Test
+    @DisplayName("HU-203: reprocesar el mismo pedido no vuelve a publicar el resultado")
+    void noRepiteLaPublicacionAlReprocesar() {
+        Payment existente = Payment.resolver(ORDER_ID, new BigDecimal("45900.00"),
+                PaymentToken.PAY_OK, "TXN-20260927-" + ORDER_ID);
+        when(repositorio.findByOrderId(ORDER_ID)).thenReturn(Optional.of(existente));
+
+        servicio.iniciarPago(orden("45900.00", PaymentToken.PAY_OK));
+
+        // Repetirlo haria que Order y Notification procesaran el mismo resultado dos veces.
+        verify(publicador, never()).publicarResultado(any(), any());
     }
 
     private StartPaymentCommand orden(String total, PaymentToken token) {
