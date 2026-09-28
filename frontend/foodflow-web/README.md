@@ -1,6 +1,6 @@
 # frontend/foodflow-web — Aplicación Angular
 
-> **Estado:** esqueleto compilable (HU-001), sin funcionalidad de negocio. La funcionalidad la construyen las historias indicadas.
+> **Estado:** HU-501 en revisión: formulario para crear un pedido a través del API Gateway. Consulta del estado (HU-502), notificaciones (HU-504) y flujo integral (HU-505) los añaden sus historias.
 
 **Responsabilidad:** Interfaz para crear pedidos y consultar su estado y sus notificaciones. Se publica con Nginx. Solo consume APIs REST del API Gateway.
 
@@ -22,6 +22,14 @@ Desde `frontend/foodflow-web/`:
 | Ejecutar en desarrollo | `npm start` y abrir http://localhost:4200/ |
 | Detener | `Ctrl+C` en la terminal |
 
-La publicación con Nginx y la conexión con el API Gateway se añaden en HU-501 y HU-607.
+## Conexión con el API Gateway
+
+La aplicación solo habla con el API Gateway. Su URL es el token `API_BASE_URL` (`src/app/core/api-config.ts`), `http://localhost:8080` por omisión. En desarrollo, el gateway debe admitir el origen `http://localhost:4200` por CORS (`GATEWAY_CORS_ALLOWED_ORIGINS`, HU-403). La publicación con Nginx se añade en HU-607.
+
+## Crear un pedido (HU-501)
+
+- Formulario con `customerReference`, `customerContact`, `notificationChannel` (solo `EMAIL`), `total` y el resultado de pago simulado (`PAY-OK` / `PAY-FAIL`). Valida en el cliente las mismas reglas que Order Service: obligatorios, correo con dominio y total mayor que cero con dos decimales como máximo.
+- Cada intento de envío lleva una `Idempotency-Key`. Reintentar **el mismo envío** tras un fallo de red o un `503` reutiliza la clave; cambiar los datos o crear otro pedido genera una nueva. Un segundo clic mientras se envía no produce otra solicitud.
+- Los errores en Problem Details se muestran con un texto para la persona y su `correlationId` como referencia. Solo se muestra el `detail` de un `VALIDATION_ERROR` (la lista de campos rechazados); nunca trazas ni datos internos.
 
 Referencias: [`CLAUDE.md`](../../CLAUDE.md) · [Wiki](../../docs/wiki/Home.md)

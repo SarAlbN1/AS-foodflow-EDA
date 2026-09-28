@@ -34,6 +34,23 @@ Closes #<n> — HU-###
 
 Reglas: el autor no aprueba su propio PR (lo revisa la otra persona); el PR es pequeño y corresponde a una sola HU; el título sigue el formato de commit.
 
+## Propiedad del trabajo entre agentes
+
+Cada persona trabaja con su propio asistente, y **cada quien corrige lo suyo**. La regla completa está en la sección 7 de [`CLAUDE.md`](../../../CLAUDE.md); aquí queda cómo se aplica a la revisión.
+
+| Situación | Qué se hace | Qué **no** se hace |
+|---|---|---|
+| Encuentras un defecto en el PR de la otra persona | Comentar con la evidencia y pedir cambios | Arreglarlo tú y subirlo a su rama |
+| Tu cambio necesita una línea en un archivo que comparte con una HU ajena | Ponerla tú, en tu rama | Dejar escrito «cuando integres esto, añade tal línea» |
+| Un *merge* rompe algo que pertenece a la otra persona | Detener la integración y reportarlo en su PR o en un issue | Repararlo al vuelo en el *merge* |
+| Te piden cambios en tu PR | Corregir en tu misma rama y responder con la evidencia | Cerrar el PR y abrir otro |
+
+**Revisar sí cruza; escribir no.** Revisar, comentar, aprobar o pedir cambios en el PR de la otra persona es obligatorio. Editar sus archivos, no.
+
+**Qué se considera «suyo».** El responsable de cada HU está en [`estado.md`](../06-backlog/estado.md). Si un archivo lo tocan dos HU de personas distintas, cada una hace su parte en su propia rama y los conflictos los resuelve quien integre en segundo lugar, **solo sobre sus propias líneas**.
+
+**Al pedir cambios, la evidencia manda.** Un hallazgo se reporta con lo que se ejecutó y lo que salió, no con una sospecha. Y quien corrige demuestra que la corrección funciona: lo habitual es enseñar que la prueba nueva **falla** sin el arreglo.
+
 ## Protección de `main`, tags y releases
 
 **Protección de `main`** (Settings, Branches): PR obligatorio, 1 aprobación, resolución de conversaciones, historial lineal (squash), sin force-push ni borrado. Los *status checks* obligatorios solo se activan si se adopta CI (opcional).
