@@ -8,6 +8,16 @@
 
 Cada servicio separa al menos: API, aplicación, dominio, persistencia, mensajería y configuración. Order Service conserva los componentes del C3: `OrderController`, `OrderApplicationService`, `OrderValidator`, `OrderRepository`, `OrderEventPublisher`, `OrderEventConsumer` y `Order`. Los nombres pueden adaptarse al paquete Java, pero las responsabilidades no se mezclan. `@KafkaListener` y `KafkaTemplate` solo viven en `infrastructure/messaging`, y solo `notification-service/infrastructure/provider` realiza llamadas HTTP salientes.
 
+### Componentes de Order Service (C4 nivel 3 y nivel de código)
+
+Los nombres de los componentes y sus responsabilidades vienen de estos diagramas del informe: mantenerlos alineados evita que el código y el documento se contradigan.
+
+![Diagrama de componentes C4 nivel 3 de Order Service](../02-arquitectura/diagramas/c4-c3-order-service.png)
+
+![Diagrama de código de OrderApplicationService](../02-arquitectura/diagramas/c4-code-order-application-service.png)
+
+> Imágenes exportadas del informe técnico (`docs/informe/main.tex`), que es la fuente de verdad del diseño. Sus fuentes las versiona HU-704.
+
 ## Errores HTTP
 
 `400` entrada inválida, `404` recurso inexistente, `409` conflicto o duplicidad, `500` error no controlado, `503` dependencia no disponible. Formato Problem Details (página [API REST](../03-contratos/api-rest.md)). Sin trazas de pila.
