@@ -10,14 +10,7 @@ public class OrderNotFoundException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    private final UUID orderId;
-
     public OrderNotFoundException(UUID orderId) {
         super("no existe un pedido con id " + orderId);
-        this.orderId = orderId;
-    }
-
-    public UUID orderId() {
-        return orderId;
     }
 }
