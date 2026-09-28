@@ -20,7 +20,7 @@
 | [HU-107](epicas/EP-01-pedidos.md) | Evitar pedidos duplicados con Idempotency-Key | 2 | Sara | 3 | Pendiente | | |
 | [HU-403](epicas/EP-04-gateway-y-contratos.md) | Propagar correlationId y manejar CORS | 2 | Juan | 3 | En revisión | [#72](https://github.com/SarAlbN1/AS-foodflow-EDA/pull/72) | |
 | [HU-404](epicas/EP-04-gateway-y-contratos.md) | Contrato OpenAPI y errores Problem Details | 2 | Sara | 5 | En revisión | #67 |  |
-| [HU-501](epicas/EP-05-frontend.md) | Crear un pedido desde Angular | 2 | Juan | 5 | Pendiente | | |
+| [HU-501](epicas/EP-05-frontend.md) | Crear un pedido desde Angular | 2 | Juan | 5 | Terminada | #74 | Criterios verificados con pruebas de componente; prueba E2E con el backend real pendiente de Docker |
 | [HU-502](epicas/EP-05-frontend.md) | Consultar y visualizar el estado del pedido | 2 | Juan | 2 | Pendiente | | |
 | [HU-604](epicas/EP-06-resiliencia-y-calidad.md) | Exponer health checks de componentes | 2 | Sara | 2 | En revisión | #68 | Health checks de los tres servicios; el del gateway lo añade HU-401 |
 | [HU-104](epicas/EP-01-pedidos.md) | Actualizar el pedido ante un pago aprobado | 3 | Juan | 3 | Pendiente | | |

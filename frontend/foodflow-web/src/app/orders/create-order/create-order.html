@@ -1,0 +1,80 @@
+@if (creado(); as pedido) {
+  <section class="resultado" aria-live="polite" data-testid="resultado">
+    <h2>Pedido creado</h2>
+    <p>
+      Identificador: <code data-testid="pedido-id">{{ pedido.id }}</code>
+    </p>
+    <p>
+      Estado: <strong data-testid="pedido-estado">{{ pedido.status }}</strong>
+    </p>
+    <p class="nota">
+      El pago se procesa en segundo plano: el estado cambiará a PAGADO o PAGO_RECHAZADO en unos
+      instantes.
+    </p>
+    <button type="button" (click)="nuevoPedido()">Crear otro pedido</button>
+  </section>
+} @else {
+  <form [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
+    <h2>Nuevo pedido</h2>
+
+    <label for="customerReference">Referencia del pedido</label>
+    <input id="customerReference" formControlName="customerReference" maxlength="60" />
+    @if (invalido('customerReference')) {
+      <p class="campo-error" data-testid="error-customerReference">
+        La referencia es obligatoria (máximo 60 caracteres).
+      </p>
+    }
+
+    <label for="customerContact">Correo de contacto</label>
+    <input id="customerContact" type="email" formControlName="customerContact" />
+    @if (invalido('customerContact')) {
+      <p class="campo-error" data-testid="error-customerContact">
+        @if (tieneError('customerContact', 'required')) {
+          El correo es obligatorio.
+        } @else {
+          Escribe un correo válido, por ejemplo ana&#64;foodflow.test.
+        }
+      </p>
+    }
+
+    <label for="notificationChannel">Canal de notificación</label>
+    <select id="notificationChannel" formControlName="notificationChannel">
+      <option value="EMAIL">Correo electrónico</option>
+    </select>
+
+    <label for="total">Total (COP)</label>
+    <input id="total" type="number" min="0.01" step="0.01" formControlName="total" />
+    @if (invalido('total')) {
+      <p class="campo-error" data-testid="error-total">
+        @if (tieneError('total', 'required')) {
+          El total es obligatorio.
+        } @else if (tieneError('total', 'decimales')) {
+          El total admite máximo dos decimales.
+        } @else if (tieneError('total', 'maximo')) {
+          El total supera el máximo permitido.
+        } @else {
+          El total debe ser mayor que cero.
+        }
+      </p>
+    }
+
+    <label for="paymentToken">Resultado de pago simulado</label>
+    <select id="paymentToken" formControlName="paymentToken">
+      <option value="PAY-OK">PAY-OK — pago aprobado</option>
+      <option value="PAY-FAIL">PAY-FAIL — pago rechazado</option>
+    </select>
+
+    @if (error(); as falla) {
+      <div class="error" role="alert" data-testid="error">
+        <p>{{ falla.mensaje }}</p>
+        @if (falla.referencia) {
+          <p class="referencia">Referencia: {{ falla.referencia }}</p>
+        }
+      </div>
+    }
+
+    <button type="submit" [disabled]="enviando()">
+      {{ enviando() ? 'Enviando…' : error()?.reintentable ? 'Reintentar' : 'Crear pedido' }}
+    </button>
+  </form>
+}

@@ -1,0 +1,43 @@
+form,
+.resultado {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-width: 28rem;
+}
+
+label {
+  margin-top: 0.6rem;
+  font-weight: 600;
+}
+
+input,
+select,
+button {
+  font: inherit;
+  padding: 0.45rem 0.6rem;
+}
+
+button {
+  margin-top: 1rem;
+  cursor: pointer;
+}
+
+.campo-error,
+.error {
+  color: #b00020;
+  margin: 0;
+}
+
+.error {
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  margin-top: 1rem;
+}
+
+.referencia,
+.nota {
+  font-size: 0.85rem;
+  color: #555;
+}
