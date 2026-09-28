@@ -23,8 +23,9 @@ public class PaymentApplicationService {
     /**
      * Inicia el pago del pedido descrito por la orden.
      *
-     * <p>El contacto es dato personal y se registra enmascarado. El importe no se registra
-     * junto al contacto para no componer un perfil innecesario en los logs.
+     * <p>El contacto es dato personal y se registra enmascarado
+     * ({@code docs/wiki/04-implementacion/convenciones.md}); el resto de la linea son los campos
+     * de correlacion y el importe, que es lo que hace util la traza del pago.
      */
     public void iniciarPago(StartPaymentCommand orden) {
         log.info("Pago iniciado. orderId={} eventId={} correlationId={} amount={} {} token={} contacto={}",
