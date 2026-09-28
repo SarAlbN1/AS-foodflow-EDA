@@ -1,6 +1,6 @@
 # services/order-service — Order Service
 
-> **Estado:** HU-101 en revisión: `POST /orders` crea y persiste el pedido en estado `CREADO`. El resto de la funcionalidad la construyen las historias indicadas.
+> **Estado:** HU-101 y HU-102 en revisión: `POST /orders` crea y persiste el pedido en estado `CREADO` y `GET /orders/{id}` lo consulta. El resto de la funcionalidad la construyen las historias indicadas.
 
 **Responsabilidad:** Crea y consulta pedidos; publica `OrderCreated` y `OrderStatusChanged`; consume `PaymentApproved` y `PaymentRejected`. Único propietario de Order DB.
 
@@ -52,7 +52,14 @@ curl -i -X POST http://localhost:8081/orders \
   -H 'Content-Type: application/json' \
   -d '{"customerReference":"PED-0001","customerContact":"ana@foodflow.test",
        "notificationChannel":"EMAIL","total":45000.00,"paymentToken":"PAY-OK"}'
+
+# Con el id de la respuesta anterior (cabecera Location):
+curl -i http://localhost:8081/orders/<id>
 ```
+
+La consulta devuelve `200` con la misma representación que la creación, `404` si el pedido no
+existe y `400` si el identificador no es un UUID. Lee siempre Order DB: no pregunta a Payment
+Service, a Notification Service ni a Kafka.
 
 ### Qué cubren las pruebas
 

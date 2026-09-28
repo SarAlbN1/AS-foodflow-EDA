@@ -1,5 +1,7 @@
 package com.foodflow.order.application;
 
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -54,5 +56,18 @@ public class OrderApplicationService {
                 ContactMasker.mask(pedido.customerContact()));
 
         return pedido;
+    }
+
+    /**
+     * Devuelve el pedido tal como esta persistido en Order DB (criterios 1 y 2 de HU-102).
+     *
+     * <p>El estado se lee de la base en cada consulta: no se reconstruye preguntando a Payment
+     * Service, a Notification Service ni a Kafka (criterio 4 de HU-102 y regla arquitectonica 8).
+     *
+     * @throws OrderNotFoundException si no existe un pedido con ese identificador
+     */
+    @Transactional(readOnly = true)
+    public Order consultarPedido(UUID id) {
+        return repository.findById(id).orElseThrow(() -> new OrderNotFoundException(id));
     }
 }

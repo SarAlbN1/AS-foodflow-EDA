@@ -1,6 +1,8 @@
 package com.foodflow.order.application;
 
 import java.math.BigDecimal;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,10 +21,15 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-/** Criterios 1, 2, 4 y 5 de HU-101 sobre el caso de uso, con el repositorio simulado. */
+/**
+ * Casos de uso del pedido con el repositorio simulado: criterios 1, 2, 4 y 5 de HU-101 y
+ * criterios 2, 3 y 4 de HU-102.
+ */
 class OrderApplicationServiceTests {
 
     private final OrderRepository repositorio = mock(OrderRepository.class);
@@ -65,5 +72,31 @@ class OrderApplicationServiceTests {
                 .isThrownBy(() -> servicio.crearPedido(invalido));
 
         verify(repositorio, never()).save(any(Order.class));
+    }
+
+    @Test
+    @DisplayName("la consulta devuelve el pedido persistido y lo lee de Order DB en cada llamada")
+    void consultaLeeLaBaseEnCadaLlamada() {
+        Order pedido = Order.crear("PED-3", NotificationChannel.EMAIL, "ana@foodflow.test",
+                PaymentToken.PAY_FAIL, new BigDecimal("12500.50"));
+        when(repositorio.findById(pedido.id())).thenReturn(Optional.of(pedido));
+
+        assertThat(servicio.consultarPedido(pedido.id())).isSameAs(pedido);
+        assertThat(servicio.consultarPedido(pedido.id())).isSameAs(pedido);
+
+        // Criterios 2 y 4 de HU-102: sin cache y sin otra fuente que Order DB.
+        verify(repositorio, times(2)).findById(pedido.id());
+        verifyNoMoreInteractions(repositorio);
+    }
+
+    @Test
+    @DisplayName("un identificador inexistente produce OrderNotFoundException")
+    void pedidoInexistente() {
+        UUID id = UUID.randomUUID();
+        when(repositorio.findById(id)).thenReturn(Optional.empty());
+
+        assertThatExceptionOfType(OrderNotFoundException.class)
+                .isThrownBy(() -> servicio.consultarPedido(id))
+                .withMessage("no existe un pedido con id " + id);
     }
 }
