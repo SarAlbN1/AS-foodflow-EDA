@@ -1,3 +1,8 @@
 import { Routes } from '@angular/router';
 
-export const routes: Routes = [];
+import { CreateOrder } from './orders/create-order/create-order';
+
+export const routes: Routes = [
+  { path: '', component: CreateOrder, title: 'FoodFlow — Nuevo pedido' },
+  { path: '**', redirectTo: '' },
+];

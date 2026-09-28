@@ -88,6 +88,12 @@ Dos consumidores del grupo no pueden procesar el mismo pedido a la vez: la clave
 
 El esquema lo crean los scripts de [`infrastructure/postgres/payment-db/`](../../infrastructure/postgres/payment-db) y Hibernate solo lo valida (`ddl-auto=validate`).
 
+`payments.status` tiene su restricción `CHECK` (`payments_status_valido`), igual que `orders` y `notifications`: la base rechaza un estado fuera del catálogo aunque el código se equivoque. **Se aplica al crear el volumen**, así que en una base ya existente hay que recrearla (`down -v`) o añadirla a mano:
+
+```sql
+ALTER TABLE payments ADD CONSTRAINT payments_status_valido CHECK (status IN ('APROBADO','RECHAZADO'));
+```
+
 **Payment DB entra en `readiness`.** El grupo `readiness` contiene solo `readinessState` por omisión, así que la HU que trae la base añade también `management.endpoint.health.group.readiness.include=readinessState,db`. Sin esa línea el servicio respondería `200` en `/actuator/health/readiness` con su base caída, que es justo lo que un health check de Compose consulta para decidir si el contenedor está listo.
 
 ### Pruebas con la base real
