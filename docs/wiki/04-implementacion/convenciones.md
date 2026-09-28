@@ -4,6 +4,8 @@
 
 ## Backend
 
+**Paquete base:** `com.foodflow.<servicio>`: `com.foodflow.order`, `com.foodflow.payment`, `com.foodflow.notification` y `com.foodflow.gateway`. Coordenadas Maven: `groupId` `com.foodflow` y `artifactId` igual al nombre de la carpeta (`order-service`, `payment-service`, `notification-service`, `api-gateway`). Los subpaquetes siguen la página [Estructura del repositorio](estructura-del-repositorio.md) (`infrastructure/persistence` → `com.foodflow.<servicio>.infrastructure.persistence`).
+
 Cada servicio separa al menos: API, aplicación, dominio, persistencia, mensajería y configuración. Order Service conserva los componentes del C3: `OrderController`, `OrderApplicationService`, `OrderValidator`, `OrderRepository`, `OrderEventPublisher`, `OrderEventConsumer` y `Order`. Los nombres pueden adaptarse al paquete Java, pero las responsabilidades no se mezclan. `@KafkaListener` y `KafkaTemplate` solo viven en `infrastructure/messaging`, y solo `notification-service/infrastructure/provider` realiza llamadas HTTP salientes.
 
 ## Errores HTTP

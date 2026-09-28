@@ -11,7 +11,7 @@
 | Java (LTS) | `25` | [api.adoptium.net/v3/info/available_releases](https://api.adoptium.net/v3/info/available_releases) (`most_recent_lts: 25`) | LTS vigente. Imagen sugerida `eclipse-temurin:25-jdk` |
 | Spring Boot | `4.1.1` | [spring.io/projects/spring-boot](https://spring.io/projects/spring-boot) | GA vigente. Compatible con Spring for Apache Kafka 4.1.x |
 | Spring for Apache Kafka | `4.1.1` | [spring.io/projects/spring-kafka](https://spring.io/projects/spring-kafka) | Matriz oficial: Spring Kafka 4.1.x ↔ Spring Boot 4.1.x ↔ `kafka-clients` 4.2.x. Es la línea 4.x que cita el informe |
-| Herramienta de build | Maven | — | El árbol asume `pom.xml`. La versión concreta la fija el *wrapper* en HU-001 |
+| Herramienta de build | Maven `3.9.14` | [maven.apache.org/download.cgi](https://maven.apache.org/download.cgi) | Fijada por el *wrapper* de cada proyecto en HU-001 (`.mvn/wrapper/maven-wrapper.properties`, script del wrapper 3.3.4) |
 | Angular | `22.2.0` | [registry.npmjs.org/@angular/core/latest](https://registry.npmjs.org/@angular/core/latest) · [angular.dev/reference/versions](https://angular.dev/reference/versions) | Línea con soporte activo |
 | Node.js | `24.21.0` | [nodejs.org/en/about/previous-releases](https://nodejs.org/en/about/previous-releases) · [nodejs.org/dist/index.json](https://nodejs.org/dist/index.json) | Active LTS (*Krypton*). Cumple el rango de Angular 22 (`^22.22.3 \|\| ^24.15.0 \|\| ^26.0.0`) |
 | PostgreSQL | `18.6` | [postgresql.org/support/versioning](https://www.postgresql.org/support/versioning/) | Mayor vigente en su minor actual. Imagen `postgres:18.6` |
