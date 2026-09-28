@@ -2,11 +2,11 @@
 
 **Responsabilidad:** `docker-compose.yml` con Kafka, tres PostgreSQL, servicios, gateway, frontend y mock.
 
-**Historias que lo construyen:** HU-002 (Kafka y las tres bases), HU-004 (tópicos), HU-607 (servicios, gateway, frontend, mock y `scripts/up.sh`)
+**Historias que lo construyen:** HU-002 (Kafka y las tres bases), HU-004 (tópicos), HU-306 (mock del proveedor), HU-607 (servicios, gateway, frontend y `scripts/up.sh`)
 
 **Reglas que aplican:** Cada servicio recibe únicamente la configuración de su propia base.
 
-> **Estado:** HU-002 y HU-004 completadas — Kafka (KRaft), sus tópicos y DLQ, y las tres PostgreSQL. Todavía **no** hay servicios, gateway, frontend o mock (HU-607).
+> **Estado:** HU-002, HU-004 y HU-306 completadas — Kafka (KRaft), sus tópicos y DLQ, las tres PostgreSQL y el proveedor de notificaciones simulado. Todavía **no** hay servicios, gateway ni frontend (HU-607).
 
 ## Qué levanta hoy
 
@@ -14,6 +14,7 @@
 |---|---|---|---|
 | `kafka` | `apache/kafka:4.3.1` | `29092` (escucha externa) | — |
 | `kafka-init` | `apache/kafka:4.3.1` | — (de un solo uso: crea los tópicos y termina) | — |
+| `notification-provider` | `foodflow/notification-provider:0.0.1` (se construye desde `mocks/notification-provider`, base `eclipse-temurin:25-jdk`) | `8090` (`NOTIFICATION_PROVIDER_HOST_PORT`) | Lo invoca solo `notification-service` |
 | `order-db` | `postgres:18.6` | `5433` | `order-service` |
 | `payment-db` | `postgres:18.6` | `5434` | `payment-service` |
 | `notification-db` | `postgres:18.6` | `5435` | `notification-service` |
