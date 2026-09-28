@@ -59,7 +59,7 @@ Detalle y justificación: `docs/wiki/02-arquitectura/reglas-arquitectonicas.md`.
 - **ADR-10:** pago determinista: `PAY-OK` produce `PaymentApproved` y `PAY-FAIL` produce `PaymentRejected`.
 - **ADR-11:** el pedido guarda un *snapshot* de contacto y canal de notificación (`notificationContact`).
 - Protocolos: **REST/JSON sobre HTTPS** en el borde y **eventos JSON sobre Kafka** internamente.
-- API REST mínima: `POST /orders`, `GET /orders/{id}`, `GET /orders/{id}/notifications`. `POST /orders` acepta `Idempotency-Key`. Errores en RFC 9457 Problem Details. Contratos en OpenAPI.
+- API REST mínima: `POST /orders`, `GET /orders/{id}`, `GET /orders/{id}/notifications`. `POST /orders` **exige** `Idempotency-Key`; sin ella, `400`. Errores en RFC 9457 Problem Details. Contratos en OpenAPI.
 - Eventos: `OrderCreated`, `OrderStatusChanged`, `PaymentApproved`, `PaymentRejected`, `NotificationSent`, `NotificationFailed`.
 
 ## 5. No implementar

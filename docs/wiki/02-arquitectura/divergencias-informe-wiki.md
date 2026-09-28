@@ -14,7 +14,7 @@ Revisión de esta página: **2026-09-28**, contra `main.tex` de 1043 líneas (HU
 
 | # | Tema | Informe | Qué se cambió en la wiki |
 |---|---|---|---|
-| D-1 | `Idempotency-Key` en `POST /orders` | «Requiere la cabecera `Idempotency-Key`» (línea 585) | [API REST](../03-contratos/api-rest.md): la cabecera pasa de **opcional** a **obligatoria**; sin ella, `400`. La exigencia la implementa HU-107 |
+| D-1 | `Idempotency-Key` en `POST /orders` | «Requiere la cabecera `Idempotency-Key`» (línea 585) | [API REST](../03-contratos/api-rest.md): la cabecera pasa de **opcional** a **obligatoria**; sin ella, `400`. **Implementado en HU-107**, que además corrigió ADR-12 y el criterio 4 de la propia HU, que seguían diciendo «opcional» |
 | D-2 | Estados de Pago | `APROBADO` o `RECHAZADO` (líneas 545 y 854) | [Persistencia](../03-contratos/persistencia.md): se fija el catálogo de `payments.status` y se anota que su `CHECK` entra en HU-202 |
 | D-3 | Diagramas | El diseño se comunica con C4 y un modelo Structurizr único (línea 531) | Las nueve imágenes exportadas quedan versionadas y **se muestran** en las páginas de arquitectura, alcance, contratos, convenciones y runbook |
 

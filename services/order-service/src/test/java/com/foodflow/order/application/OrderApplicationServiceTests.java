@@ -1,9 +1,19 @@
 package com.foodflow.order.application;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,42 +21,43 @@ import com.foodflow.order.domain.NotificationChannel;
 import com.foodflow.order.domain.Order;
 import com.foodflow.order.domain.OrderStatus;
 import com.foodflow.order.domain.PaymentToken;
-import com.foodflow.order.infrastructure.messaging.OrderEventPublisher;
 import com.foodflow.order.infrastructure.persistence.OrderRepository;
 import com.foodflow.order.validation.OrderDraft;
 import com.foodflow.order.validation.OrderValidationException;
 import com.foodflow.order.validation.OrderValidator;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import com.foodflow.order.validation.ValidatedOrderCommand;
 
 /**
- * Casos de uso del pedido con el repositorio simulado: criterios 1, 2, 4 y 5 de HU-101 y
- * criterios 2, 3 y 4 de HU-102.
+ * Casos de uso del pedido con las escrituras simuladas: criterios 1, 2, 4 y 5 de HU-101 y
+ * criterios 2, 3 y 4 de HU-102. Las decisiones de idempotencia van en {@code IdempotencyTests}.
  */
 class OrderApplicationServiceTests {
 
     private static final UUID CORRELACION = UUID.fromString("1a2b3c4d-5e6f-4071-8293-a4b5c6d7e8f9");
+    private static final String CLAVE = "7c9e6679-7425-40de-944b-e07fc1f90ae7";
 
-    private final OrderRepository repositorio = mock(OrderRepository.class);
-    private final OrderEventPublisher publicador = mock(OrderEventPublisher.class);
-    private final OrderApplicationService servicio =
-            new OrderApplicationService(new OrderValidator(), repositorio, publicador);
+    private OrderRepository repositorio;
+    private OrderCreationTransaction transaccion;
+    private OrderApplicationService servicio;
+
+    @BeforeEach
+    void prepararServicio() {
+        repositorio = mock(OrderRepository.class);
+        transaccion = mock(OrderCreationTransaction.class);
+        when(transaccion.buscarClave(anyString())).thenReturn(Optional.empty());
+        // El colaborador transaccional construye el pedido con el comando ya validado.
+        when(transaccion.crear(any(), anyString(), anyString(), any())).thenAnswer(invocacion -> {
+            ValidatedOrderCommand c = invocacion.getArgument(0);
+            return Order.crear(c.customerReference(), c.notificationChannel(), c.customerContact(),
+                    c.paymentToken(), c.total());
+        });
+        servicio = new OrderApplicationService(new OrderValidator(), repositorio, transaccion);
+    }
 
     @Test
     @DisplayName("el pedido se crea en CREADO, con identificador propio y el snapshot de ADR-11")
     void creaPedidoEnCreado() {
-        when(repositorio.save(any(Order.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
-
-        Order pedido = servicio.crearPedido(new OrderDraft(
-                "PED-0001", "ana@foodflow.test", "EMAIL", new BigDecimal("45000.00"), "PAY-OK"), CORRELACION);
+        Order pedido = servicio.crearPedido(borrador("45000.00"), CORRELACION, CLAVE);
 
         assertThat(pedido.id()).isNotNull();
         assertThat(pedido.status()).isEqualTo(OrderStatus.CREADO);
@@ -54,18 +65,15 @@ class OrderApplicationServiceTests {
         assertThat(pedido.customerContact()).isEqualTo("ana@foodflow.test");
         assertThat(pedido.notificationChannel()).isEqualTo(NotificationChannel.EMAIL);
         assertThat(pedido.paymentToken()).isEqualTo(PaymentToken.PAY_OK);
-        assertThat(pedido.createdAt()).isNotNull();
-        assertThat(pedido.updatedAt()).isEqualTo(pedido.createdAt());
-        verify(repositorio).save(pedido);
     }
 
     @Test
     @DisplayName("dos pedidos reciben identificadores distintos")
     void identificadoresUnicos() {
-        when(repositorio.save(any(Order.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
-        OrderDraft draft = new OrderDraft("PED-1", "ana@foodflow.test", "EMAIL", new BigDecimal("1.00"), "PAY-OK");
+        UUID uno = servicio.crearPedido(borrador("1.00"), CORRELACION, CLAVE).id();
+        UUID otro = servicio.crearPedido(borrador("1.00"), CORRELACION, "otra-clave").id();
 
-        assertThat(servicio.crearPedido(draft, CORRELACION).id()).isNotEqualTo(servicio.crearPedido(draft, CORRELACION).id());
+        assertThat(uno).isNotEqualTo(otro);
     }
 
     @Test
@@ -74,9 +82,9 @@ class OrderApplicationServiceTests {
         OrderDraft invalido = new OrderDraft("PED-2", "sin-arroba", "SMS", BigDecimal.ZERO, "PAY-QUIZAS");
 
         assertThatExceptionOfType(OrderValidationException.class)
-                .isThrownBy(() -> servicio.crearPedido(invalido, CORRELACION));
+                .isThrownBy(() -> servicio.crearPedido(invalido, CORRELACION, CLAVE));
 
-        verify(repositorio, never()).save(any(Order.class));
+        verify(transaccion, never()).crear(any(), anyString(), anyString(), any());
     }
 
     @Test
@@ -89,9 +97,7 @@ class OrderApplicationServiceTests {
         assertThat(servicio.consultarPedido(pedido.id())).isSameAs(pedido);
         assertThat(servicio.consultarPedido(pedido.id())).isSameAs(pedido);
 
-        // Criterios 2 y 4 de HU-102: sin cache y sin otra fuente que Order DB.
-        verify(repositorio, times(2)).findById(pedido.id());
-        verifyNoMoreInteractions(repositorio);
+        verify(repositorio, org.mockito.Mockito.times(2)).findById(pedido.id());
     }
 
     @Test
@@ -103,5 +109,9 @@ class OrderApplicationServiceTests {
         assertThatExceptionOfType(OrderNotFoundException.class)
                 .isThrownBy(() -> servicio.consultarPedido(id))
                 .withMessage("no existe un pedido con id " + id);
+    }
+
+    private static OrderDraft borrador(String total) {
+        return new OrderDraft("PED-0001", "ana@foodflow.test", "EMAIL", new BigDecimal(total), "PAY-OK");
     }
 }

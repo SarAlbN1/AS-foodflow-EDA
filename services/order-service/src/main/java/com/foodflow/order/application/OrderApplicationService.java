@@ -4,11 +4,12 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.foodflow.order.domain.IdempotencyKey;
 import com.foodflow.order.domain.Order;
-import com.foodflow.order.infrastructure.messaging.OrderEventPublisher;
 import com.foodflow.order.infrastructure.persistence.OrderRepository;
 import com.foodflow.order.validation.OrderDraft;
 import com.foodflow.order.validation.OrderValidator;
@@ -29,45 +30,80 @@ public class OrderApplicationService {
 
     private final OrderValidator validator;
     private final OrderRepository repository;
-    private final OrderEventPublisher publicador;
+    private final OrderCreationTransaction transaccion;
 
     public OrderApplicationService(OrderValidator validator, OrderRepository repository,
-            OrderEventPublisher publicador) {
+            OrderCreationTransaction transaccion) {
         this.validator = validator;
         this.repository = repository;
-        this.publicador = publicador;
+        this.transaccion = transaccion;
     }
 
     /**
-     * Crea y persiste un pedido en estado {@code CREADO} y publica {@code OrderCreated}.
+     * Crea el pedido, o devuelve el que ya produjo esta misma solicitud (HU-107).
      *
-     * <p>El evento se envia <strong>despues</strong> del commit de esta transaccion (HU-103,
-     * criterios 1 y 3): si la persistencia falla, no se publica nada. Lo registra
-     * {@link OrderEventPublisher}, que es quien conoce Kafka.
+     * <p>Este metodo <strong>no</strong> es transaccional a proposito: la escritura vive en
+     * {@link OrderCreationTransaction} para poder reaccionar aqui, ya fuera de la transaccion,
+     * cuando dos solicitudes con la misma clave llegan a la vez.
      *
-     * @param correlationId correlacion de extremo a extremo que entra por el gateway y viaja en
-     *                      el envelope del evento
+     * <table>
+     *   <caption>Que ocurre segun la clave y el cuerpo</caption>
+     *   <tr><td>Clave nueva</td><td>Se crea el pedido y se publica {@code OrderCreated}</td></tr>
+     *   <tr><td>Misma clave, mismo cuerpo</td><td>Se devuelve el pedido original; no se crea
+     *       otro ni se publica otro evento (criterio 2)</td></tr>
+     *   <tr><td>Misma clave, cuerpo distinto</td><td>{@link IdempotencyConflictException},
+     *       que la capa {@code api} traduce a {@code 409} (criterio 3)</td></tr>
+     * </table>
+     *
+     * @param key clave de idempotencia de la solicitud; el contrato la exige siempre
      * @throws com.foodflow.order.validation.OrderValidationException si la entrada es invalida,
      *         en cuyo caso no se escribe nada en Order DB ni se publica ningun evento
      */
-    @Transactional
-    public Order crearPedido(OrderDraft draft, UUID correlationId) {
+    public Order crearPedido(OrderDraft draft, UUID correlationId, String key) {
         ValidatedOrderCommand comando = validator.validar(draft);
+        String requestHash = RequestHash.de(comando);
 
-        Order pedido = repository.save(Order.crear(
-                comando.customerReference(),
-                comando.notificationChannel(),
-                comando.customerContact(),
-                comando.paymentToken(),
-                comando.total()));
+        Order yaCreado = pedidoDeClaveExistente(key, requestHash);
+        if (yaCreado != null) {
+            return yaCreado;
+        }
 
-        log.info("Pedido creado orderId={} status={} total={} canal={} correlationId={} contacto={}",
-                pedido.id(), pedido.status(), pedido.total(), pedido.notificationChannel(),
-                correlationId, ContactMasker.mask(pedido.customerContact()));
+        try {
+            Order pedido = transaccion.crear(comando, requestHash, key, correlationId);
+            log.info("Pedido creado orderId={} status={} total={} canal={} correlationId={} contacto={}",
+                    pedido.id(), pedido.status(), pedido.total(), pedido.notificationChannel(),
+                    correlationId, ContactMasker.mask(pedido.customerContact()));
+            return pedido;
+        } catch (DataIntegrityViolationException e) {
+            // Otra solicitud con la misma clave gano la carrera y escribio primero. La clave
+            // primaria de idempotency_keys hizo su trabajo: esta transaccion se deshizo entera,
+            // asi que no quedo ningun pedido a medias. Se relee ya fuera de ella.
+            Order delOtro = pedidoDeClaveExistente(key, requestHash);
+            if (delOtro == null) {
+                throw e;
+            }
+            log.info("Solicitud simultanea con la misma Idempotency-Key: se devuelve el pedido que gano. "
+                    + "orderId={} correlationId={}", delOtro.id(), correlationId);
+            return delOtro;
+        }
+    }
 
-        publicador.publicarOrderCreated(pedido, correlationId);
-
-        return pedido;
+    /**
+     * Pedido que ya produjo esta clave, o {@code null} si la clave no se ha usado.
+     *
+     * @throws IdempotencyConflictException si la clave existe con otro cuerpo
+     */
+    private Order pedidoDeClaveExistente(String key, String requestHash) {
+        IdempotencyKey registrada = transaccion.buscarClave(key).orElse(null);
+        if (registrada == null) {
+            return null;
+        }
+        if (!registrada.mismaSolicitud(requestHash)) {
+            throw new IdempotencyConflictException(key);
+        }
+        // El pedido tiene que existir: la clave lo referencia por clave foranea.
+        return transaccion.buscarPedido(registrada.orderId())
+                .orElseThrow(() -> new OrderNotFoundException(registrada.orderId()));
     }
 
     /**

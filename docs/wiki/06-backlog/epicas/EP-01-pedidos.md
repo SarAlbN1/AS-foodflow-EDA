@@ -130,6 +130,6 @@ Como cliente, quiero que un reintento de mi solicitud de creación no genere un 
 1. `POST /orders` acepta el encabezado `Idempotency-Key`.
 2. Misma clave y mismo cuerpo devuelven la respuesta original sin crear otro pedido ni publicar otro `OrderCreated`.
 3. Misma clave y cuerpo distinto devuelven `409` en formato Problem Details.
-4. Sin encabezado, la solicitud se procesa normalmente.
+4. Sin encabezado, la solicitud se rechaza con `400` en Problem Details. El informe técnico lo exige («Requiere la cabecera `Idempotency-Key`») y `contracts/api/openapi.yaml` la declara `required: true`.
 5. Las claves se guardan en `idempotency_keys` de Order DB.
 6. Existe una prueba con una clave repetida.
