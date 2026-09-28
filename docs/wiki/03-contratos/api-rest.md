@@ -60,35 +60,6 @@ Esta idempotencia protege la **entrada síncrona** ante doble clic o reintento d
 
 La moneda **no** viaja en la representación: es `COP` para todo el prototipo (constante del envelope de eventos, `contracts/events/v1/envelope.schema.json`). El contacto y el canal van planos en REST (`customerContact`, `notificationChannel`) y anidados solo en los eventos, como `notificationContact: {channel, destination}`.
 
-**Representación del pedido.** La devuelven `POST /orders` (`201`) y `GET /orders/{id}` (`200`), idéntica en ambas, para que el frontend use un solo modelo:
-
-```json
-{
-  "id": "3f6c1e0a-6c9d-4f6f-9c4b-2a9f1d5e7b10",
-  "customerReference": "PED-0001",
-  "customerContact": "ana@foodflow.test",
-  "notificationChannel": "EMAIL",
-  "total": 45000.00,
-  "status": "CREADO",
-  "createdAt": "2026-09-28T06:41:12.482913Z",
-  "updatedAt": "2026-09-28T06:41:12.482913Z"
-}
-```
-
-| Campo | Tipo | Regla |
-|---|---|---|
-| `id` | UUID | Identificador del pedido. En los eventos el mismo valor viaja como `aggregateId` y como `payload.orderId` |
-| `customerReference` | string | Máx. 60, tal como se envió |
-| `customerContact` | string | Correo del cliente; *snapshot* de ADR-11. En los registros se enmascara (`a***@dominio.com`) |
-| `notificationChannel` | string | `EMAIL` (único canal del prototipo); *snapshot* de ADR-11 |
-| `total` | number | Escala 2, mayor que 0 |
-| `status` | string | `CREADO`, `PAGADO` o `PAGO_RECHAZADO` |
-| `createdAt`, `updatedAt` | string | ISO 8601 en UTC con sufijo `Z` |
-
-`Location` de la respuesta `201` es la ruta relativa `/orders/{id}`; el gateway le añade su propio prefijo si lo tiene.
-
-La moneda **no** viaja en la representación: es `COP` para todo el prototipo (constante del envelope de eventos, `contracts/events/v1/envelope.schema.json`). El contacto y el canal van planos en REST (`customerContact`, `notificationChannel`) y anidados solo en los eventos, como `notificationContact: {channel, destination}`.
-
 **Errores (RFC 9457 Problem Details):**
 
 ```json
