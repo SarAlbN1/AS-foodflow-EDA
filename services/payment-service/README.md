@@ -1,6 +1,6 @@
 # services/payment-service — Payment Service
 
-> **Estado:** consume `OrderCreated` (HU-201), resuelve y persiste el pago (HU-202) y publica `PaymentApproved` en `payments.events` (HU-203). `PaymentRejected` lo añade HU-204.
+> **Estado:** consume `OrderCreated` (HU-201), resuelve y persiste el pago (HU-202) y publica su resultado en `payments.events`: `PaymentApproved` (HU-203) o `PaymentRejected` (HU-204).
 
 **Responsabilidad:** Consume `OrderCreated`, decide el pago de forma determinista (`PAY-OK` / `PAY-FAIL`) y publica `PaymentApproved` o `PaymentRejected`. Único propietario de Payment DB.
 
@@ -107,9 +107,9 @@ export PAYMENT_DB_URL="jdbc:postgresql://localhost:$PAYMENT_DB_HOST_PORT/$PAYMEN
 cd services/payment-service && ./mvnw verify
 ```
 
-## Publicación del resultado (HU-203)
+## Publicación del resultado (HU-203 y HU-204)
 
-Tras persistir el pago, Payment Service publica `PaymentApproved` en `payments.events`. **Order Service y Notification Service lo consumen cada uno por su cuenta**, en grupos distintos: Payment no llama por REST a ninguno de los dos (reglas 4, 6 y 10).
+Tras persistir el pago, Payment Service publica su resultado en `payments.events`: `PaymentApproved` si fue aprobado, `PaymentRejected` si fue rechazado. **Order Service y Notification Service lo consumen cada uno por su cuenta**, en grupos distintos: Payment no llama por REST a ninguno de los dos (reglas 4, 6 y 10).
 
 | Qué | Cómo |
 |---|---|
@@ -121,7 +121,9 @@ Tras persistir el pago, Payment Service publica `PaymentApproved` en `payments.e
 
 **El riesgo aceptado de ADR-08.** Si el commit sale bien y la publicación falla, el pago queda registrado **sin que nadie se entere**, y el pedido se queda en `CREADO` para siempre. Se registra un `ERROR` y ahí termina: no hay Outbox ni reconciliación.
 
-**Un pago rechazado todavía no produce evento.** `PaymentRejected` lo publica HU-204. Hasta entonces el pago se persiste como `RECHAZADO` y el publicador lo deja dicho en un `WARN`, para que no parezca un fallo silencioso.
+**Un pago, un evento.** El resultado ya está decidido cuando el pago se persiste (ADR-10), así que la rama la elige el estado persistido y no un parámetro de quien llama: cada pago produce exactamente uno de los dos eventos y nunca los dos.
+
+Los dos hechos son eventos **distintos**, no uno con un indicador de resultado. Se diferencian en un campo —el aprobado lleva `transactionReference`, el rechazado `reasonCode`— y así un consumidor puede suscribirse solo al que le importa y no tiene que interpretar nada para saber qué pasó. El único `reasonCode` del prototipo es `PAGO_RECHAZADO_POR_TOKEN`, porque el pago es determinista.
 
 Ver los eventos con la infraestructura levantada:
 

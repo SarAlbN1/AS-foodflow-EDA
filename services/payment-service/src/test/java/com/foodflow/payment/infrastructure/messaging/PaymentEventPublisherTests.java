@@ -32,6 +32,7 @@ import com.foodflow.payment.domain.NotificationChannel;
 import com.foodflow.payment.domain.NotificationContact;
 import com.foodflow.payment.domain.Payment;
 import com.foodflow.payment.domain.PaymentToken;
+import com.foodflow.payment.domain.RejectionReason;
 
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -55,6 +56,9 @@ class PaymentEventPublisherTests {
      */
     private static final Path EJEMPLO_APPROVED =
             Path.of("../../contracts/events/v1/examples/validos/payment-approved.json");
+
+    private static final Path EJEMPLO_REJECTED =
+            Path.of("../../contracts/events/v1/examples/validos/payment-rejected.json");
 
     private KafkaTemplate<String, String> kafka;
     private ObjectMapper jackson;
@@ -164,14 +168,68 @@ class PaymentEventPublisherTests {
     }
 
     @Test
-    @DisplayName("un pago rechazado no produce PaymentApproved; su evento es HU-204")
-    void unPagoRechazadoNoAnunciaAprobacion() {
-        Payment rechazado = Payment.resolver(ORDER_ID, new BigDecimal("45900.00"),
-                PaymentToken.PAY_FAIL, "TXN-20260927-" + ORDER_ID);
+    @DisplayName("CA-1 de HU-204: un pago rechazado produce PaymentRejected con su motivo")
+    void publicaElRechazo() {
+        publicador.publicarResultado(rechazado(), orden());
 
-        publicador.publicarResultado(rechazado, orden());
+        JsonNode evento = jackson.readTree(cuerpoPublicado());
+        assertThat(evento.get("eventType").asString()).isEqualTo("PaymentRejected");
+        assertThat(evento.get("aggregateId").asString()).isEqualTo(ORDER_ID.toString());
 
-        verify(kafka, never()).send(anyString(), anyString(), anyString());
+        JsonNode payload = evento.get("payload");
+        assertThat(payload.get("reasonCode").asString()).isEqualTo(RejectionReason.PAGO_RECHAZADO_POR_TOKEN);
+        assertThat(payload.get("currency").asString()).isEqualTo("COP");
+        assertThat(new BigDecimal(payload.get("amount").asString())).isEqualByComparingTo("45900.00");
+        assertThat(payload.get("notificationContact").get("destination").asString())
+                .isEqualTo("cliente@foodflow.test");
+        // El rechazo no lleva referencia de transaccion: ese campo es del aprobado.
+        assertThat(payload.propertyNames()).doesNotContain("transactionReference");
+    }
+
+    @Test
+    @DisplayName("CA-2 de HU-204: el rechazo tiene los campos del ejemplo versionado del contrato")
+    void elRechazoNoSeDesviaDelContrato() throws Exception {
+        publicador.publicarResultado(rechazado(), orden());
+
+        JsonNode publicado = jackson.readTree(cuerpoPublicado());
+        JsonNode canonico = jackson.readTree(Files.readString(EJEMPLO_REJECTED));
+
+        assertThat(nombres(publicado)).isEqualTo(nombres(canonico));
+        assertThat(nombres(publicado.get("payload"))).isEqualTo(nombres(canonico.get("payload")));
+    }
+
+    @Test
+    @DisplayName("CA-3 de HU-204: un mismo pago produce un solo evento, nunca los dos")
+    void cadaPagoProduceUnSoloEvento() {
+        publicador.publicarResultado(aprobado(), orden());
+        publicador.publicarResultado(rechazado(), orden());
+
+        ArgumentCaptor<String> cuerpos = ArgumentCaptor.forClass(String.class);
+        verify(kafka, org.mockito.Mockito.times(2)).send(anyString(), anyString(), cuerpos.capture());
+
+        // Cada llamada produjo exactamente uno, y de tipos distintos: la rama la decide el
+        // estado persistido, no un parametro de quien llama.
+        assertThat(cuerpos.getAllValues()).hasSize(2);
+        assertThat(jackson.readTree(cuerpos.getAllValues().get(0)).get("eventType").asString())
+                .isEqualTo("PaymentApproved");
+        assertThat(jackson.readTree(cuerpos.getAllValues().get(1)).get("eventType").asString())
+                .isEqualTo("PaymentRejected");
+    }
+
+    @Test
+    @DisplayName("CA-3 de HU-204: el rechazo tampoco se publica si la persistencia se deshace")
+    void elRechazoEsperaAlCommit() {
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            publicador.publicarResultado(rechazado(), orden());
+
+            TransactionSynchronizationManager.getSynchronizations()
+                    .forEach(s -> s.afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK));
+
+            verify(kafka, never()).send(anyString(), anyString(), anyString());
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 
     @Test
@@ -200,6 +258,11 @@ class PaymentEventPublisherTests {
 
     private static Payment aprobado() {
         return Payment.resolver(ORDER_ID, new BigDecimal("45900.00"), PaymentToken.PAY_OK,
+                "TXN-20260927-" + ORDER_ID);
+    }
+
+    private static Payment rechazado() {
+        return Payment.resolver(ORDER_ID, new BigDecimal("45900.00"), PaymentToken.PAY_FAIL,
                 "TXN-20260927-" + ORDER_ID);
     }
 

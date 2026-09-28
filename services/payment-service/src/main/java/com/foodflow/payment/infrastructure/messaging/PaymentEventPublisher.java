@@ -16,7 +16,8 @@ import com.foodflow.payment.domain.Payment;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * Publica el resultado del pago en {@code payments.events} (HU-203).
+ * Publica el resultado del pago en {@code payments.events}: {@code PaymentApproved} (HU-203) o
+ * {@code PaymentRejected} (HU-204).
  *
  * <p>Es el unico punto del servicio que produce eventos. Payment Service no llama por REST a
  * Order Service ni a Notification Service: publica el hecho y cada uno reacciona por su cuenta,
@@ -28,17 +29,19 @@ import tools.jackson.databind.ObjectMapper;
  * acepta: si el commit sale bien y la publicacion falla, el pago queda registrado sin que nadie
  * se entere. Se registra el fallo y no se hace nada mas: no hay Outbox ni reconciliacion.
  *
- * <p><strong>Alcance de HU-203.</strong> Solo se publica {@code PaymentApproved}. El evento de
- * rechazo lo anade HU-204; hasta entonces un pago {@code RECHAZADO} se persiste y no produce
- * evento, y el publicador lo deja dicho en un {@code WARN} para que no parezca un fallo.
+ * <p><strong>Un pago, un evento.</strong> El resultado ya esta decidido cuando el pago se
+ * persiste (ADR-10), asi que cada pago produce exactamente uno de los dos eventos y nunca los
+ * dos: la rama la elige el estado persistido, no un parametro de quien llama.
  */
 @Component
 public class PaymentEventPublisher {
 
     private static final Logger log = LoggerFactory.getLogger(PaymentEventPublisher.class);
 
-    /** Nombre del evento en el catalogo de {@code docs/wiki/03-contratos/eventos.md}. */
+    /** Nombres de los eventos en el catalogo de {@code docs/wiki/03-contratos/eventos.md}. */
     static final String PAYMENT_APPROVED = "PaymentApproved";
+
+    static final String PAYMENT_REJECTED = "PaymentRejected";
 
     private final KafkaTemplate<String, String> kafka;
     private final ObjectMapper jackson;
@@ -64,17 +67,13 @@ public class PaymentEventPublisher {
      *              moneda y el snapshot de contacto, que no estan en Payment DB
      */
     public void publicarResultado(Payment pago, StartPaymentCommand orden) {
-        if (!pago.aprobado()) {
-            // HU-204 publica PaymentRejected. Hasta entonces no hay evento de rechazo.
-            log.warn("Pago rechazado sin evento: PaymentRejected lo publica HU-204. "
-                    + "orderId={} paymentId={} correlationId={}",
-                    pago.orderId(), pago.id(), orden.correlationId());
-            return;
-        }
-
-        EventEnvelope<PaymentApprovedPayload> evento = EventEnvelope.de(
-                PAYMENT_APPROVED, pago.orderId(), orden.correlationId(),
-                PaymentApprovedPayload.de(pago, orden.currency(), orden.contact()));
+        // Uno u otro, nunca los dos: el estado persistido decide, y es excluyente por
+        // construccion (HU-204, criterio 3).
+        EventEnvelope<? extends Record> evento = pago.aprobado()
+                ? EventEnvelope.de(PAYMENT_APPROVED, pago.orderId(), orden.correlationId(),
+                        PaymentApprovedPayload.de(pago, orden.currency(), orden.contact()))
+                : EventEnvelope.de(PAYMENT_REJECTED, pago.orderId(), orden.correlationId(),
+                        PaymentRejectedPayload.de(pago, orden.currency(), orden.contact()));
 
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -98,7 +97,7 @@ public class PaymentEventPublisher {
                     evento.eventType(), evento.eventId(), evento.aggregateId(),
                     evento.correlationId(), paymentsTopic);
         } catch (Exception e) {
-            // ADR-08: el pago queda registrado y nadie lo reconcilia.
+            // ADR-08: el pago queda registrado y nadie lo reconcilia, ni aprobado ni rechazado.
             log.error("No se pudo publicar {} tras el commit. El pago queda registrado sin que nadie "
                             + "se entere. eventId={} orderId={} correlationId={} topic={} causa={}",
                     evento.eventType(), evento.eventId(), evento.aggregateId(),
