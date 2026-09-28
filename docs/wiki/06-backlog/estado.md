@@ -6,23 +6,23 @@
 
 | HU | Título | Sprint | Resp. | Pts | Estado | PR | Notas |
 |---|---|---:|---|---:|---|---|---|
-| [HU-001](epicas/EP-00-base-tecnica-y-estandares.md) | Inicializar la estructura del repositorio | 1 | Juan | 5 | Pendiente | | |
-| [HU-002](epicas/EP-00-base-tecnica-y-estandares.md) | Levantar infraestructura local reproducible | 1 | Sara | 5 | Pendiente | | |
-| [HU-003](epicas/EP-00-base-tecnica-y-estandares.md) | Definir y versionar contratos de eventos v1 | 1 | Sara | 3 | Pendiente | | |
-| [HU-004](epicas/EP-00-base-tecnica-y-estandares.md) | Configurar tópicos Kafka del prototipo | 1 | Juan | 2 | Pendiente | | |
-| [HU-005](epicas/EP-00-base-tecnica-y-estandares.md) | Registrar los ADR del proyecto | 1 | Sara | 5 | Pendiente | | |
-| [HU-008](epicas/EP-00-base-tecnica-y-estandares.md) | Alinear el documento técnico con las decisiones consolidadas | 1 | Sara | 3 | Pendiente | | |
-| [HU-009](epicas/EP-00-base-tecnica-y-estandares.md) | Configurar los estándares del repositorio | 1 | Juan | 2 | Pendiente | | |
-| [HU-101](epicas/EP-01-pedidos.md) | Crear un pedido válido | 1 | Sara | 5 | Pendiente | | |
+| [HU-001](epicas/EP-00-base-tecnica-y-estandares.md) | Inicializar la estructura del repositorio | 1 | Juan | 5 | Terminada | #16 |  |
+| [HU-002](epicas/EP-00-base-tecnica-y-estandares.md) | Levantar infraestructura local reproducible | 1 | Sara | 5 | Terminada | #11 | Corrección del montaje de volúmenes en revisión (#64) |
+| [HU-003](epicas/EP-00-base-tecnica-y-estandares.md) | Definir y versionar contratos de eventos v1 | 1 | Sara | 3 | Terminada | #12 |  |
+| [HU-004](epicas/EP-00-base-tecnica-y-estandares.md) | Configurar tópicos Kafka del prototipo | 1 | Juan | 2 | Terminada | #15 |  |
+| [HU-005](epicas/EP-00-base-tecnica-y-estandares.md) | Registrar los ADR del proyecto | 1 | Sara | 5 | Terminada | #13 |  |
+| [HU-008](epicas/EP-00-base-tecnica-y-estandares.md) | Alinear el documento técnico con las decisiones consolidadas | 1 | Sara | 3 | En revisión | #66 |  |
+| [HU-009](epicas/EP-00-base-tecnica-y-estandares.md) | Configurar los estándares del repositorio | 1 | Juan | 2 | Terminada | — | Integrada en el commit inicial del repositorio, sin PR |
+| [HU-101](epicas/EP-01-pedidos.md) | Crear un pedido válido | 1 | Sara | 5 | En revisión | #65 |  |
 | [HU-102](epicas/EP-01-pedidos.md) | Consultar un pedido por identificador | 1 | Juan | 2 | Pendiente | | |
 | [HU-401](epicas/EP-04-gateway-y-contratos.md) | Enrutar operaciones de pedidos | 1 | Juan | 3 | Pendiente | | |
 | [HU-103](epicas/EP-01-pedidos.md) | Publicar OrderCreated al crear el pedido | 2 | Sara | 5 | Pendiente | | |
 | [HU-107](epicas/EP-01-pedidos.md) | Evitar pedidos duplicados con Idempotency-Key | 2 | Sara | 3 | Pendiente | | |
 | [HU-403](epicas/EP-04-gateway-y-contratos.md) | Propagar correlationId y manejar CORS | 2 | Juan | 3 | Pendiente | | |
-| [HU-404](epicas/EP-04-gateway-y-contratos.md) | Contrato OpenAPI y errores Problem Details | 2 | Sara | 5 | Pendiente | | |
+| [HU-404](epicas/EP-04-gateway-y-contratos.md) | Contrato OpenAPI y errores Problem Details | 2 | Sara | 5 | En revisión | #67 |  |
 | [HU-501](epicas/EP-05-frontend.md) | Crear un pedido desde Angular | 2 | Juan | 5 | Pendiente | | |
 | [HU-502](epicas/EP-05-frontend.md) | Consultar y visualizar el estado del pedido | 2 | Juan | 2 | Pendiente | | |
-| [HU-604](epicas/EP-06-resiliencia-y-calidad.md) | Exponer health checks de componentes | 2 | Sara | 2 | Pendiente | | |
+| [HU-604](epicas/EP-06-resiliencia-y-calidad.md) | Exponer health checks de componentes | 2 | Sara | 2 | En revisión | #68 | Health checks de los tres servicios; el del gateway lo añade HU-401 |
 | [HU-104](epicas/EP-01-pedidos.md) | Actualizar el pedido ante un pago aprobado | 3 | Juan | 3 | Pendiente | | |
 | [HU-105](epicas/EP-01-pedidos.md) | Actualizar el pedido ante un pago rechazado | 3 | Juan | 2 | Pendiente | | |
 | [HU-106](epicas/EP-01-pedidos.md) | Publicar OrderStatusChanged al cambiar el estado del pedido | 3 | Juan | 3 | Pendiente | | |
@@ -37,7 +37,7 @@
 | [HU-303](epicas/EP-03-notificaciones.md) | Registrar y publicar una notificación enviada | 4 | Sara | 3 | Pendiente | | |
 | [HU-304](epicas/EP-03-notificaciones.md) | Registrar y publicar una notificación fallida | 4 | Sara | 5 | Pendiente | | |
 | [HU-305](epicas/EP-03-notificaciones.md) | Consultar las notificaciones de un pedido | 4 | Juan | 3 | Pendiente | | |
-| [HU-306](epicas/EP-03-notificaciones.md) | Mock del proveedor de notificaciones | 4 | Juan | 3 | Pendiente | | |
+| [HU-306](epicas/EP-03-notificaciones.md) | Mock del proveedor de notificaciones | 4 | Juan | 3 | Terminada | #62 |  |
 | [HU-402](epicas/EP-04-gateway-y-contratos.md) | Enrutar la consulta de notificaciones | 4 | Juan | 3 | Pendiente | | |
 | [HU-504](epicas/EP-05-frontend.md) | Visualizar el estado de la notificación | 4 | Juan | 3 | Pendiente | | |
 | [HU-006](epicas/EP-00-base-tecnica-y-estandares.md) | Guardas de arquitectura ejecutables | 5 | Juan | 5 | Pendiente | | |

@@ -13,3 +13,4 @@
 | A-7 | Licencia del repositorio. | Sin definir. | Decidir. |
 | A-8 | Usuarios de GitHub para asignaciones. | Sin registrar. | Registrar en el Project. |
 | A-9 | Criterio de participación en la sustentación (todos participan). | Segmento propio en HU-707. | Confirmar con el docente. |
+| A-10 | `api-rest.md` exige `GET /actuator/health` a «cada servicio», pero HU-604 solo cubre los tres servicios Spring Boot. El API Gateway no lo expone. | Pendiente: no está en el alcance de ninguna HU. | Decidir si se añade al gateway y en qué HU. |

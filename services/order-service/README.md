@@ -4,7 +4,7 @@
 
 **Responsabilidad:** Crea y consulta pedidos; publica `OrderCreated` y `OrderStatusChanged`; consume `PaymentApproved` y `PaymentRejected`. Único propietario de Order DB.
 
-**Historias que lo construyen:** HU-001, HU-101 a HU-107
+**Historias que lo construyen:** HU-001, HU-101 a HU-107, HU-604
 
 **Reglas que aplican:** ADR-08, ADR-09, ADR-11. Sin llamadas REST a otros servicios.
 
@@ -63,5 +63,17 @@ levanta Order DB y exporta las variables como arriba.
 
 > Kafka todavía no se usa: `OrderCreated` se publica en HU-103. Order Service nunca llama a
 > Payment Service por REST (regla arquitectónica 8).
+
+## Health check (HU-604)
+
+Con el servicio en ejecución (`./mvnw spring-boot:run`, puerto `ORDER_SERVICE_PORT`):
+
+| Comprobación | Comando |
+|---|---|
+| Estado agregado | `curl -i http://localhost:8081/actuator/health` |
+| La aplicación arrancó | `curl -i http://localhost:8081/actuator/health/liveness` |
+| Puede atender tráfico | `curl -i http://localhost:8081/actuator/health/readiness` |
+
+`200` con `"status":"UP"` cuando está disponible; `503` con `"status":"DOWN"` cuando una dependencia esencial no responde; `readiness` incluye Order DB (`db`). Es el único grupo de endpoints de Actuator expuesto y no publica detalles ni credenciales. Contrato completo: [api-rest.md](../../docs/wiki/03-contratos/api-rest.md).
 
 Referencias: [`CLAUDE.md`](../../CLAUDE.md) · [Wiki](../../docs/wiki/Home.md)
