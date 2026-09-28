@@ -568,7 +568,7 @@ El caso de uso principal se limita a \textbf{crear un pedido, procesar automáti
     \item Order Service persiste el Pedido en Order DB con estado \texttt{CREADO} y luego intenta publicar \texttt{OrderCreated}. El evento contiene identificadores de trazabilidad, total, token de prueba y snapshot de contacto. La separación commit--publish constituye el riesgo aceptado de ADR-08.
     \item Payment Service consume \texttt{OrderCreated} de forma idempotente. La regla es determinista: el token \texttt{PAY-OK} genera un Pago \texttt{APROBADO}; el token \texttt{PAY-FAIL} genera un Pago \texttt{RECHAZADO}. Después publica el evento de aprobación o de rechazo correspondiente.
     \item Order Service consume el resultado del pago de forma idempotente, actualiza el Pedido a \texttt{PAGADO} o \texttt{PAGO\_RECHAZADO} y publica \texttt{OrderStatusChanged}.
-    \item Notification Service consume \texttt{OrderStatusChanged} de forma idempotente, crea una Notificación en Notification DB y utiliza el snapshot de contacto contenido en el evento para construir el destino.
+    \item Notification Service consume \texttt{PaymentApproved}/\texttt{PaymentRejected} de forma idempotente, crea una Notificación en Notification DB y utiliza el snapshot de contacto contenido en el evento de pago para construir el destino.
     \item Notification Service invoca al Proveedor de Notificaciones mediante HTTPS/REST. En la demo se envía \texttt{notificationId} como clave de idempotencia al adaptador/mock del proveedor para que un reintento no genere un segundo envío con la misma clave.
     \item Notification Service actualiza el estado de la Notificación y publica \texttt{NotificationSent} o \texttt{NotificationFailed}.
 \end{enumerate}
@@ -631,7 +631,7 @@ ADR-07 & Entrada síncrona controlada & El flujo principal entra por \texttt{POS
 ADR-08 & Escritura dual aceptada & Se acepta la ventana entre commit en PostgreSQL y publicación en Kafka para mantener el alcance acotado. Transactional Outbox se deja como evolución. & Riesgo aceptado \\
 ADR-09 & Idempotencia de consumidores & Cada consumidor registra \texttt{eventId} de forma única en \texttt{processed\_events} dentro de la misma transacción local del efecto de negocio. & Implementar \\
 ADR-10 & Pago simulado reproducible & \texttt{PAY-OK} genera \texttt{PaymentApproved} y \texttt{PAY-FAIL} genera \texttt{PaymentRejected}. & Implementar \\
-ADR-11 & Snapshot de contacto & El pedido captura canal/destino y Order Service lo propaga hasta \texttt{OrderStatusChanged}; Notification Service no consulta otra base. & Implementar \\
+ADR-11 & Snapshot de contacto & El pedido captura canal/destino; \texttt{OrderCreated} lo transporta, Payment Service lo copia en \texttt{PaymentApproved}/\texttt{PaymentRejected} y Notification Service lo toma de ahí sin consultar otra base. \texttt{OrderStatusChanged} también lo lleva, para consumidores futuros. & Implementar \\
 ADR-12 & Contrato HTTP & Se documentan los endpoints mínimos, errores \texttt{application/problem+json}, OpenAPI e idempotencia de \texttt{POST /orders}. & Implementar \\
 \bottomrule
 \end{longtable}
@@ -652,8 +652,12 @@ Todos los eventos del flujo principal utilizan un envelope común con los campos
     \item Campos comunes: \texttt{eventId}, \texttt{correlationId}, \texttt{orderId}, \texttt{eventType}, \texttt{occurredAt} y \texttt{schemaVersion}.
     \item \texttt{OrderCreated}: añade \texttt{total}, el token de pago de prueba, el canal de notificación y el snapshot de contacto.
     \item \texttt{PaymentApproved} y \texttt{PaymentRejected}: incluyen \texttt{paymentId} y el resultado del pago.
-    \item Después de actualizar Order DB, Order Service publica \texttt{OrderStatusChanged}; Notification Service consume ese evento para generar la notificación.
+    \item Payment Service publica el resultado del pago; Order Service y Notification Service lo consumen de forma independiente: el primero actualiza Order DB y publica \texttt{OrderStatusChanged}, el segundo genera la notificación sin esperar a ese evento.
 \end{itemize}
+
+Order Service y Notification Service consumen el mismo resultado de pago en grupos de consumidores distintos, en lugar de encadenarse. La razón es la ventana de escritura dual que acepta ADR-08: sin \textit{Outbox}, toda publicación posterior a un \textit{commit} puede perderse. Si la notificación dependiera de \texttt{OrderStatusChanged}, atravesaría esa ventana dos veces y un fallo de publicación en Order Service dejaría el pedido pagado y sin notificación, sin ningún mecanismo de reconciliación. Consumiendo el resultado del pago, la notificación solo depende de que Payment Service haya publicado, y un fallo de Order Service no la impide.
+
+Como contrapartida, la notificación puede emitirse antes de que el Pedido muestre su estado final. Por eso su contenido se redacta sobre el resultado del pago y no sobre el estado del pedido, de modo que sea cierto con independencia de cuándo Order Service aplique su propia actualización.
 
 \subsubsection{Criterios de verificación del prototipo}
 
@@ -722,9 +726,9 @@ Kubernetes & Complejidad operativa & Docker Compose satisface el entorno contene
 
 \subsection{Diagrama de Alto Nivel (HLD)}
 
-El HLD presenta las capas estructurales de FoodFlow: Cliente, presentación con Angular/Nginx, API Gateway, tres servicios Spring Boot, persistencia PostgreSQL por servicio, Apache Kafka y Proveedor de Notificaciones. \textbf{El flujo principal entra únicamente por Order Service}. Payment Service no recibe una orden de pago directa del Cliente: reacciona a \texttt{OrderCreated}. Notification Service tampoco se dispara por una llamada del Cliente: reacciona a \texttt{OrderStatusChanged}.
+El HLD presenta las capas estructurales de FoodFlow: Cliente, presentación con Angular/Nginx, API Gateway, tres servicios Spring Boot, persistencia PostgreSQL por servicio, Apache Kafka y Proveedor de Notificaciones. \textbf{El flujo principal entra únicamente por Order Service}. Payment Service no recibe una orden de pago directa del Cliente: reacciona a \texttt{OrderCreated}. Notification Service tampoco se dispara por una llamada del Cliente: reacciona al resultado del pago, es decir a \texttt{PaymentApproved}/\texttt{PaymentRejected}.
 
-Cada base PostgreSQL está conectada exclusivamente con su servicio propietario. Kafka se relaciona con los servicios de negocio, nunca con las bases. La dirección lógica de eventos es la siguiente: Order Service publica \texttt{OrderCreated} y \texttt{OrderStatusChanged}; Payment Service consume \texttt{OrderCreated} y publica el resultado del pago; Order Service consume ese resultado; Notification Service consume \texttt{OrderStatusChanged} y publica el resultado de la notificación.
+Cada base PostgreSQL está conectada exclusivamente con su servicio propietario. Kafka se relaciona con los servicios de negocio, nunca con las bases. La dirección lógica de eventos es la siguiente: Order Service publica \texttt{OrderCreated} y \texttt{OrderStatusChanged}; Payment Service consume \texttt{OrderCreated} y publica el resultado del pago; Order Service y Notification Service consumen ese resultado de forma independiente; Notification Service publica el resultado de la notificación. \texttt{OrderStatusChanged} queda disponible para consumidores futuros y no lo consume ningún servicio del prototipo.
 
 El HLD representa que el Cliente \textbf{no realiza el pago mediante una llamada directa}. En la demo proporciona un token de pago de prueba junto con el pedido y el procesamiento ocurre después, de forma asíncrona. Cualquier relación del API Gateway hacia Payment o Notification corresponde a endpoints auxiliares de consulta o diagnóstico y no forma parte del flujo principal.
 
@@ -750,7 +754,7 @@ No aparecen Angular, Nginx, API Gateway, Spring Boot, PostgreSQL ni Kafka porque
 
 El C2 conserva Angular, Nginx, API Gateway, los tres servicios Spring Boot, Kafka y tres bases PostgreSQL. Para el caso de uso principal, Angular envía \texttt{POST /orders} al API Gateway y este enruta la operación a Order Service. Las consultas \texttt{GET /orders/\{id\}} también se dirigen a Order Service y \texttt{GET /orders/\{id\}/notifications} se enruta a Notification Service. Payment y Notification siguen siendo activados por eventos para el procesamiento del caso de uso; los endpoints GET no disparan el flujo asíncrono.
 
-\textbf{Order Service} gestiona Pedido y Order DB. Publica \texttt{OrderCreated}; consume \texttt{PaymentApproved}/\texttt{PaymentRejected}; tras actualizar el pedido publica \texttt{OrderStatusChanged}. \textbf{Payment Service} gestiona Pago y Payment DB, consume \texttt{OrderCreated} y publica el resultado determinista del pago. \textbf{Notification Service} gestiona Notificación y Notification DB, consume exclusivamente \texttt{OrderStatusChanged} en el flujo principal y publica \texttt{NotificationSent}/\texttt{NotificationFailed}.
+\textbf{Order Service} gestiona Pedido y Order DB. Publica \texttt{OrderCreated}; consume \texttt{PaymentApproved}/\texttt{PaymentRejected}; tras actualizar el pedido publica \texttt{OrderStatusChanged}. \textbf{Payment Service} gestiona Pago y Payment DB, consume \texttt{OrderCreated} y publica el resultado determinista del pago. \textbf{Notification Service} gestiona Notificación y Notification DB, consume \texttt{PaymentApproved}/\texttt{PaymentRejected} en el flujo principal y publica \texttt{NotificationSent}/\texttt{NotificationFailed}.
 
 Las relaciones con Kafka son entre broker y servicios. Las bases PostgreSQL solo se relacionan con su servicio propietario. Los consumidores usan \texttt{eventId} para idempotencia; la implementación técnica se apoya en una tabla local \texttt{processed\_events}, que no se cuenta como entidad de negocio.
 
@@ -805,7 +809,7 @@ La idempotencia del consumidor por \texttt{eventId} se implementa fuera de este 
 
 El diagrama dinámico forma parte del modelo Structurizr DSL. En C4 esta vista describe cómo elementos ya definidos en el modelo estático colaboran en tiempo de ejecución para implementar una historia o caso de uso. Structurizr permite modelarla con la palabra clave \texttt{dynamic}, reutilizando personas, contenedores y relaciones del C2 \cite{c4-dynamic,structurizr-dynamic-view}. En el renderer de Structurizr esta vista se presenta de forma nativa con estilo de colaboración y numeración explícita de las interacciones; la semántica es la misma que una representación secuencial del mismo flujo.
 
-La vista \texttt{Dynamic\_OrderFlow} representa el \textbf{happy path reproducible} del caso de uso con \texttt{PAY-OK}. El Cliente confirma el pedido; Angular invoca \texttt{POST /orders} con \texttt{Idempotency-Key}; el API Gateway enruta la solicitud a Order Service; Order Service persiste el Pedido y publica \texttt{OrderCreated}; Payment Service consume el evento, registra el Pago y publica \texttt{PaymentApproved}; Order Service actualiza el Pedido y publica \texttt{OrderStatusChanged}; Notification Service consume ese cambio, persiste la Notificación, invoca al proveedor y finalmente publica \texttt{NotificationSent}.
+La vista \texttt{Dynamic\_OrderFlow} representa el \textbf{happy path reproducible} del caso de uso con \texttt{PAY-OK}. El Cliente confirma el pedido; Angular invoca \texttt{POST /orders} con \texttt{Idempotency-Key}; el API Gateway enruta la solicitud a Order Service; Order Service persiste el Pedido y publica \texttt{OrderCreated}; Payment Service consume el evento, registra el Pago y publica \texttt{PaymentApproved}. A partir de ahí el flujo se abre en dos ramas independientes: Order Service actualiza el Pedido y publica \texttt{OrderStatusChanged}, y Notification Service persiste la Notificación, invoca al proveedor y publica \texttt{NotificationSent}. Ninguna de las dos espera a la otra.
 
 El diagrama mantiene la regla arquitectónica principal: \textbf{las bases de datos solo se comunican con su servicio propietario}. Kafka recibe/publica eventos a través de los servicios, nunca directamente desde PostgreSQL. La rama \texttt{PAY-FAIL} se prueba como escenario alternativo de robustez, pero no se duplica en el diagrama para mantenerlo enfocado; sustituye \texttt{PaymentApproved} por \texttt{PaymentRejected} y el Pedido converge a \texttt{PAGO\_RECHAZADO}.
 
