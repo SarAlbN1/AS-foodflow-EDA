@@ -1,0 +1,468 @@
+openapi: 3.1.0
+
+info:
+  title: FoodFlow — API del borde
+  version: 1.0.0
+  summary: Las tres operaciones HTTP del prototipo, expuestas por el API Gateway.
+  description: |
+    Contrato de la API mínima de FoodFlow. El cliente **solo crea el pedido**: el pago se
+    dispara cuando Payment Service consume `OrderCreated`, de forma asíncrona, y no existe
+    ninguna operación para iniciarlo ni para consultarlo (regla arquitectónica 9).
+
+    Angular consume únicamente estas operaciones, siempre a través del API Gateway; nunca
+    accede a Kafka ni a PostgreSQL (reglas 1 y 2). La consistencia entre servicios es
+    **eventual**: tras crear un pedido, su estado puede tardar en pasar a `PAGADO` o
+    `PAGO_RECHAZADO`, y la interfaz debe tolerar ese intervalo refrescando la consulta.
+
+    Fuente de verdad del diseño: `docs/informe/main.tex`. Descripción operativa:
+    `docs/wiki/03-contratos/api-rest.md`.
+  contact:
+    name: Equipo FoodFlow
+    url: https://github.com/SarAlbN1/AS-foodflow-EDA
+  license:
+    name: Uso académico
+    url: https://github.com/SarAlbN1/AS-foodflow-EDA/blob/main/LICENSE
+
+servers:
+  - url: http://localhost:{puerto}
+    description: |
+      API Gateway en desarrollo. El puerto lo fija HU-401; 8080 es el valor por omisión de
+      Spring Boot mientras no se configure otro.
+    variables:
+      puerto:
+        default: "8080"
+
+tags:
+  - name: pedidos
+    description: Creación y consulta de pedidos. Servicio propietario, Order Service.
+  - name: notificaciones
+    description: Consulta de las notificaciones de un pedido. Servicio propietario, Notification Service.
+
+paths:
+  /orders:
+    post:
+      tags: [pedidos]
+      operationId: crearPedido
+      summary: Crea un pedido
+      description: |
+        Valida la entrada, persiste el pedido en Order DB con estado `CREADO` y publica
+        `OrderCreated` después del commit. El pago ocurre luego, de forma asíncrona.
+
+        La cabecera `Idempotency-Key` es **obligatoria**: protege la entrada ante un doble
+        clic o un reintento del cliente. Con la misma clave y el mismo cuerpo se devuelve la
+        respuesta original sin crear otro pedido; con la misma clave y un cuerpo distinto se
+        responde `409`.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+            examples:
+              pagoAprobado:
+                summary: Pedido que será aprobado (PAY-OK)
+                value:
+                  customerReference: PED-0001
+                  customerContact: ana@foodflow.test
+                  notificationChannel: EMAIL
+                  total: 45000.00
+                  paymentToken: PAY-OK
+              pagoRechazado:
+                summary: Pedido que será rechazado (PAY-FAIL)
+                value:
+                  customerReference: PED-0002
+                  customerContact: bruno@foodflow.test
+                  notificationChannel: EMAIL
+                  total: 12500.50
+                  paymentToken: PAY-FAIL
+      responses:
+        '201':
+          description: Pedido creado.
+          headers:
+            Location:
+              description: Ruta del pedido creado, relativa al gateway.
+              required: true
+              schema:
+                type: string
+                examples: ['/orders/3f6c1e0a-6c9d-4f6f-9c4b-2a9f1d5e7b10']
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdRespuesta'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+              examples:
+                creado:
+                  $ref: '#/components/examples/PedidoCreado'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '409':
+          $ref: '#/components/responses/ClaveIdempotenteReutilizada'
+
+  /orders/{id}:
+    get:
+      tags: [pedidos]
+      operationId: consultarPedido
+      summary: Consulta un pedido por su identificador
+      description: |
+        Devuelve el estado persistido más reciente del pedido. La consulta no invoca a Payment
+        Service, a Notification Service ni a Kafka para reconstruir el estado.
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Pedido encontrado.
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdRespuesta'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+              examples:
+                pagado:
+                  summary: Pedido ya pagado
+                  value:
+                    id: 3f6c1e0a-6c9d-4f6f-9c4b-2a9f1d5e7b10
+                    customerReference: PED-0001
+                    customerContact: ana@foodflow.test
+                    notificationChannel: EMAIL
+                    total: 45000.00
+                    status: PAGADO
+                    createdAt: '2026-09-28T06:41:12.482913Z'
+                    updatedAt: '2026-09-28T06:41:14.903221Z'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+
+  /orders/{id}/notifications:
+    get:
+      tags: [notificaciones]
+      operationId: consultarNotificacionesDelPedido
+      summary: Consulta las notificaciones de un pedido
+      description: |
+        Devuelve las notificaciones registradas para el pedido, de la más reciente a la más
+        antigua. La lista puede estar **vacía**: la notificación se crea al conocerse el
+        resultado del pago, así que un pedido recién creado todavía no tiene ninguna.
+
+        El API Gateway enruta esta operación a Notification Service. Un pedido inexistente no
+        produce `404`: Notification Service no conoce el catálogo de pedidos y responde una
+        lista vacía.
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Lista de notificaciones, posiblemente vacía.
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdRespuesta'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+              examples:
+                enviada:
+                  summary: Notificación entregada
+                  value:
+                    - id: 8b1f6d24-59ac-4a1e-9f0c-6d1c2b3a4e5f
+                      orderId: 3f6c1e0a-6c9d-4f6f-9c4b-2a9f1d5e7b10
+                      paymentId: c2d3e4f5-6789-4abc-8def-0123456789ab
+                      channel: EMAIL
+                      destination: ana@foodflow.test
+                      status: ENVIADA
+                      attempts: 1
+                      failureCode: null
+                      createdAt: '2026-09-28T06:41:15.114002Z'
+                      updatedAt: '2026-09-28T06:41:15.742318Z'
+                vacia:
+                  summary: Pedido sin notificaciones todavía
+                  value: []
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+
+components:
+
+  parameters:
+    OrderId:
+      name: id
+      in: path
+      required: true
+      description: Identificador del pedido. Es el mismo valor que en los eventos viaja como `aggregateId` y como `payload.orderId`.
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: |
+        Clave de idempotencia de la solicitud, generada por el cliente para cada intento de
+        creación. Es distinta de la idempotencia de consumidores Kafka de ADR-09: esta evita
+        crear dos pedidos a partir de la misma solicitud HTTP.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+      examples:
+        uuidDeCliente:
+          value: 7c9e6679-7425-40de-944b-e07fc1f90ae7
+    CorrelationId:
+      name: X-Correlation-Id
+      in: header
+      required: false
+      description: |
+        Identificador de correlación. Si la solicitud no lo trae, el gateway lo genera. Se
+        propaga a los eventos y a los registros de los tres servicios.
+      schema:
+        $ref: '#/components/schemas/Uuid'
+
+  headers:
+    CorrelationIdRespuesta:
+      description: El `correlationId` con el que se procesó la solicitud.
+      required: false
+      schema:
+        $ref: '#/components/schemas/Uuid'
+
+  responses:
+    SolicitudInvalida:
+      description: |
+        Entrada inválida. No se crea ni se modifica ningún registro. El `detail` enumera todos
+        los campos rechazados, separados por `; ` y en formato `campo: motivo`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          examples:
+            validacion:
+              summary: Total y canal inválidos
+              value:
+                type: https://foodflow.local/problems/validation-error
+                title: Solicitud invalida
+                status: 400
+                detail: 'total: debe ser mayor que cero; notificationChannel: el prototipo solo admite EMAIL'
+                code: VALIDATION_ERROR
+                correlationId: 11111111-1111-1111-1111-111111111111
+            cabeceraAusente:
+              summary: Falta la cabecera Idempotency-Key
+              value:
+                type: https://foodflow.local/problems/validation-error
+                title: Solicitud invalida
+                status: 400
+                detail: 'Idempotency-Key: es obligatoria'
+                code: VALIDATION_ERROR
+                correlationId: 22222222-2222-2222-2222-222222222222
+    NoEncontrado:
+      description: El recurso no existe.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          examples:
+            pedidoInexistente:
+              value:
+                type: https://foodflow.local/problems/not-found
+                title: Recurso no encontrado
+                status: 404
+                detail: 'no existe un pedido con id 3f6c1e0a-6c9d-4f6f-9c4b-2a9f1d5e7b10'
+                code: NOT_FOUND
+                correlationId: 33333333-3333-3333-3333-333333333333
+    ClaveIdempotenteReutilizada:
+      description: |
+        La `Idempotency-Key` ya se usó con un cuerpo distinto. El pedido original no se
+        modifica y no se crea uno nuevo.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+          examples:
+            conflicto:
+              value:
+                type: https://foodflow.local/problems/idempotency-conflict
+                title: Clave de idempotencia reutilizada
+                status: 409
+                detail: 'la clave 7c9e6679-7425-40de-944b-e07fc1f90ae7 ya se uso con un cuerpo distinto'
+                code: IDEMPOTENCY_CONFLICT
+                correlationId: 44444444-4444-4444-4444-444444444444
+
+  examples:
+    PedidoCreado:
+      summary: Pedido recién creado
+      value:
+        id: 3f6c1e0a-6c9d-4f6f-9c4b-2a9f1d5e7b10
+        customerReference: PED-0001
+        customerContact: ana@foodflow.test
+        notificationChannel: EMAIL
+        total: 45000.00
+        status: CREADO
+        createdAt: '2026-09-28T06:41:12.482913Z'
+        updatedAt: '2026-09-28T06:41:12.482913Z'
+
+  schemas:
+
+    Uuid:
+      type: string
+      format: uuid
+      pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+
+    Importe:
+      description: Importe en pesos colombianos. `NUMERIC(12,2)` en la base; mayor que cero.
+      type: number
+      exclusiveMinimum: 0
+      maximum: 9999999999.99
+      multipleOf: 0.01
+      examples: [45000.00]
+
+    CanalNotificacion:
+      description: Canal de notificación. El prototipo implementa únicamente `EMAIL`.
+      type: string
+      enum: [EMAIL]
+
+    EstadoPedido:
+      description: |
+        Estado del pedido. `CREADO` al crearse; pasa a `PAGADO` o `PAGO_RECHAZADO` cuando
+        Order Service consume el resultado del pago. No hay otras transiciones.
+      type: string
+      enum: [CREADO, PAGADO, PAGO_RECHAZADO]
+
+    EstadoNotificacion:
+      description: Estado de entrega de la notificación.
+      type: string
+      enum: [PENDIENTE, ENVIADA, FALLIDA]
+
+    TokenPago:
+      description: |
+        Token de pago simulado (ADR-10). `PAY-OK` produce `PaymentApproved` y `PAY-FAIL`
+        produce `PaymentRejected`. Cualquier otro valor produce `400`.
+      type: string
+      enum: [PAY-OK, PAY-FAIL]
+
+    CreateOrderRequest:
+      type: object
+      additionalProperties: false
+      required: [customerReference, customerContact, notificationChannel, total, paymentToken]
+      properties:
+        customerReference:
+          description: Referencia del pedido visible para el cliente.
+          type: string
+          minLength: 1
+          maxLength: 60
+        customerContact:
+          description: Correo del cliente. Se guarda como snapshot de notificación (ADR-11) y se registra enmascarado en los logs.
+          type: string
+          format: email
+          maxLength: 255
+        notificationChannel:
+          $ref: '#/components/schemas/CanalNotificacion'
+        total:
+          $ref: '#/components/schemas/Importe'
+        paymentToken:
+          $ref: '#/components/schemas/TokenPago'
+
+    Order:
+      description: |
+        Representación del pedido. Idéntica en `POST /orders` y en `GET /orders/{id}`.
+        La moneda no viaja en el cuerpo: es `COP` en todo el prototipo.
+      type: object
+      required: [id, customerReference, customerContact, notificationChannel, total, status, createdAt, updatedAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        customerReference:
+          type: string
+          maxLength: 60
+        customerContact:
+          description: Snapshot del destino de notificación (ADR-11).
+          type: string
+          format: email
+        notificationChannel:
+          $ref: '#/components/schemas/CanalNotificacion'
+        total:
+          $ref: '#/components/schemas/Importe'
+        status:
+          $ref: '#/components/schemas/EstadoPedido'
+        createdAt:
+          description: Fecha de creación, ISO 8601 en UTC.
+          type: string
+          format: date-time
+        updatedAt:
+          description: Fecha del último cambio de estado, ISO 8601 en UTC.
+          type: string
+          format: date-time
+
+    Notification:
+      description: |
+        Notificación registrada por Notification Service para un pedido. No expone el
+        contenido del mensaje: la interfaz muestra el estado de la entrega, no el texto.
+      type: object
+      required: [id, orderId, channel, destination, status, attempts, createdAt, updatedAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        orderId:
+          $ref: '#/components/schemas/Uuid'
+        paymentId:
+          description: Pago que originó la notificación. Ausente si la notificación no proviene de un resultado de pago.
+          anyOf:
+            - $ref: '#/components/schemas/Uuid'
+            - type: 'null'
+        channel:
+          $ref: '#/components/schemas/CanalNotificacion'
+        destination:
+          description: Destino al que se envió, tomado del snapshot de contacto (ADR-11).
+          type: string
+        status:
+          $ref: '#/components/schemas/EstadoNotificacion'
+        attempts:
+          description: Intentos de envío realizados contra el proveedor.
+          type: integer
+          minimum: 1
+        failureCode:
+          description: Motivo del fallo cuando el estado es `FALLIDA`; `null` en los demás casos.
+          type: [string, 'null']
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ProblemDetail:
+      description: |
+        Error en formato RFC 9457 (`application/problem+json`), con dos extensiones propias:
+        `code`, estable para que el cliente lo interprete sin leer el texto, y
+        `correlationId`, para cruzar la respuesta con los registros. Nunca se devuelven
+        trazas de pila.
+      type: object
+      required: [type, title, status, code, correlationId]
+      properties:
+        type:
+          description: URI que identifica el tipo de problema.
+          type: string
+          format: uri
+          examples: ['https://foodflow.local/problems/validation-error']
+        title:
+          type: string
+          examples: ['Solicitud invalida']
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          description: Explicación legible del caso concreto.
+          type: string
+        instance:
+          description: Ruta de la solicitud que falló.
+          type: string
+        code:
+          description: Código estable del error.
+          type: string
+          enum: [VALIDATION_ERROR, NOT_FOUND, IDEMPOTENCY_CONFLICT, INTERNAL_ERROR, DEPENDENCY_UNAVAILABLE]
+        correlationId:
+          $ref: '#/components/schemas/Uuid'

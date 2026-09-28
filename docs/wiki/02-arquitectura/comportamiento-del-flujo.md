@@ -2,6 +2,8 @@
 
 [← Índice de la wiki](../Home.md)
 
+El orden de los pasos y quién reacciona a cada evento están en la [vista dinámica](estilo-y-flujo.md#estilo) y en el informe técnico; esta página define **qué ocurre cuando algo falla**.
+
 ## Reglas de comportamiento del flujo
 
 **Publicación (ADR-08).** Order Service publica `OrderCreated` **después** del commit de la transacción que persiste el pedido. El productor usa `acks=all` e idempotencia habilitada. Si la publicación falla tras los reintentos del productor, se registra un `ERROR` con `correlationId` y `orderId`, y el pedido permanece en `CREADO`. No se implementa Outbox ni tarea de reconciliación.
