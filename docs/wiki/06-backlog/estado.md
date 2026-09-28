@@ -15,7 +15,7 @@
 | [HU-009](epicas/EP-00-base-tecnica-y-estandares.md) | Configurar los estándares del repositorio | 1 | Juan | 2 | Terminada | — | Integrada en el commit inicial del repositorio, sin PR |
 | [HU-101](epicas/EP-01-pedidos.md) | Crear un pedido válido | 1 | Sara | 5 | En revisión | #65 |  |
 | [HU-102](epicas/EP-01-pedidos.md) | Consultar un pedido por identificador | 1 | Juan | 2 | Pendiente | | |
-| [HU-401](epicas/EP-04-gateway-y-contratos.md) | Enrutar operaciones de pedidos | 1 | Juan | 3 | Terminada | #70 | Verificada contra un Order Service simulado; prueba E2E con el servicio real pendiente de Docker |
+| [HU-401](epicas/EP-04-gateway-y-contratos.md) | Enrutar operaciones de pedidos | 1 | Juan | 3 | En revisión | [#70](https://github.com/SarAlbN1/AS-foodflow-EDA/pull/70) | |
 | [HU-103](epicas/EP-01-pedidos.md) | Publicar OrderCreated al crear el pedido | 2 | Sara | 5 | Pendiente | | |
 | [HU-107](epicas/EP-01-pedidos.md) | Evitar pedidos duplicados con Idempotency-Key | 2 | Sara | 3 | Pendiente | | |
 | [HU-403](epicas/EP-04-gateway-y-contratos.md) | Propagar correlationId y manejar CORS | 2 | Juan | 3 | En revisión | [#72](https://github.com/SarAlbN1/AS-foodflow-EDA/pull/72) | |
