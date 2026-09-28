@@ -108,6 +108,17 @@ class PaymentApplicationServiceTests {
     }
 
     @Test
+    @DisplayName("HU-204: un pago rechazado tambien publica su resultado")
+    void publicaTambienElRechazo() {
+        StartPaymentCommand orden = orden("45900.00", PaymentToken.PAY_FAIL);
+
+        Payment pago = servicio.iniciarPago(orden);
+
+        assertThat(pago.aprobado()).isFalse();
+        verify(publicador).publicarResultado(pago, orden);
+    }
+
+    @Test
     @DisplayName("HU-203: reprocesar el mismo pedido no vuelve a publicar el resultado")
     void noRepiteLaPublicacionAlReprocesar() {
         Payment existente = Payment.resolver(ORDER_ID, new BigDecimal("45900.00"),
