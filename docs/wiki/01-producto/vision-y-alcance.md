@@ -26,6 +26,14 @@ Exactamente tres entidades principales:
 
 Relaciones lógicas: un Pedido tiene un Pago y puede generar varias Notificaciones. Al haber bases separadas, se expresan mediante identificadores lógicos y eventos, **no** mediante llaves foráneas entre bases.
 
+## Panorama del sistema
+
+Backoffice Operativo y Analítica y Reportes aparecen con borde punteado: se diseñan como evolución y **quedan fuera del alcance de implementación** del prototipo.
+
+![System Landscape de FoodFlow, con los módulos fuera de alcance punteados](../02-arquitectura/diagramas/system-landscape-foodflow.png)
+
+> Imagen exportada del informe técnico (`docs/informe/main.tex`), que es la fuente de verdad del diseño. Su fuente la versiona HU-704.
+
 ## Alcance y no alcance
 
 ### Dentro del alcance
