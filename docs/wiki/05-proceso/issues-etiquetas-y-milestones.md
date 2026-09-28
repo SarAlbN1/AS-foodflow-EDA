@@ -35,7 +35,6 @@ GitHub ya trae 10 etiquetas por defecto en este repositorio. **No se duplican**:
 | Prioridad | `priority:P0`, `priority:P1`, `priority:P2` | `#b60205`, `#d93f0b`, `#fbca04` | Coincide con la prioridad de la HU |
 | Épica | `epic:EP-00` a `epic:EP-07` | `#5319e7` | Épica a la que pertenece la HU |
 | Estado excepcional | `status:blocked`, `status:needs-decision` | `#24292f`, `#e99695` | El flujo normal (Todo, En curso, En revisión, Hecho) se maneja con el tablero del Project |
-| Transparencia | `ai-assisted` | `#c2e0c6` | PR o issue con contribución sustancial de un asistente de IA |
 
 Convención de color (sistema de diseño de etiquetas): un color por familia, para que la familia se reconozca de un vistazo; la prioridad usa la escala rojo, naranja, amarillo.
 
@@ -59,7 +58,6 @@ for e in 00 01 02 03 04 05 06 07; do
 done
 label "status:blocked"        "24292f" "Bloqueado por una dependencia"
 label "status:needs-decision" "e99695" "Requiere decisión del equipo"
-label "ai-assisted"           "c2e0c6" "Contribución sustancial de un asistente de IA"
 ```
 
 ## Milestones y tablero

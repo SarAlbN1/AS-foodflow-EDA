@@ -21,6 +21,3 @@ Closes #<n> — HU-###
 
 ## Documentación
 - [ ] README, ADR o `docs/wiki/06-backlog/estado.md` actualizados cuando aplica
-
-## Asistencia de IA
-- [ ] Este PR tuvo contribución sustancial de un asistente de IA (añadir `ai-assisted`)

@@ -53,12 +53,12 @@ gh pr create \
   --base main \
   --title "<tipo>(<ámbito>): <descripción> [HU-###]" \
   --body-file <cuerpo.md> \
-  --label "<etiquetas del issue>" --label "ai-assisted" \
+  --label "<etiquetas del issue>" \
   --milestone "Sprint N" \
   --assignee @me
 ```
 
-Etiquetas: las mismas del issue (tipo, área, prioridad, épica) más `ai-assisted` si hubo asistencia sustancial de IA.
+Etiquetas: las mismas del issue (tipo, área, prioridad y épica).
 
 ## 6. Después de crear
 
