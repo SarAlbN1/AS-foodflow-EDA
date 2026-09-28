@@ -12,7 +12,7 @@ Estas páginas son **normativas** para personas y asistentes de IA. Su objetivo 
 | [Estándares de documentación](documentacion.md) | README, ADR, OpenAPI, runbook |
 | [DoR y DoD](dor-y-dod.md) | Cuándo una HU está lista y cuándo está terminada |
 | [Trabajo con asistentes de IA](trabajo-con-ia.md) | Algoritmo, prohibiciones, reporte y plantilla de sesión |
-| [Bootstrap del repositorio](bootstrap-repositorio.md) | Cómo se creó y publicó el repositorio (runbook para Claude Code) |
+| [Bootstrap del repositorio](bootstrap-repositorio.md) | Cómo se creó y publicó el repositorio (runbook para un asistente de IA o una persona) |
 
 ## Resumen en cinco líneas
 

@@ -38,7 +38,7 @@ foodflow-eda/
 ├── mocks/             # Proveedor de notificaciones simulado
 ├── scripts/           # Automatización
 ├── .github/           # Plantillas de PR e issues
-└── .claude/           # Comandos y ajustes de Claude Code
+└── .claude/           # Comandos y ajustes del asistente de IA
 ```
 
 Detalle completo: [estructura del repositorio](docs/wiki/04-implementacion/estructura-del-repositorio.md).
