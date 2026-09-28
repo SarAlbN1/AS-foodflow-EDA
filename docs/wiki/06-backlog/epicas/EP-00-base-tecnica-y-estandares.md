@@ -178,9 +178,9 @@ Como equipo de desarrollo, quiero un repositorio con ramas, etiquetas, plantilla
 3. Existen `.github/pull_request_template.md` y las plantillas de issue `story`, `bug` y `adr`.
 4. `main` está protegida según la página [Pull requests, protección y releases](../../05-proceso/pull-requests-y-releases.md).
 5. Existen `.gitignore`, `.editorconfig`, `.env.example` y `CONTRIBUTING.md`.
-6. Los issues del Sprint 1 están creados con etiquetas, milestone y responsable; los demás se crean al iniciar su sprint.
+6. Existe un issue por cada HU del backlog, con etiquetas, milestone y responsable (las HU opcionales P2, sin sprint, no llevan milestone ni responsable), y todos están en el Project con su estado.
 
-> **Nota de bootstrap:** el bootstrap cumple los criterios 1 a 5 y el 6 (issues del Sprint 1). Queda verificar el checklist y completar el Project si falló; la HU se cierra al verificarlo.
+> **Nota de bootstrap:** el bootstrap cumple los criterios 1 a 5 y creó los issues del Sprint 1. El 2026-09-28 se crearon los issues del resto del backlog (#18 a #60) y se añadieron al Project en estado `Todo`. La HU se cierra al verificar el checklist.
 
 ## HU-010 — Versionado de esquemas con Flyway (opcional)
 

@@ -65,7 +65,7 @@ Esto configura: solo squash merge y borrado de ramas al fusionar; etiquetas (res
 DRY_RUN=1 SARA_GH="$SARA_GH" JUAN_GH="$JUAN_GH" bash scripts/create-issues.sh 1
 SARA_GH="$SARA_GH" JUAN_GH="$JUAN_GH" bash scripts/create-issues.sh 1
 ```
-Los issues de los demás sprints se crean al iniciar cada sprint (`bash scripts/create-issues.sh 2`, etc.). `all` crea todos.
+Los issues de los demás sprints ya están creados: el 2026-09-28 se ejecutó `bash scripts/create-issues.sh all` (#18 a #60). El script salta las HU que ya tienen issue, así que si se añade una HU a `backlog.tsv` basta con volver a ejecutarlo con `all`.
 
 ### 8. Project de GitHub (mejor esfuerzo)
 ```bash
