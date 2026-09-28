@@ -16,7 +16,13 @@ import org.springframework.web.client.RestClient;
  * Comprueba el contrato de docs/wiki/03-contratos/api-rest.md: GET /actuator/health
  * responde 200 cuando el servicio y sus dependencias esenciales están disponibles.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+/*
+ * Sin broker en las pruebas de contexto: el contenedor del @KafkaListener no arranca, asi que
+ * no se intenta conectar a Kafka. El recorrido con un broker real lo cubre HU-605.
+ */
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "spring.kafka.listener.auto-startup=false")
 class HealthEndpointTest {
 
     @Value("${local.server.port}")
