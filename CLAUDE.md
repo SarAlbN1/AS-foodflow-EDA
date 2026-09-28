@@ -76,7 +76,22 @@ Flyway, Testcontainers y CI son **opcionales**: no los conviertas en requisito.
 - El PR usa la plantilla, referencia `Closes #<n>`, lo revisa la otra persona y se integra con squash.
 - Detalle: `docs/wiki/05-proceso/`.
 
-## 7. Cómo trabajar una HU
+## 7. Propiedad del trabajo (obligatoria)
+
+Cada persona del equipo trabaja con su propio asistente. **Cada quien corrige lo suyo.**
+
+1. **Solo tocas las HU de tu responsable.** El responsable de cada HU está en `docs/wiki/06-backlog/estado.md`. No edites código, pruebas ni documentación que pertenezcan a una HU de la otra persona, ni siquiera para arreglar algo que acabas de encontrar.
+2. **Solo subes a tus propias ramas.** Nunca hagas *commit*, *push*, *rebase* ni resuelvas conflictos en la rama de un PR ajeno.
+3. **Un hallazgo en un PR ajeno se reporta, no se arregla.** Se comenta en el PR con la evidencia y se pide cambios si procede. Quien lo escribió decide y corrige.
+4. **No le encargues trabajo a la otra persona dentro de tus propias HU.** Si tu cambio necesita un ajuste en un archivo que comparte con otra HU, hazlo tú en tu rama. No dejes instrucciones del tipo «cuando integres esto, añade tal línea».
+5. **Al integrar, quien integra no repara código ajeno.** Si un *merge* deja algo roto que pertenece a la otra persona, se reporta en su PR o en un issue nuevo y se detiene la integración.
+6. **La revisión sí cruza.** Revisar, comentar, aprobar o pedir cambios en el PR de la otra persona no solo está permitido: es obligatorio (sección 6). Lo que no cruza es la escritura.
+
+**Por qué.** Dos asistentes editando el mismo archivo producen conflictos que ninguno de los dos ve venir, y borran el rastro de quién decidió qué. La trazabilidad HU → issue → rama → PR → responsable es parte de lo que se evalúa.
+
+Excepción única: Sara puede editar cualquier cosa si lo decide explícitamente, porque es la responsable del repositorio. Un asistente no asume esa excepción por su cuenta.
+
+## 8. Cómo trabajar una HU
 
 1. Confirma que la HU existe como issue y lee su épica y sus criterios de aceptación.
 2. Identifica el servicio propietario de los datos y los contratos afectados.
@@ -86,13 +101,13 @@ Flyway, Testcontainers y CI son **opcionales**: no los conviertas en requisito.
 6. Abre el PR y entrega el reporte de `docs/wiki/05-proceso/trabajo-con-ia.md`.
 7. No marques la HU como terminada si algún criterio de aceptación no está verificado.
 
-## 8. Ante ambigüedad
+## 9. Ante ambigüedad
 
 - Si la decisión afecta un contrato, un tópico, un estado o el alcance: **detente y pregunta**.
 - Si es una decisión local (nombre de una clase privada): elige la opción más simple coherente con EDA y anótala en el reporte.
 - Nunca inventes versiones, URLs, credenciales, endpoints ni entidades. Las versiones se fijan en `docs/wiki/04-implementacion/versiones.md`.
 
-## 9. Comandos
+## 10. Comandos
 
 | Acción | Comando | Disponible desde |
 |---|---|---|
@@ -105,12 +120,12 @@ Flyway, Testcontainers y CI son **opcionales**: no los conviertas en requisito.
 | Construir y probar un servicio | `./mvnw verify` (en `services/<servicio>` o `gateway/api-gateway`; Windows: `mvnw.cmd verify`) | HU-001 |
 | Construir y probar el frontend | `npm ci && npm run build && npm test -- --watch=false` (en `frontend/foodflow-web`) | HU-001 |
 
-## 10. Comandos de Claude Code del proyecto
+## 11. Comandos de Claude Code del proyecto
 
 - `/hu HU-101`: implementa una historia siguiendo el flujo de este archivo.
 - `/verificar`: ejecuta pruebas y checklist arquitectónico sobre los cambios actuales.
 - `/pr`: prepara el PR con la plantilla y las etiquetas correctas.
 
-## 11. Estado
+## 12. Estado
 
 El estado vivo del backlog está en `docs/wiki/06-backlog/estado.md`. Actualízalo al cerrar cada HU.
