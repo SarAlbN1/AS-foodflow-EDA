@@ -1,13 +1,14 @@
 # ============================================================================
-#  FoodFlow EDA — infraestructura local (HU-002, HU-004)
+#  FoodFlow EDA — entorno local (HU-002, HU-004, HU-306)
 # ============================================================================
-#  Contiene SOLO la infraestructura de datos y mensajería:
+#  Contiene la infraestructura de datos y mensajería y las dependencias simuladas:
 #    - Apache Kafka en modo KRaft (un nodo que hace de broker y de controller).
 #    - Tres PostgreSQL independientes, una por servicio, con credenciales propias.
 #    - Los tópicos y sus DLQ, creados por `kafka-init` (HU-004).
+#    - El proveedor de notificaciones simulado `notification-provider` (HU-306).
 #
 #  Fuera del alcance:
-#    - Servicios, gateway, frontend y mock -> HU-001 y HU-607
+#    - Servicios, gateway y frontend -> HU-607
 #
 #  Reglas que aplican:
 #    2. Cada servicio es el único propietario de su base.
@@ -154,6 +155,26 @@ services:
       timeout: 5s
       retries: 10
       start_period: 20s
+    networks: [foodflow]
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  #  Proveedor de notificaciones simulado (HU-306). Solo desarrollo, demo y
+  #  pruebas. Lo invoca ÚNICAMENTE notification-service, con la URL de
+  #  NOTIFICATION_PROVIDER_URL. Modos por destino: *@fail.test, *@flaky.test,
+  #  *@slow.test (docs/wiki/03-contratos/proveedor-notificaciones.md).
+  # --------------------------------------------------------------------------
+  notification-provider:
+    build:
+      context: ../../mocks/notification-provider
+    image: foodflow/notification-provider:0.0.1
+    container_name: foodflow-notification-provider
+    ports:
+      # Solo para probarlo desde el host (curl); los servicios usan la red interna.
+      - "${NOTIFICATION_PROVIDER_HOST_PORT:-8090}:8080"
+    environment:
+      MOCK_SLOW_DELAY: ${MOCK_SLOW_DELAY:-5s}
+      MOCK_FLAKY_FAILURES: ${MOCK_FLAKY_FAILURES:-2}
     networks: [foodflow]
     restart: unless-stopped
 
