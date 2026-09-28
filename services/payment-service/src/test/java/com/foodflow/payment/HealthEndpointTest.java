@@ -17,7 +17,8 @@ import org.springframework.web.client.RestClient;
  * <p>Comprueba el contrato de {@code docs/wiki/03-contratos/api-rest.md}. La prueba corre sin
  * infraestructura: se fija el dialecto y se desactiva la validacion de esquema para que el
  * contexto arranque tambien cuando el servicio tenga su base, sin necesitar que este levantada.
- * Esas propiedades son inertes mientras el servicio no use JPA.
+ * Esas propiedades son inertes mientras el servicio no use JPA. El listener de Kafka no
+ * arranca: sin broker, esta prueba no lo necesita.
  *
  * <p>Por eso no se afirma que el estado agregado sea {@code UP}: sin sus dependencias el
  * servicio esta {@code DOWN} y eso es lo correcto. Lo que si se afirma es la distincion del
@@ -26,6 +27,7 @@ import org.springframework.web.client.RestClient;
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
+            "spring.kafka.listener.auto-startup=false",
             "spring.jpa.hibernate.ddl-auto=none",
             "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect"
         })

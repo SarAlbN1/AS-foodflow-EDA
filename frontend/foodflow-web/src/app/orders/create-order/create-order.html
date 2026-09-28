@@ -11,6 +11,7 @@
       El pago se procesa en segundo plano: el estado cambiará a PAGADO o PAGO_RECHAZADO en unos
       instantes.
     </p>
+    <a [routerLink]="['/orders', pedido.id]" data-testid="ver-estado">Ver el estado del pedido</a>
     <button type="button" (click)="nuevoPedido()">Crear otro pedido</button>
   </section>
 } @else {

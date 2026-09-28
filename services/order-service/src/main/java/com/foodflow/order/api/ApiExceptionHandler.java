@@ -81,13 +81,8 @@ class ApiExceptionHandler {
         return problema;
     }
 
-    /**
-     * El {@code correlationId} entra por el gateway; si la peticion llega sin el, se genera uno
-     * para que la respuesta y el registro sigan siendo correlacionables. La propagacion completa
-     * es HU-403.
-     */
+    /** Misma regla que usa el resto del servicio: ver {@link CorrelationId}. */
     private static String correlationId(HttpServletRequest peticion) {
-        String recibido = peticion.getHeader(CABECERA_CORRELACION);
-        return recibido == null || recibido.isBlank() ? UUID.randomUUID().toString() : recibido;
+        return CorrelationId.de(peticion).toString();
     }
 }

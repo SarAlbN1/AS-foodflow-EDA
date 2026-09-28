@@ -1,6 +1,6 @@
 # frontend/foodflow-web — Aplicación Angular
 
-> **Estado:** HU-501 en revisión: formulario para crear un pedido a través del API Gateway. Consulta del estado (HU-502), notificaciones (HU-504) y flujo integral (HU-505) los añaden sus historias.
+> **Estado:** HU-501 y HU-502 en revisión: crear un pedido y consultar su estado a través del API Gateway. Notificaciones (HU-504) y flujo integral (HU-505) los añaden sus historias.
 
 **Responsabilidad:** Interfaz para crear pedidos y consultar su estado y sus notificaciones. Se publica con Nginx. Solo consume APIs REST del API Gateway.
 
@@ -31,5 +31,15 @@ La aplicación solo habla con el API Gateway. Su URL es el token `API_BASE_URL` 
 - Formulario con `customerReference`, `customerContact`, `notificationChannel` (solo `EMAIL`), `total` y el resultado de pago simulado (`PAY-OK` / `PAY-FAIL`). Valida en el cliente las mismas reglas que Order Service: obligatorios, correo con dominio y total mayor que cero con dos decimales como máximo.
 - Cada intento de envío lleva una `Idempotency-Key`. Reintentar **el mismo envío** tras un fallo de red o un `503` reutiliza la clave; cambiar los datos o crear otro pedido genera una nueva. Un segundo clic mientras se envía no produce otra solicitud.
 - Los errores en Problem Details se muestran con un texto para la persona y su `correlationId` como referencia. Solo se muestra el `detail` de un `VALIDATION_ERROR` (la lista de campos rechazados); nunca trazas ni datos internos.
+
+## Consultar el estado del pedido (HU-502)
+
+| Ruta | Pantalla |
+|---|---|
+| `/` | Crear un pedido; el resultado enlaza a su estado |
+| `/orders` | Consultar un pedido conocido por su identificador |
+| `/orders/:id` | Estado del pedido: `CREADO`, `PAGADO` o `PAGO_RECHAZADO` |
+
+La consistencia es eventual: mientras el pedido está en `CREADO`, la pantalla vuelve a consultar `GET /orders/{id}` cada segundo durante 30 s como máximo (la meta es converger en menos de 5 s, [atributos de calidad](../../docs/wiki/02-arquitectura/atributos-de-calidad.md)) y se detiene al ver un estado final. Después queda el botón **Actualizar**. Toda consulta es `GET`: refrescar nunca crea un pedido ni repite una operación.
 
 Referencias: [`CLAUDE.md`](../../CLAUDE.md) · [Wiki](../../docs/wiki/Home.md)

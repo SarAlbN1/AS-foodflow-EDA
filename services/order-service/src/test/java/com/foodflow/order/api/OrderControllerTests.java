@@ -61,7 +61,7 @@ class OrderControllerTests {
     void creaPedido() throws Exception {
         Order pedido = Order.crear("PED-0001", NotificationChannel.EMAIL, "ana@foodflow.test",
                 PaymentToken.PAY_OK, new BigDecimal("45000.00"));
-        when(servicio.crearPedido(any(OrderDraft.class))).thenReturn(pedido);
+        when(servicio.crearPedido(any(OrderDraft.class), any(UUID.class))).thenReturn(pedido);
 
         mockMvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON).content(CUERPO_VALIDO))
                 .andExpect(status().isCreated())
@@ -79,7 +79,7 @@ class OrderControllerTests {
     @Test
     @DisplayName("400 en formato Problem Details cuando la entrada es invalida")
     void entradaInvalida() throws Exception {
-        when(servicio.crearPedido(any(OrderDraft.class)))
+        when(servicio.crearPedido(any(OrderDraft.class), any(UUID.class)))
                 .thenThrow(new OrderValidationException(List.of(new Violation("total", "debe ser mayor que cero"))));
 
         mockMvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON)
@@ -156,7 +156,7 @@ class OrderControllerTests {
     @Test
     @DisplayName("un fallo no controlado responde 500 sin trazas de pila")
     void sinTrazas() throws Exception {
-        when(servicio.crearPedido(any(OrderDraft.class))).thenThrow(new IllegalStateException("fallo interno"));
+        when(servicio.crearPedido(any(OrderDraft.class), any(UUID.class))).thenThrow(new IllegalStateException("fallo interno"));
 
         mockMvc.perform(post("/orders").contentType(MediaType.APPLICATION_JSON).content(CUERPO_VALIDO))
                 .andExpect(status().isInternalServerError())

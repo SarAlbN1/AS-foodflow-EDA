@@ -1,6 +1,6 @@
 # services/order-service — Order Service
 
-> **Estado:** `POST /orders` crea y persiste el pedido en estado `CREADO` (HU-101) y `GET /orders/{id}` lo consulta (HU-102). El resto de la funcionalidad la construyen las historias indicadas.
+> **Estado:** `POST /orders` crea y persiste el pedido en estado `CREADO` (HU-101), `GET /orders/{id}` lo consulta (HU-102) y la creación publica `OrderCreated` en `orders.events` (HU-103). El resto de la funcionalidad la construyen las historias indicadas.
 
 **Responsabilidad:** Crea y consulta pedidos; publica `OrderCreated` y `OrderStatusChanged`; consume `PaymentApproved` y `PaymentRejected`. Único propietario de Order DB.
 
@@ -70,6 +70,29 @@ levanta Order DB y exporta las variables como arriba.
 
 > Kafka todavía no se usa: `OrderCreated` se publica en HU-103. Order Service nunca llama a
 > Payment Service por REST (regla arquitectónica 8).
+
+## Publicación de `OrderCreated` (HU-103)
+
+Al crear un pedido, Order Service publica `OrderCreated` en `orders.events`. Payment Service lo consume y arranca el pago: **Order Service no llama a Payment Service** (reglas arquitectónicas 4 y 5).
+
+| Qué | Cómo |
+|---|---|
+| Cuándo se publica | **Después del commit** de la transacción que persiste el pedido. Si la persistencia falla, no se publica nada |
+| Clave del mensaje | El `orderId`, que es la clave de partición (regla 11, ADR-04): los eventos de un pedido conservan su orden |
+| Garantías del productor | `acks=all` y `enable.idempotence=true`: un reintento interno del productor no duplica el registro |
+| Contenido | Envelope de `contracts/events/v1/envelope.schema.json` con el payload de `order-created.schema.json`, incluido el snapshot `notificationContact` (ADR-11) |
+| `correlationId` | El de la petición HTTP. Si llega sin cabecera o con un valor que no es UUID, se genera uno |
+
+**El riesgo aceptado de ADR-08.** No hay Transactional Outbox. Si el commit sale bien y la publicación falla, el pedido queda en `CREADO` **sin evento y sin que nadie lo reconcilie**. Se registra un `ERROR` con el `orderId` y el `correlationId`, y ahí termina: no se reintenta desde la base ni existe tarea de recuperación. Es la decisión de ADR-08, no un olvido.
+
+Por eso el productor tiene un tiempo límite (`ORDERS_PUBLISH_TIMEOUT_MS`, 10 s): la publicación ocurre después del commit, así que sin límite una espera larga retrasaría la respuesta de un pedido que **ya está creado**.
+
+Ver los eventos con la infraestructura levantada:
+
+```bash
+docker exec foodflow-kafka /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 --topic orders.events --from-beginning --max-messages 1
+```
 
 ## Health check (HU-604)
 

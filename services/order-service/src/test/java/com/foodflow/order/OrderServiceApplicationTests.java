@@ -49,7 +49,7 @@ class OrderServiceApplicationTests {
     void persisteElPedido() {
         UUID id = servicio.crearPedido(new OrderDraft(
                 "PED-IT-" + UUID.randomUUID(), "ana@foodflow.test", "EMAIL",
-                new BigDecimal("45000.00"), "PAY-OK")).id();
+                new BigDecimal("45000.00"), "PAY-OK"), UUID.randomUUID()).id();
 
         try {
             Optional<Order> guardado = repositorio.findById(id);
@@ -68,7 +68,7 @@ class OrderServiceApplicationTests {
     void consultaElPedidoPersistido() {
         UUID id = servicio.crearPedido(new OrderDraft(
                 "PED-IT-" + UUID.randomUUID(), "ana@foodflow.test", "EMAIL",
-                new BigDecimal("12500.50"), "PAY-FAIL")).id();
+                new BigDecimal("12500.50"), "PAY-FAIL"), UUID.randomUUID()).id();
 
         try {
             Order consultado = servicio.consultarPedido(id);
