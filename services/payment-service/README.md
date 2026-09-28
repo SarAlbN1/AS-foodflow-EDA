@@ -1,6 +1,6 @@
 # services/payment-service — Payment Service
 
-> **Estado:** consume `OrderCreated` desde `orders.events` (HU-201). Todavía no crea ni persiste el pago (HU-202) ni publica su resultado (HU-203, HU-204).
+> **Estado:** consume `OrderCreated` (HU-201) y resuelve y persiste el pago en Payment DB (HU-202). Todavía no publica el resultado: `PaymentApproved` es HU-203 y `PaymentRejected` es HU-204.
 
 **Responsabilidad:** Consume `OrderCreated`, decide el pago de forma determinista (`PAY-OK` / `PAY-FAIL`) y publica `PaymentApproved` o `PaymentRejected`. Único propietario de Payment DB.
 
@@ -62,6 +62,33 @@ El `notificationContact` no se guarda en Payment DB —la tabla `payments` no ti
 
 Un evento no procesable debería ir a `orders.events.dlq` sin reintentos ([comportamiento del flujo](../../docs/wiki/02-arquitectura/comportamiento-del-flujo.md)). HU-201 todavía no publica en la DLQ: registra el fallo y confirma el offset, porque dejar de confirmarlo bloquearía la partición y con ella todos los eventos posteriores del mismo pedido. Los reintentos y la DLQ los añade HU-602.
 
+## Resolución y persistencia del pago (HU-202)
+
+El pago es determinista (ADR-10): el resultado se conoce al procesar `OrderCreated`, así que no hay estado pendiente y un pago existe solo cuando ya está resuelto.
+
+| `paymentToken` del pedido | `payments.status` | `payments.reasonCode` |
+|---|---|---|
+| `PAY-OK` | `APROBADO` | nulo |
+| `PAY-FAIL` | `RECHAZADO` | `PAGO_RECHAZADO_POR_TOKEN` |
+| cualquier otro | no se crea pago | el evento es no procesable y lo descarta el consumidor (HU-201) |
+
+`transactionReference` tiene el formato `TXN-<yyyyMMdd>-<8 primeros dígitos del orderId>` y nunca es nula, tampoco cuando el pago se rechaza: sirve para rastrear el intento. Es una referencia propia del servicio, no de una pasarela externa; el prototipo no integra ninguna.
+
+**Un pedido, un pago.** `payments.order_id` es único: reprocesar el mismo `OrderCreated` devuelve el pago que ya existía y no cobra de nuevo. La consulta previa evita el caso común y la restricción de la base cubre la carrera entre dos consumidores del grupo. El registro del `eventId` en `processed_events` (ADR-09) lo añade HU-601.
+
+El esquema lo crean los scripts de [`infrastructure/postgres/payment-db/`](../../infrastructure/postgres/payment-db) y Hibernate solo lo valida (`ddl-auto=validate`).
+
+### Pruebas con la base real
+
+`PaymentServiceApplicationTests` persiste contra Payment DB y solo corre cuando `PAYMENT_DB_URL` está definida, para que `./mvnw verify` funcione sin infraestructura:
+
+```bash
+docker compose --env-file .env -f infrastructure/compose/docker-compose.yml up -d payment-db
+set -a && . ./.env && set +a
+export PAYMENT_DB_URL="jdbc:postgresql://localhost:$PAYMENT_DB_HOST_PORT/$PAYMENT_DB_NAME"
+cd services/payment-service && ./mvnw verify
+```
+
 ## Configuración
 
 Variables en [`.env.example`](../../.env.example):
@@ -72,5 +99,7 @@ Variables en [`.env.example`](../../.env.example):
 | `KAFKA_BOOTSTRAP_SERVERS` | `localhost:29092` | Broker |
 | `PAYMENT_ORDERS_CONSUMER_GROUP` | `payment-service.orders` | Grupo de consumidores propio del servicio |
 | `ORDERS_TOPIC` | `orders.events` | Tópico de entrada; los tópicos se leen de configuración, nunca como literales |
+| `PAYMENT_DB_URL` | `jdbc:postgresql://localhost:5434/paymentdb` | URL de **su** base; el servicio no recibe la de ninguna otra (regla 2) |
+| `PAYMENT_DB_USER`, `PAYMENT_DB_PASSWORD` | — | Credenciales propias de Payment DB |
 
 Referencias: [`CLAUDE.md`](../../CLAUDE.md) · [Wiki](../../docs/wiki/Home.md)

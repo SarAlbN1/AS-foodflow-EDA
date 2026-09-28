@@ -22,8 +22,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_payments_order_id ON payments (order_id);
 
 COMMENT ON TABLE  payments IS 'Pagos de FoodFlow. Único propietario: payment-service.';
 COMMENT ON COLUMN payments.order_id IS 'Único: evita cobrar dos veces el mismo pedido si OrderCreated se reprocesa.';
-COMMENT ON COLUMN payments.status IS 'Sin CHECK: el catálogo de estados de pago no está fijado en la wiki (pendiente de HU-201/HU-202).';
-COMMENT ON COLUMN payments.reason_code IS 'Motivo del rechazo que viaja en PaymentRejected. Catálogo pendiente de HU-202.';
+COMMENT ON COLUMN payments.status IS 'APROBADO o RECHAZADO (HU-202). Sin CHECK: el catálogo lo fija el dominio y se documenta en docs/wiki/03-contratos/persistencia.md.';
+COMMENT ON COLUMN payments.reason_code IS 'Motivo del rechazo que viaja en PaymentRejected. Único valor del prototipo: PAGO_RECHAZADO_POR_TOKEN (HU-202). Nulo cuando el pago fue aprobado.';
 
 CREATE INDEX IF NOT EXISTS idx_payments_status     ON payments (status);
 CREATE INDEX IF NOT EXISTS idx_payments_created_at ON payments (created_at);

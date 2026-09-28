@@ -31,6 +31,16 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+        <!-- Payment DB (HU-202). Regla 2: es la unica base que este servicio toca. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
         <!-- Consumo de orders.events (HU-201). Solo infrastructure.messaging lo usa. -->
         <dependency>
             <groupId>org.springframework.kafka</groupId>
