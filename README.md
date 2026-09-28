@@ -45,7 +45,7 @@ Detalle completo: [estructura del repositorio](docs/wiki/04-implementacion/estru
 
 ## Cómo ejecutar, detener y probar localmente
 
-Requisitos: JDK 25, Node.js 24.21.0 con npm y Docker o Podman con Compose. Las versiones fijadas están en [versiones.md](docs/wiki/04-implementacion/versiones.md). Maven no hace falta instalarlo: cada proyecto Java trae su *wrapper* (`mvnw`).
+Requisitos: JDK 25, Node.js 24.21.0 con npm y Docker o Podman con Compose. Las versiones fijadas están en [versiones.md](docs/wiki/04-implementacion/versiones.md). Maven no hace falta instalarlo: cada proyecto Java trae su *wrapper* (`mvnw`). El *wrapper* usa el JDK de `JAVA_HOME`, así que `JAVA_HOME` debe apuntar al JDK 25 (con un JDK anterior, la compilación falla con `release version 25 not supported`).
 
 > **Estado actual:** los proyectos son esqueletos sin funcionalidad de negocio (HU-001). A partir de la HU-607, `scripts/up.sh`, `scripts/down.sh` y `scripts/smoke-test.sh` levantarán, detendrán y probarán la solución completa.
 
