@@ -24,6 +24,5 @@ done
 
 label "status:blocked"        "24292f" "Bloqueado por una dependencia"
 label "status:needs-decision" "e99695" "Requiere decisión del equipo"
-label "ai-assisted"           "c2e0c6" "Contribución sustancial de un asistente de IA"
 
 echo "Etiquetas listas."

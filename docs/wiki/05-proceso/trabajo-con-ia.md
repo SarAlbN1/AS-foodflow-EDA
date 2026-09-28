@@ -8,7 +8,7 @@
 2. Crear la rama `<tipo>/<HU-###>-<slug>` desde `main` actualizado.
 3. Implementar según la página [Trabajo con asistentes de IA](trabajo-con-ia.md) y hacer commits con el formato de 10.2.
 4. Ejecutar las pruebas y `scripts/verify-architecture.sh`.
-5. Abrir el PR con la plantilla, `Closes #<n>` y `ai-assisted` si corresponde.
+5. Abrir el PR con la plantilla, `Closes #<n>`, las etiquetas del issue y el milestone.
 6. Entregar el reporte de la página [Trabajo con asistentes de IA](trabajo-con-ia.md).
 7. **No** fusionar su propio PR ni marcar la HU como terminada sin verificar todos los criterios.
 

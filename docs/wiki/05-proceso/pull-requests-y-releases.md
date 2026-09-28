@@ -30,9 +30,6 @@ Closes #<n> — HU-###
 
 ## Documentación
 - [ ] README, ADR o `docs/wiki/06-backlog/estado.md` actualizados cuando aplica
-
-## Asistencia de IA
-- [ ] Este PR tuvo contribución sustancial de un asistente de IA (añadir `ai-assisted`)
 ```
 
 Reglas: el autor no aprueba su propio PR (lo revisa la otra persona); el PR es pequeño y corresponde a una sola HU; el título sigue el formato de commit.
