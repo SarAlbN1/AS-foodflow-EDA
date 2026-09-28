@@ -3,10 +3,13 @@ package com.foodflow.order.api;
 import java.net.URI;
 import java.util.UUID;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,16 +28,36 @@ import com.foodflow.order.domain.Order;
 @RequestMapping("/orders")
 class OrderController {
 
+    /** Nombre de la cabecera de idempotencia, tal como la documenta el contrato. */
+    static final String IDEMPOTENCY_KEY = "Idempotency-Key";
+
+    /** Longitud maxima que admite el contrato y la columna {@code idempotency_keys.key}. */
+    private static final int LARGO_MAXIMO = 200;
+
     private final OrderApplicationService servicio;
 
     OrderController(OrderApplicationService servicio) {
         this.servicio = servicio;
     }
 
-    /** Crea el pedido y responde {@code 201} con {@code Location} hacia el recurso creado. */
+    /**
+     * Crea el pedido y responde {@code 201} con {@code Location} hacia el recurso creado.
+     *
+     * <p>El {@code correlationId} de la peticion viaja al envelope de {@code OrderCreated}, que
+     * se publica despues del commit (HU-103).
+     *
+     * <p>La cabecera {@code Idempotency-Key} es obligatoria ({@code contracts/api/openapi.yaml}):
+     * reenviar la misma solicitud devuelve el pedido original en lugar de crear otro (HU-107).
+     * La cabecera se declara opcional en la firma para poder responder {@code 400} en Problem
+     * Details en vez del error generico que produciria Spring al faltar una cabecera requerida.
+     */
     @PostMapping
-    ResponseEntity<OrderResponse> crear(@RequestBody CreateOrderRequest request) {
-        Order pedido = servicio.crearPedido(request.aBorrador());
+    ResponseEntity<OrderResponse> crear(
+            @RequestHeader(name = IDEMPOTENCY_KEY, required = false) String idempotencyKey,
+            @RequestBody CreateOrderRequest request,
+            HttpServletRequest peticion) {
+        Order pedido = servicio.crearPedido(
+                request.aBorrador(), CorrelationId.de(peticion), exigirClave(idempotencyKey));
         return ResponseEntity
                 .created(URI.create("/orders/" + pedido.id()))
                 .body(OrderResponse.from(pedido));
@@ -48,5 +71,17 @@ class OrderController {
     @GetMapping("/{id}")
     ResponseEntity<OrderResponse> consultar(@PathVariable UUID id) {
         return ResponseEntity.ok(OrderResponse.from(servicio.consultarPedido(id)));
+    }
+
+    /** Comprueba la cabecera antes de tocar nada: sin ella la solicitud no se procesa. */
+    private static String exigirClave(String idempotencyKey) {
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            throw new MissingIdempotencyKeyException("es obligatoria");
+        }
+        String clave = idempotencyKey.strip();
+        if (clave.length() > LARGO_MAXIMO) {
+            throw new MissingIdempotencyKeyException("admite como maximo " + LARGO_MAXIMO + " caracteres");
+        }
+        return clave;
     }
 }

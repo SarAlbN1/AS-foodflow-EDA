@@ -14,7 +14,7 @@ Revisión de esta página: **2026-09-28**, contra `main.tex` de 1043 líneas (HU
 
 | # | Tema | Informe | Qué se cambió en la wiki |
 |---|---|---|---|
-| D-1 | `Idempotency-Key` en `POST /orders` | «Requiere la cabecera `Idempotency-Key`» (línea 585) | [API REST](../03-contratos/api-rest.md): la cabecera pasa de **opcional** a **obligatoria**; sin ella, `400`. La exigencia la implementa HU-107 |
+| D-1 | `Idempotency-Key` en `POST /orders` | «Requiere la cabecera `Idempotency-Key`» (línea 585) | [API REST](../03-contratos/api-rest.md): la cabecera pasa de **opcional** a **obligatoria**; sin ella, `400`. **Implementado en HU-107**, que además corrigió ADR-12 y el criterio 4 de la propia HU, que seguían diciendo «opcional» |
 | D-2 | Estados de Pago | `APROBADO` o `RECHAZADO` (líneas 545 y 854) | [Persistencia](../03-contratos/persistencia.md): se fija el catálogo de `payments.status` y se anota que su `CHECK` entra en HU-202 |
 | D-3 | Diagramas | El diseño se comunica con C4 y un modelo Structurizr único (línea 531) | Las nueve imágenes exportadas quedan versionadas y **se muestran** en las páginas de arquitectura, alcance, contratos, convenciones y runbook |
 
@@ -29,32 +29,25 @@ Revisión de esta página: **2026-09-28**, contra `main.tex` de 1043 líneas (HU
 
 Cada fila afecta contratos ya fusionados o código. **No se ha cambiado nada** en ninguno de los dos lados.
 
-### D-6 — Quién dispara la notificación · **DECIDIDO: abanico desde `payments.events`**
+### D-6 — Quién dispara la notificación · **RESUELTO en el informe**
 
-Decidido el **2026-09-28** por Sara y Juan. **Gana la wiki**: Notification Service consume `payments.events`. La wiki, las reglas, ADR-11 y los esquemas de evento no cambian; se corrige el informe. El texto propuesto está en [Propuesta D-6](../../informe/propuesta-D6-quien-dispara-la-notificacion.md).
+Decidido el **2026-09-28** por Sara y Juan: Notification Service consume **`payments.events`**, no `OrderStatusChanged`. **Los siete reemplazos ya están aplicados en `main.tex`**, así que el texto del informe y la wiki vuelven a decir lo mismo.
 
-| | |
-|---|---|
-| **Informe (a corregir)** | Notification Service consume **`OrderStatusChanged`** (líneas 571, 634, 655, 725, 727, 753, 808) |
-| **Decisión** | **`payments.events`**: Payment publica el resultado y Order y Notification reaccionan en paralelo, cada uno por su cuenta |
-| **Qué NO cambia** | Reglas 10 y 13, [Eventos](../03-contratos/eventos.md), [Estilo y flujo](estilo-y-flujo.md), ADR-11, los seis esquemas de `contracts/events/v1/` y los criterios de HU-301 a HU-304. Tampoco el código ya entregado: en #71 Payment ya copia el `notificationContact` de `OrderCreated` para llevarlo al evento de pago |
-| **Qué sí cambia** | Siete frases de `main.tex` (solo las edita Sara), incluida la fila de ADR-11 de la tabla de decisiones, que es la que originó A-2, y **los diagramas**: la vista `Dynamic_OrderFlow` dibuja la cadena y el C2 tiene la flecha `OrderStatusChanged → Notification`. El modelo Structurizr y la reexportación son **HU-704, de Juan** |
+La wiki, las reglas 10 y 13, ADR-11, [Eventos](../03-contratos/eventos.md) y los seis esquemas de `contracts/events/v1/` **no cambiaron**: la decisión los confirma. Tampoco el código: en #71 Payment Service ya copia el `notificationContact` de `OrderCreated` para llevarlo al evento de pago.
 
 **Por qué el abanico**
 
-1. **El evento de pago cruza una sola vez la ventana de ADR-08.** Sin Outbox, cada publicación tras un commit puede perderse. En la cadena, la notificación depende además de que Order publique `OrderStatusChanged`, así que atraviesa esa ventana dos veces: si Order hace commit y no publica, el pedido queda `PAGADO` y **no llega notificación nunca**, sin nada que lo reconcilie.
-2. **Independencia frente a Order Service.** Es lo que piden las reglas 10 y 13. Si Order se detiene, las notificaciones siguen saliendo.
-3. **No alarga el camino crítico.** Con la cadena, HU-301 a HU-304 dependerían de HU-106, que a su vez espera a D-7, D-8 y HU-103.
+1. **El evento de pago cruza una sola vez la ventana de ADR-08.** Sin Outbox, toda publicación posterior a un commit puede perderse. En la cadena la notificación atravesaría esa ventana dos veces: si Order hace commit y no publica `OrderStatusChanged`, el pedido queda `PAGADO` y **no llega notificación nunca**, sin nada que lo reconcilie.
+2. **Independencia frente a Order Service** (reglas 10 y 13): si Order se detiene, las notificaciones siguen saliendo.
+3. **No alarga el camino crítico:** con la cadena, HU-301 a HU-304 dependerían de HU-106.
 
-**Qué se pierde, y cómo se cubre**
+**Qué se pierde, y cómo se cubre.** La cadena garantizaba que, si existía notificación, el pedido ya había cambiado de estado. El abanico no: si Order no procesa `PaymentApproved` y el evento acaba en la DLQ, la notificación sale con el pedido en `CREADO`. Se cubre **redactando el mensaje sobre el resultado del pago y no sobre el estado del pedido** («tu pago fue aprobado», nunca «tu pedido está pagado»), fijado en [Proveedor de notificaciones](../03-contratos/proveedor-notificaciones.md) e implementado por HU-301.
 
-La cadena daba una garantía que el abanico no tiene: si existe notificación, el pedido ya cambió de estado. Con el abanico, si Order no puede procesar `PaymentApproved` y el evento acaba en la DLQ, sale la notificación con el pedido todavía en `CREADO`.
+> **Argumento descartado.** La primera versión justificaba el abanico con el criterio de Disponibilidad del informe: «detener Notification Service 30 s y comprobar que Order/Payment continúan». **No sirve para decidir**: Notification es el último eslabón en las dos topologías, así que esa prueba se cumple igual en la cadena, y al reiniciarla consume el evento retenido en Kafka. La que sí las distingue es **detener Order Service**, y el informe no la plantea.
 
-Se cubre **redactando el mensaje sobre el resultado del pago y no sobre el estado del pedido**: «tu pago fue aprobado» / «tu pago fue rechazado», nunca «tu pedido está pagado». Así la notificación no afirma nada que pueda ser falso. Queda fijado en [Proveedor de notificaciones](../03-contratos/proveedor-notificaciones.md).
+**Pendiente: los diagramas.** La vista `Dynamic_OrderFlow` y el C2 todavía dibujan la cadena. Hay que corregir el modelo Structurizr y reexportar las imágenes: es **HU-704**. Mientras tanto, el texto del informe y sus figuras no coinciden en ese punto.
 
-> **Argumento descartado.** La primera versión de esta fila justificaba el abanico con el criterio de verificación de Disponibilidad del informe (línea 673): «detener Notification Service 30 s y comprobar que Order/Payment continúan». **No sirve para decidir**: Notification es el último eslabón en las dos topologías, así que esa prueba se cumple igual en la cadena, y al reiniciarla consume el evento retenido en Kafka. La prueba que sí las distingue es **detener Order Service**, y el informe no la plantea. Corregido por Juan en la revisión.
-
-**No genera ADR nuevo:** la decisión confirma lo que ya dicen ADR-11 y la regla 10, no las cambia.
+**No genera ADR nuevo:** confirma ADR-11 y la regla 10, no las cambia.
 
 ### D-7 — Nombre del campo de versión del envelope
 

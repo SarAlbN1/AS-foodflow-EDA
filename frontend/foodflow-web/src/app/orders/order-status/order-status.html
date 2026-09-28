@@ -1,0 +1,51 @@
+<section>
+  <h2>Estado del pedido</h2>
+  <p>
+    Identificador: <code data-testid="pedido-id">{{ id() }}</code>
+  </p>
+
+  @if (pedido(); as p) {
+    <p class="estado" [attr.data-estado]="p.status" data-testid="estado">
+      <span class="etiqueta">{{ etiquetas[p.status] }}</span>
+      <code data-testid="estado-codigo">{{ p.status }}</code>
+    </p>
+    <dl>
+      <dt>Referencia</dt>
+      <dd>{{ p.customerReference }}</dd>
+      <dt>Total</dt>
+      <dd>{{ p.total }} COP</dd>
+      <dt>Última actualización</dt>
+      <dd>{{ p.updatedAt }}</dd>
+    </dl>
+    @if (esperandoResultado()) {
+      <p class="nota" data-testid="esperando" aria-live="polite">
+        Esperando el resultado del pago; esta pantalla se actualiza sola.
+      </p>
+    } @else if (p.status === 'CREADO') {
+      <p class="nota" data-testid="sin-resultado">
+        El pago todavía no tiene resultado. Pulsa "Actualizar" para consultar de nuevo.
+      </p>
+    }
+  }
+
+  @if (error(); as falla) {
+    <div class="error" role="alert" data-testid="error">
+      <p>{{ falla.mensaje }}</p>
+      @if (falla.referencia) {
+        <p class="referencia">Referencia: {{ falla.referencia }}</p>
+      }
+    </div>
+  }
+
+  <div class="acciones">
+    <button
+      type="button"
+      (click)="actualizar()"
+      [disabled]="consultando()"
+      data-testid="actualizar"
+    >
+      {{ consultando() ? 'Consultando…' : 'Actualizar' }}
+    </button>
+    <a routerLink="/">Crear otro pedido</a>
+  </div>
+</section>

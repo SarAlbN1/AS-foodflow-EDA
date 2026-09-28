@@ -28,7 +28,7 @@ No hay endpoint de consulta de pagos: el resultado del pago se observa por el es
 
 **Errores en RFC 9457 Problem Details**, con `Content-Type: application/problem+json`, incluyendo `type`, `title`, `status`, `detail`, `code` y `correlationId`. **Nunca** se devuelven trazas de pila. Códigos: `400` entrada inválida, `404` inexistente, `409` conflicto o duplicidad, `500` error no controlado, `503` dependencia no disponible.
 
-**`Idempotency-Key` en `POST /orders`.** Encabezado opcional para clientes externos y **siempre enviado por Angular**. Se respalda en la tabla `idempotency_keys` de Order DB (`key` PK, `request_hash`, `order_id`, `created_at`):
+**`Idempotency-Key` en `POST /orders`.** Encabezado **obligatorio**: sin él la solicitud se rechaza con `400`. Lo exige el informe técnico («Requiere la cabecera `Idempotency-Key`») y lo declara `required: true` el contrato OpenAPI. Angular la genera por intento de creación. Se respalda en la tabla `idempotency_keys` de Order DB (`key` PK, `request_hash`, `order_id`, `created_at`):
 
 - Misma clave y **mismo** cuerpo: se devuelve la respuesta original, sin crear otro pedido.
 - Misma clave y cuerpo **distinto**: `409`.

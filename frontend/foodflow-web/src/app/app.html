@@ -1,4 +1,10 @@
 <main>
   <h1>FoodFlow</h1>
+  <nav>
+    <a routerLink="/" routerLinkActive="activo" [routerLinkActiveOptions]="{ exact: true }"
+      >Nuevo pedido</a
+    >
+    <a routerLink="/orders" routerLinkActive="activo">Consultar pedido</a>
+  </nav>
   <router-outlet />
 </main>

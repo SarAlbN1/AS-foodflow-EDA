@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import com.foodflow.order.application.IdempotencyConflictException;
 import com.foodflow.order.application.OrderNotFoundException;
 import com.foodflow.order.validation.OrderValidationException;
 
@@ -55,6 +56,27 @@ class ApiExceptionHandler {
                 excepcion.getName() + ": debe ser un UUID valido", "VALIDATION_ERROR", peticion);
     }
 
+    /** Falta la cabecera {@code Idempotency-Key} o no es utilizable (criterio 1 de HU-107). */
+    @ExceptionHandler(MissingIdempotencyKeyException.class)
+    ProblemDetail cabeceraDeIdempotenciaAusente(MissingIdempotencyKeyException excepcion,
+            HttpServletRequest peticion) {
+        return problema(HttpStatus.BAD_REQUEST, "validation-error", "Solicitud invalida",
+                excepcion.getMessage(), "VALIDATION_ERROR", peticion);
+    }
+
+    /**
+     * La misma clave se reutilizo con un cuerpo distinto (criterio 3 de HU-107).
+     *
+     * <p>El pedido original no se toca: atender esta solicitud crearia un segundo pedido bajo
+     * una clave que ya identifica a otro.
+     */
+    @ExceptionHandler(IdempotencyConflictException.class)
+    ProblemDetail claveDeIdempotenciaReutilizada(IdempotencyConflictException excepcion,
+            HttpServletRequest peticion) {
+        return problema(HttpStatus.CONFLICT, "idempotency-conflict", "Clave de idempotencia reutilizada",
+                excepcion.getMessage(), "IDEMPOTENCY_CONFLICT", peticion);
+    }
+
     /** El pedido consultado no existe (criterio 3 de HU-102). */
     @ExceptionHandler(OrderNotFoundException.class)
     ProblemDetail noEncontrado(OrderNotFoundException excepcion, HttpServletRequest peticion) {
@@ -81,13 +103,8 @@ class ApiExceptionHandler {
         return problema;
     }
 
-    /**
-     * El {@code correlationId} entra por el gateway; si la peticion llega sin el, se genera uno
-     * para que la respuesta y el registro sigan siendo correlacionables. La propagacion completa
-     * es HU-403.
-     */
+    /** Misma regla que usa el resto del servicio: ver {@link CorrelationId}. */
     private static String correlationId(HttpServletRequest peticion) {
-        String recibido = peticion.getHeader(CABECERA_CORRELACION);
-        return recibido == null || recibido.isBlank() ? UUID.randomUUID().toString() : recibido;
+        return CorrelationId.de(peticion).toString();
     }
 }

@@ -59,7 +59,7 @@ Detalle y justificación: `docs/wiki/02-arquitectura/reglas-arquitectonicas.md`.
 - **ADR-10:** pago determinista: `PAY-OK` produce `PaymentApproved` y `PAY-FAIL` produce `PaymentRejected`.
 - **ADR-11:** el pedido guarda un *snapshot* de contacto y canal de notificación (`notificationContact`).
 - Protocolos: **REST/JSON sobre HTTPS** en el borde y **eventos JSON sobre Kafka** internamente.
-- API REST mínima: `POST /orders`, `GET /orders/{id}`, `GET /orders/{id}/notifications`. `POST /orders` acepta `Idempotency-Key`. Errores en RFC 9457 Problem Details. Contratos en OpenAPI.
+- API REST mínima: `POST /orders`, `GET /orders/{id}`, `GET /orders/{id}/notifications`. `POST /orders` **exige** `Idempotency-Key`; sin ella, `400`. Errores en RFC 9457 Problem Details. Contratos en OpenAPI.
 - Eventos: `OrderCreated`, `OrderStatusChanged`, `PaymentApproved`, `PaymentRejected`, `NotificationSent`, `NotificationFailed`.
 
 ## 5. No implementar
@@ -91,7 +91,25 @@ Cada persona del equipo trabaja con su propio asistente. **Cada quien corrige lo
 
 Excepción única: Sara puede editar cualquier cosa si lo decide explícitamente, porque es la responsable del repositorio. Un asistente no asume esa excepción por su cuenta.
 
-## 8. Cómo trabajar una HU
+## 8. La traza del proyecto no nombra herramientas de IA (obligatoria)
+
+El repositorio es el entregable académico. Lo que se evalúa es el trabajo del equipo, así que **ninguna marca de herramienta de IA aparece en la traza del proyecto**.
+
+**No se escribe, nunca:**
+
+- Ningún `Co-Authored-By`, `Generated with`, `Assisted by` ni firma equivalente en un mensaje de commit.
+- Ninguna mención de marca en la descripción de un PR, en un comentario de revisión, en un issue o en una release.
+- Ningún nombre comercial (`Claude`, `Claude Code`, `Anthropic`, `Copilot`, `ChatGPT`, `Gemini`…) en la wiki, en el informe, en el README o en los comentarios del código.
+
+**Cuando haya que referirse al asistente**, se escribe en genérico: «un asistente de IA», «el asistente». La página [Trabajo con asistentes de IA](docs/wiki/05-proceso/trabajo-con-ia.md) ya está redactada así y es el modelo.
+
+**Excepciones, y solo estas dos:** el archivo `CLAUDE.md` y la carpeta `.claude/` conservan su nombre, porque son configuración que la herramienta localiza por ruta y renombrarlos la rompe. Las referencias a esos dos nombres son rutas de archivo, no menciones.
+
+**Al integrar con squash, el mensaje se escribe a mano.** GitHub propone un cuerpo con los mensajes de los commits del PR, *trailers* incluidos: aceptarlo mete la firma en `main` aunque el PR estuviera limpio. Título escrito a mano y cuerpo vacío.
+
+**Al revisar un PR se comprueba.** Una firma de herramienta en un commit o en la descripción es motivo de pedir cambios.
+
+## 9. Cómo trabajar una HU
 
 1. Confirma que la HU existe como issue y lee su épica y sus criterios de aceptación.
 2. Identifica el servicio propietario de los datos y los contratos afectados.
@@ -101,13 +119,13 @@ Excepción única: Sara puede editar cualquier cosa si lo decide explícitamente
 6. Abre el PR y entrega el reporte de `docs/wiki/05-proceso/trabajo-con-ia.md`.
 7. No marques la HU como terminada si algún criterio de aceptación no está verificado.
 
-## 9. Ante ambigüedad
+## 10. Ante ambigüedad
 
 - Si la decisión afecta un contrato, un tópico, un estado o el alcance: **detente y pregunta**.
 - Si es una decisión local (nombre de una clase privada): elige la opción más simple coherente con EDA y anótala en el reporte.
 - Nunca inventes versiones, URLs, credenciales, endpoints ni entidades. Las versiones se fijan en `docs/wiki/04-implementacion/versiones.md`.
 
-## 10. Comandos
+## 11. Comandos
 
 | Acción | Comando | Disponible desde |
 |---|---|---|
@@ -120,12 +138,12 @@ Excepción única: Sara puede editar cualquier cosa si lo decide explícitamente
 | Construir y probar un servicio | `./mvnw verify` (en `services/<servicio>` o `gateway/api-gateway`; Windows: `mvnw.cmd verify`) | HU-001 |
 | Construir y probar el frontend | `npm ci && npm run build && npm test -- --watch=false` (en `frontend/foodflow-web`) | HU-001 |
 
-## 11. Comandos de Claude Code del proyecto
+## 12. Comandos del asistente
 
 - `/hu HU-101`: implementa una historia siguiendo el flujo de este archivo.
 - `/verificar`: ejecuta pruebas y checklist arquitectónico sobre los cambios actuales.
 - `/pr`: prepara el PR con la plantilla y las etiquetas correctas.
 
-## 12. Estado
+## 13. Estado
 
 El estado vivo del backlog está en `docs/wiki/06-backlog/estado.md`. Actualízalo al cerrar cada HU.
