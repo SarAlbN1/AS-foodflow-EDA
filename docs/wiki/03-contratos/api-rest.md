@@ -150,4 +150,4 @@ No se pone por adelantado en los servicios que todavía no tienen base: el arran
 }
 ```
 
-**El gateway todavía no los expone.** `gateway/api-gateway` sigue siendo un esqueleto sin servidor web: su health check se añade en HU-401, junto con la decisión de su stack (servlet o reactivo).
+**El gateway todavía no los expone.** HU-604 cubre los tres servicios Spring Boot. El health check del API Gateway no está en el alcance de ninguna HU: queda registrado como [punto abierto A-10](../02-arquitectura/puntos-abiertos.md).
