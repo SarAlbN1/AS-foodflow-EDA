@@ -40,7 +40,7 @@
 | [HU-306](epicas/EP-03-notificaciones.md) | Mock del proveedor de notificaciones | 4 | Juan | 3 | Terminada | #62 |  |
 | [HU-402](epicas/EP-04-gateway-y-contratos.md) | Enrutar la consulta de notificaciones | 4 | Juan | 3 | Pendiente | | |
 | [HU-504](epicas/EP-05-frontend.md) | Visualizar el estado de la notificación | 4 | Juan | 3 | Pendiente | | |
-| [HU-006](epicas/EP-00-base-tecnica-y-estandares.md) | Guardas de arquitectura ejecutables | 5 | Juan | 5 | En revisión | | `bash scripts/verify-architecture.sh`; la comprobación de Compose se activa con HU-607 |
+| [HU-006](epicas/EP-00-base-tecnica-y-estandares.md) | Guardas de arquitectura ejecutables | 5 | Juan | 5 | En revisión | [#85](https://github.com/SarAlbN1/AS-foodflow-EDA/pull/85) | `bash scripts/verify-architecture.sh`; la comprobación de Compose se activa con HU-607 |
 | [HU-505](epicas/EP-05-frontend.md) | Visualizar el flujo integral de un pedido | 5 | Juan | 5 | Pendiente | | |
 | [HU-601](epicas/EP-06-resiliencia-y-calidad.md) | Hacer idempotentes los consumidores Kafka | 5 | Sara | 5 | Pendiente | | |
 | [HU-602](epicas/EP-06-resiliencia-y-calidad.md) | Aplicar reintentos y DLQ a eventos fallidos | 5 | Sara | 5 | Pendiente | | |
