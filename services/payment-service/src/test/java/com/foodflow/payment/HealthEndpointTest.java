@@ -15,10 +15,14 @@ import org.springframework.web.client.RestClient;
  * HU-604 — health checks de Payment Service.
  *
  * <p>Comprueba el contrato de {@code docs/wiki/03-contratos/api-rest.md}. La prueba corre sin
- * infraestructura: el dialecto se fija a mano y la validacion de esquema se desactiva para que
- * el contexto arranque sin Payment DB, y el listener de Kafka no se inicia. Eso es justamente lo
- * que hace observable el criterio 2 de HU-604: sin su base, el servicio esta vivo (liveness
- * {@code 200}) pero su estado agregado refleja la dependencia caida.
+ * infraestructura: se fija el dialecto y se desactiva la validacion de esquema para que el
+ * contexto arranque tambien cuando el servicio tenga su base, sin necesitar que este levantada.
+ * Esas propiedades son inertes mientras el servicio no use JPA. El listener de Kafka no
+ * arranca: sin broker, esta prueba no lo necesita.
+ *
+ * <p>Por eso no se afirma que el estado agregado sea {@code UP}: sin sus dependencias el
+ * servicio esta {@code DOWN} y eso es lo correcto. Lo que si se afirma es la distincion del
+ * criterio 2: {@code liveness} responde {@code 200} aunque una dependencia no este disponible.
  */
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -44,8 +48,8 @@ class HealthEndpointTest {
 
     /** CA-2: liveness responde por la aplicacion iniciada, al margen de sus dependencias. */
     @Test
-    @DisplayName("CA-2: liveness responde 200 aunque Payment DB no este disponible")
-    void livenessNoDependeDeLaBase() {
+    @DisplayName("CA-2: liveness responde 200 aunque una dependencia esencial no responda")
+    void livenessNoDependeDeLasDependencias() {
         assertThat(get("/actuator/health/liveness").getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
