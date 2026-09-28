@@ -1,0 +1,19 @@
+{
+  "eventId": "00000001-1111-4222-8333-444455556666",
+  "eventType": "OrderCreated",
+  "eventVersion": 1,
+  "occurredAt": "2026-09-27T20:00:00Z",
+  "correlationId": "1a2b3c4d-5e6f-4071-8293-a4b5c6d7e8f9",
+  "aggregateId": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+  "payload": {
+    "orderId": "3f8b1c2e-5a47-4d9b-8e10-7c2a6b4f9d31",
+    "customerReference": "CLI-000123",
+    "total": 45900.0,
+    "currency": "COP",
+    "paymentToken": "PAY-OK",
+    "notificationContact": {
+      "channel": "EMAIL",
+      "destination": "cliente@foodflow.test"
+    }
+  }
+}

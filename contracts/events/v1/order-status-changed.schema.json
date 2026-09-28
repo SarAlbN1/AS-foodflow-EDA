@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foodflow.local/contracts/events/v1/order-status-changed.schema.json",
+  "title": "OrderStatusChanged v1",
+  "description": "El estado del pedido cambió tras registrar el resultado del pago. Sustituye al nombre OrderUpdated, que no se usa. Notification Service NO depende de este evento: reacciona a payments.events (regla 6 y supuesto A-2). El contacto viaja aquí solo para consumidores futuros. Productor: Order Service. Tópico: orders.events. Fuente de verdad: docs/wiki/03-contratos/eventos.md.",
+  "allOf": [
+    {
+      "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "const": "OrderStatusChanged"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "orderId",
+            "previousStatus",
+            "newStatus",
+            "notificationContact"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "orderId": {
+              "description": "Identificador del pedido. Coincide con aggregateId.",
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/uuid"
+            },
+            "previousStatus": {
+              "description": "Estado anterior. Las únicas transiciones permitidas parten de CREADO.",
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/estadoPedido"
+            },
+            "newStatus": {
+              "description": "Estado nuevo: PAGADO o PAGO_RECHAZADO.",
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/estadoPedido"
+            },
+            "notificationContact": {
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/notificationContact"
+            }
+          }
+        }
+      },
+      "required": [
+        "eventType",
+        "payload"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foodflow.local/contracts/events/v1/notification-sent.schema.json",
+  "title": "NotificationSent v1",
+  "description": "El proveedor externo aceptó la notificación; pasó de PENDIENTE a ENVIADA. Solo Notification Service llama al proveedor externo (regla 7). Productor: Notification Service. Tópico: notifications.events. Fuente de verdad: docs/wiki/03-contratos/eventos.md.",
+  "allOf": [
+    {
+      "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "const": "NotificationSent"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "notificationId",
+            "orderId",
+            "paymentId",
+            "channel",
+            "providerReference"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "notificationId": {
+              "description": "Identificador de la notificación.",
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/uuid"
+            },
+            "orderId": {
+              "description": "Pedido notificado. Coincide con aggregateId.",
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/uuid"
+            },
+            "paymentId": {
+              "description": "Pago cuyo resultado se notificó.",
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/uuid"
+            },
+            "channel": {
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/canal"
+            },
+            "providerReference": {
+              "description": "Referencia devuelta por el proveedor (providerReference del 202).",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          }
+        }
+      },
+      "required": [
+        "eventType",
+        "payload"
+      ]
+    }
+  ]
+}

@@ -96,6 +96,7 @@ Flyway, Testcontainers y CI son **opcionales**: no los conviertas en requisito.
 | Verificar estructura del repo | `bash scripts/check-structure.sh` | Bootstrap |
 | Levantar / detener entorno | `scripts/up.sh` / `scripts/down.sh` | HU-607 |
 | Prueba de humo E2E | `scripts/smoke-test.sh` | HU-607 |
+| Validar contratos de eventos | `bash scripts/validate-events.sh` | HU-003 |
 | Verificar arquitectura | `scripts/verify-architecture.sh` | HU-006 |
 | Construir y probar un servicio | Se define en HU-001 | HU-001 |
 

@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foodflow.local/contracts/events/v1/envelope.schema.json",
+  "title": "Envelope común de los eventos de FoodFlow v1",
+  "description": "Estructura obligatoria de todo evento publicado en Kafka. Fuente de verdad: docs/wiki/03-contratos/eventos.md. Los eventos son hechos inmutables: aggregateId es siempre el orderId y se usa como clave de partición (ADR-04); eventId sustenta la idempotencia de los consumidores (ADR-09).",
+  "type": "object",
+  "required": ["eventId", "eventType", "eventVersion", "occurredAt", "correlationId", "aggregateId", "payload"],
+  "additionalProperties": false,
+  "properties": {
+    "eventId": {
+      "description": "Identificador único del evento. Clave de idempotencia (ADR-09): el consumidor lo registra en processed_events.",
+      "$ref": "#/$defs/uuid"
+    },
+    "eventType": {
+      "description": "Nombre del evento. Se usa OrderStatusChanged, nunca OrderUpdated.",
+      "type": "string",
+      "enum": [
+        "OrderCreated",
+        "OrderStatusChanged",
+        "PaymentApproved",
+        "PaymentRejected",
+        "NotificationSent",
+        "NotificationFailed"
+      ]
+    },
+    "eventVersion": {
+      "description": "Versión del contrato del evento. Los esquemas de este directorio son la v1.",
+      "type": "integer",
+      "const": 1
+    },
+    "occurredAt": {
+      "description": "Momento en que ocurrió el hecho, en UTC (ISO 8601).",
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
+    },
+    "correlationId": {
+      "description": "Correlación de extremo a extremo. Entra por el gateway (X-Correlation-Id) y se propaga por eventos y llamadas HTTP.",
+      "$ref": "#/$defs/uuid"
+    },
+    "aggregateId": {
+      "description": "Siempre el orderId. Es la clave de partición del mensaje (ADR-04), lo que garantiza el orden por pedido.",
+      "$ref": "#/$defs/uuid"
+    },
+    "payload": {
+      "description": "Cuerpo específico de cada tipo de evento. Lo restringe el esquema del evento concreto.",
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "importe": {
+      "description": "Importe monetario. NUMERIC(12,2): hasta 10 enteros y exactamente 2 decimales. Se serializa como número JSON.",
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 9999999999.99,
+      "multipleOf": 0.01
+    },
+    "moneda": {
+      "description": "Moneda del prototipo. Única: pesos colombianos.",
+      "type": "string",
+      "const": "COP"
+    },
+    "canal": {
+      "description": "Canal de notificación. El prototipo solo implementa correo electrónico.",
+      "type": "string",
+      "enum": ["EMAIL"]
+    },
+    "notificationContact": {
+      "description": "Snapshot del contacto y canal capturado en el pedido y propagado por eventos (ADR-11). Dato personal: se registra enmascarado en logs.",
+      "type": "object",
+      "required": ["channel", "destination"],
+      "additionalProperties": false,
+      "properties": {
+        "channel": { "$ref": "#/$defs/canal" },
+        "destination": {
+          "description": "Destino del canal. Con channel EMAIL, una dirección de correo válida.",
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 255
+        }
+      }
+    },
+    "estadoPedido": {
+      "description": "Estados del agregado Order. Transiciones permitidas: CREADO a PAGADO y CREADO a PAGO_RECHAZADO.",
+      "type": "string",
+      "enum": ["CREADO", "PAGADO", "PAGO_RECHAZADO"]
+    }
+  }
+}

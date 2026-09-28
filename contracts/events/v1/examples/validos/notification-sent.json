@@ -1,0 +1,15 @@
+{
+  "eventId": "00000005-1111-4222-8333-444455556666",
+  "eventType": "NotificationSent",
+  "eventVersion": 1,
+  "occurredAt": "2026-09-27T20:00:00Z",
+  "correlationId": "1a2b3c4d-5e6f-4071-8293-a4b5c6d7e8f9",
+  "aggregateId": "3f8b1c2e-5a47-4d9b-8e10-7c2a6b4f9d31",
+  "payload": {
+    "notificationId": "c92f5e7b-3d69-4a24-8b1f-6e9d4c2a8f53",
+    "orderId": "3f8b1c2e-5a47-4d9b-8e10-7c2a6b4f9d31",
+    "paymentId": "b71e4d6a-2c58-4f13-9a0e-5d8c3b1f7e42",
+    "channel": "EMAIL",
+    "providerReference": "PRV-9f3c21"
+  }
+}

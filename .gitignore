@@ -34,3 +34,6 @@ yarn-error.log*
 # Variables de entorno reales (solo se versiona .env.example)
 .env
 **/.env
+
+# Entorno de validación de contratos (scripts/validate-events.sh)
+.venv-contracts/

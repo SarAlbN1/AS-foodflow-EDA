@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foodflow.local/contracts/events/v1/payment-approved.schema.json",
+  "title": "PaymentApproved v1",
+  "description": "El pago del pedido fue aprobado (paymentToken PAY-OK, ADR-10). Lo consumen Order Service y Notification Service de forma independiente (regla 6). Productor: Payment Service. Tópico: payments.events. Fuente de verdad: docs/wiki/03-contratos/eventos.md.",
+  "allOf": [
+    {
+      "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "eventType": {
+          "const": "PaymentApproved"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "paymentId",
+            "orderId",
+            "amount",
+            "currency",
+            "transactionReference",
+            "notificationContact"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "paymentId": {
+              "description": "Identificador del pago.",
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/uuid"
+            },
+            "orderId": {
+              "description": "Pedido pagado. Coincide con aggregateId.",
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/uuid"
+            },
+            "amount": {
+              "description": "Importe cobrado.",
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/importe"
+            },
+            "currency": {
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/moneda"
+            },
+            "transactionReference": {
+              "description": "Referencia de la transacción del pago.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "notificationContact": {
+              "description": "Snapshot copiado por Payment Service desde OrderCreated (ADR-11, supuesto A-2). Permite que Notification Service no dependa de OrderStatusChanged.",
+              "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/notificationContact"
+            }
+          }
+        }
+      },
+      "required": [
+        "eventType",
+        "payload"
+      ]
+    }
+  ]
+}
