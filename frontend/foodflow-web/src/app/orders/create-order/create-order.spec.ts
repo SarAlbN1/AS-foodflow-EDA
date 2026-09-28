@@ -117,6 +117,34 @@ describe('CreateOrder (HU-501)', () => {
     expect(q('[data-testid="error-total"]')?.textContent).toContain('mayor que cero');
   });
 
+  // Totales con decimales cuyo producto por 100 no es exacto en coma flotante
+  // (8.2 * 100 = 819.9999999999999). Una comprobación ingenua los rechazaba.
+  for (const total of ['8.2', '1.1', '0.07', '12500.5', '1234567.89', '9999999999.99']) {
+    it(`CA2: acepta el total ${total}, que tiene dos decimales como máximo`, async () => {
+      diligenciar({ total });
+      await enviar();
+
+      expect(q('[data-testid="error-total"]')).toBeNull();
+      const peticion = http.expectOne(`${GATEWAY}/orders`);
+      expect(peticion.request.body.total).toBe(Number(total));
+      peticion.flush(CREADO, { status: 201, statusText: 'Created' });
+    });
+  }
+
+  for (const [total, motivo] of [
+    ['1.005', 'dos decimales'],
+    ['0.001', 'dos decimales'],
+    ['10000000000', 'máximo permitido'],
+  ]) {
+    it(`CA2: rechaza el total ${total} (${motivo})`, async () => {
+      diligenciar({ total });
+      await enviar();
+
+      http.expectNone(`${GATEWAY}/orders`);
+      expect(q('[data-testid="error-total"]')?.textContent).toContain(motivo);
+    });
+  }
+
   it('CA3 y CA4: envía POST /orders al gateway con Idempotency-Key y muestra id y estado CREADO', async () => {
     diligenciar({ paymentToken: 'PAY-FAIL' });
     await enviar();

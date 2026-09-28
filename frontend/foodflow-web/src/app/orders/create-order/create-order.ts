@@ -15,7 +15,16 @@ import { CreateOrderRequest, Order } from '../order.model';
 /** Mismo formato de correo que valida Order Service (`OrderValidator`): arroba y dominio con punto. */
 const EMAIL = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
 
-/** Total mayor que cero y con dos decimales como máximo, como `NUMERIC(12,2)` en Order DB. */
+/** Máximo de `NUMERIC(12,2)` en Order DB y del esquema `Importe` del contrato. */
+const TOTAL_MAXIMO = 9_999_999_999.99;
+
+/**
+ * Total mayor que cero, con dos decimales como máximo y dentro de `NUMERIC(12,2)`.
+ *
+ * Los decimales se comprueban redondeando a 2 y comparando con el valor, no multiplicando por
+ * 100: en coma flotante `8.2 * 100` da `819.9999999999999`, y una comparación exacta (o con una
+ * tolerancia fija, que falla con importes grandes como `1234567.89`) rechazaría totales válidos.
+ */
 function totalValido(control: AbstractControl): ValidationErrors | null {
   const valor = control.value as number | null;
   if (valor === null || valor === undefined || Number.isNaN(valor)) {
@@ -24,8 +33,11 @@ function totalValido(control: AbstractControl): ValidationErrors | null {
   if (valor <= 0) {
     return { mayorQueCero: true };
   }
-  if (Math.round(valor * 100) !== valor * 100) {
+  if (Number(valor.toFixed(2)) !== valor) {
     return { decimales: true };
+  }
+  if (valor > TOTAL_MAXIMO) {
+    return { maximo: true };
   }
   return null;
 }

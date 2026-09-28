@@ -50,6 +50,8 @@
           El total es obligatorio.
         } @else if (tieneError('total', 'decimales')) {
           El total admite máximo dos decimales.
+        } @else if (tieneError('total', 'maximo')) {
+          El total supera el máximo permitido.
         } @else {
           El total debe ser mayor que cero.
         }
