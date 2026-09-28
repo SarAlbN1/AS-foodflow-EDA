@@ -19,3 +19,4 @@ Jerarquía completa: [`CLAUDE.md`](../../CLAUDE.md) §1 y [Home de la wiki](../w
 | `diagramas/` | Imágenes exportadas desde las fuentes de la wiki (HU-704) |
 | `figuras/` | Gráficas de mercado laboral |
 | `correcciones-propuestas-HU-008.md` | Cambios propuestos al documento, pendientes de que Sara los aplique |
+| `propuesta-HU-702-proyeccion-laboral.md` | Propuesta de texto para la columna «Proyección sustentada» de la matriz de mercado (HU-702): tendencia con regla explícita y datos observados separados de inferencias |
