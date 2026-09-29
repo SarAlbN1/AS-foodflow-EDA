@@ -19,6 +19,10 @@ import org.springframework.web.client.RestClient;
  * contexto arranque tambien cuando el servicio tenga su base, sin necesitar que este levantada.
  * Esas propiedades son inertes mientras el servicio no use JPA.
  *
+ * <p>El consumidor de {@code payments.events} (HU-301) se deja parado: sin broker solo anadiria
+ * reintentos de conexion a la salida de la prueba, y la salud del broker no forma parte de este
+ * contrato (no hay indicador automatico de Kafka, {@code api-rest.md}).
+ *
  * <p>Por eso no se afirma que el estado agregado sea {@code UP}: sin sus dependencias el
  * servicio esta {@code DOWN} y eso es lo correcto. Lo que si se afirma es la distincion del
  * criterio 2: {@code liveness} responde {@code 200} aunque una dependencia no este disponible.
@@ -27,7 +31,8 @@ import org.springframework.web.client.RestClient;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
             "spring.jpa.hibernate.ddl-auto=none",
-            "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect"
+            "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect",
+            "spring.kafka.listener.auto-startup=false"
         })
 class HealthEndpointTest {
 

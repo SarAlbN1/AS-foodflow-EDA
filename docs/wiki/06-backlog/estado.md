@@ -11,28 +11,28 @@
 | [HU-003](epicas/EP-00-base-tecnica-y-estandares.md) | Definir y versionar contratos de eventos v1 | 1 | Sara | 3 | Terminada | #12 |  |
 | [HU-004](epicas/EP-00-base-tecnica-y-estandares.md) | Configurar tópicos Kafka del prototipo | 1 | Juan | 2 | Terminada | #15 |  |
 | [HU-005](epicas/EP-00-base-tecnica-y-estandares.md) | Registrar los ADR del proyecto | 1 | Sara | 5 | Terminada | #13 |  |
-| [HU-008](epicas/EP-00-base-tecnica-y-estandares.md) | Alinear el documento técnico con las decisiones consolidadas | 1 | Sara | 3 | En revisión | #66 |  |
+| [HU-008](epicas/EP-00-base-tecnica-y-estandares.md) | Alinear el documento técnico con las decisiones consolidadas | 1 | Sara | 3 | Terminada | #66, #78, #80 | D-6 cerrado en abanico y aplicado a `main.tex` |
 | [HU-009](epicas/EP-00-base-tecnica-y-estandares.md) | Configurar los estándares del repositorio | 1 | Juan | 2 | Terminada | — | Integrada en el commit inicial del repositorio, sin PR |
-| [HU-101](epicas/EP-01-pedidos.md) | Crear un pedido válido | 1 | Sara | 5 | En revisión | #65 |  |
+| [HU-101](epicas/EP-01-pedidos.md) | Crear un pedido válido | 1 | Sara | 5 | Terminada | #65 |  |
 | [HU-102](epicas/EP-01-pedidos.md) | Consultar un pedido por identificador | 1 | Juan | 2 | Terminada | #69 | Verificada con Order DB real por Sara (25/25) |
 | [HU-401](epicas/EP-04-gateway-y-contratos.md) | Enrutar operaciones de pedidos | 1 | Juan | 3 | Terminada | #70 | Verificada contra un Order Service simulado; prueba E2E con el servicio real pendiente de Docker |
-| [HU-103](epicas/EP-01-pedidos.md) | Publicar OrderCreated al crear el pedido | 2 | Sara | 5 | En revisión | #81 | Publica OrderCreated tras el commit; sin Outbox (ADR-08) |
-| [HU-107](epicas/EP-01-pedidos.md) | Evitar pedidos duplicados con Idempotency-Key | 2 | Sara | 3 | En revisión | #82 | Cabecera obligatoria; corrige ADR-12 y el CA4 de la HU |
+| [HU-103](epicas/EP-01-pedidos.md) | Publicar OrderCreated al crear el pedido | 2 | Sara | 5 | Terminada | #81, #87 | Publica OrderCreated tras el commit, sin bloquear la respuesta HTTP; sin Outbox (ADR-08) |
+| [HU-107](epicas/EP-01-pedidos.md) | Evitar pedidos duplicados con Idempotency-Key | 2 | Sara | 3 | Terminada | #82 | Cabecera obligatoria; corrige ADR-12 y el CA4 de la HU |
 | [HU-403](epicas/EP-04-gateway-y-contratos.md) | Propagar correlationId y manejar CORS | 2 | Juan | 3 | Terminada | #72 | Verificada contra un Order Service simulado; prueba E2E pendiente de Docker |
-| [HU-404](epicas/EP-04-gateway-y-contratos.md) | Contrato OpenAPI y errores Problem Details | 2 | Sara | 5 | En revisión | #67 |  |
+| [HU-404](epicas/EP-04-gateway-y-contratos.md) | Contrato OpenAPI y errores Problem Details | 2 | Sara | 5 | Terminada | #67 |  |
 | [HU-501](epicas/EP-05-frontend.md) | Crear un pedido desde Angular | 2 | Juan | 5 | Terminada | #74 | Criterios verificados con pruebas de componente y en el navegador contra el gateway real en Compose (HU-607) |
 | [HU-502](epicas/EP-05-frontend.md) | Consultar y visualizar el estado del pedido | 2 | Juan | 2 | Terminada | #75 | Criterios verificados con pruebas de componente y en el navegador contra el gateway real en Compose (HU-607) |
-| [HU-604](epicas/EP-06-resiliencia-y-calidad.md) | Exponer health checks de componentes | 2 | Sara | 2 | En revisión | #68 | Health checks de los tres servicios; el del gateway lo añade HU-401 |
+| [HU-604](epicas/EP-06-resiliencia-y-calidad.md) | Exponer health checks de componentes | 2 | Sara | 2 | Terminada | #68 | Health checks de los tres servicios; el del gateway lo añade HU-607, que cierra el punto abierto A-10 |
 | [HU-104](epicas/EP-01-pedidos.md) | Actualizar el pedido ante un pago aprobado | 3 | Juan | 3 | Pendiente | | |
 | [HU-105](epicas/EP-01-pedidos.md) | Actualizar el pedido ante un pago rechazado | 3 | Juan | 2 | Pendiente | | |
 | [HU-106](epicas/EP-01-pedidos.md) | Publicar OrderStatusChanged al cambiar el estado del pedido | 3 | Juan | 3 | Pendiente | | |
-| [HU-201](epicas/EP-02-pagos.md) | Consumir OrderCreated para iniciar un pago | 3 | Sara | 3 | En revisión | #71 | Consume OrderCreated; el pago se crea en HU-202 |
-| [HU-202](epicas/EP-02-pagos.md) | Procesar y persistir el resultado del pago | 3 | Sara | 5 | En revisión | #73 | Resuelve y persiste el pago; la publicación es HU-203 y HU-204 |
-| [HU-203](epicas/EP-02-pagos.md) | Publicar PaymentApproved | 3 | Sara | 2 | En revisión | | Publica PaymentApproved tras el commit; el rechazo es HU-204 |
-| [HU-204](epicas/EP-02-pagos.md) | Publicar PaymentRejected | 3 | Sara | 2 | En revisión | | Publica PaymentRejected; un pago produce un solo evento |
+| [HU-201](epicas/EP-02-pagos.md) | Consumir OrderCreated para iniciar un pago | 3 | Sara | 3 | Terminada | #71 | Consume OrderCreated; el pago se crea en HU-202 |
+| [HU-202](epicas/EP-02-pagos.md) | Procesar y persistir el resultado del pago | 3 | Sara | 5 | Terminada | #73 | Resuelve y persiste el pago; la publicación es HU-203 y HU-204 |
+| [HU-203](epicas/EP-02-pagos.md) | Publicar PaymentApproved | 3 | Sara | 2 | Terminada | #84 | Publica PaymentApproved tras el commit; el rechazo es HU-204 |
+| [HU-204](epicas/EP-02-pagos.md) | Publicar PaymentRejected | 3 | Sara | 2 | Terminada | #86 | Publica PaymentRejected; un pago produce un solo evento |
 | [HU-702](epicas/EP-07-entregables-y-sustentacion.md) | Proyección laboral en la matriz de mercado | 3 | Juan | 2 | En revisión | [#76](https://github.com/SarAlbN1/AS-foodflow-EDA/pull/76) | Propuesta a `main.tex`: la aplica Sara |
-| [HU-703](epicas/EP-07-entregables-y-sustentacion.md) | Patrones, antipatrones y trazabilidad en el documento técnico | 3 | Sara | 3 | En revisión | | Matriz Investigado/Diseñado/Implementado, antipatrones y riesgos aceptados |
-| [HU-301](epicas/EP-03-notificaciones.md) | Crear una notificación ante el resultado del pago | 4 | Sara | 5 | Pendiente | | |
+| [HU-703](epicas/EP-07-entregables-y-sustentacion.md) | Patrones, antipatrones y trazabilidad en el documento técnico | 3 | Sara | 3 | Terminada | #88 | Matriz Investigado/Diseñado/Implementado, antipatrones y riesgos aceptados |
+| [HU-301](epicas/EP-03-notificaciones.md) | Crear una notificación ante el resultado del pago | 4 | Sara | 5 | En revisión | #93 | Consume `payments.events` en abanico (D-6) y crea la notificación en `PENDIENTE`; el envío es HU-302 |
 | [HU-302](epicas/EP-03-notificaciones.md) | Enviar una notificación mediante el proveedor externo | 4 | Sara | 5 | Pendiente | | |
 | [HU-303](epicas/EP-03-notificaciones.md) | Registrar y publicar una notificación enviada | 4 | Sara | 3 | Pendiente | | |
 | [HU-304](epicas/EP-03-notificaciones.md) | Registrar y publicar una notificación fallida | 4 | Sara | 5 | Pendiente | | |

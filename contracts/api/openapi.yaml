@@ -434,9 +434,13 @@ components:
         status:
           $ref: '#/components/schemas/EstadoNotificacion'
         attempts:
-          description: Intentos de envío realizados contra el proveedor.
+          description: |
+            Intentos de envío realizados contra el proveedor. Es `0` mientras la notificación
+            está `PENDIENTE`: HU-301 la crea al conocerse el resultado del pago y todavía no
+            ha intentado nada; el primer intento lo hace HU-302. La columna de Notification DB
+            tiene la misma regla (`DEFAULT 0`, `CHECK (attempts >= 0)`).
           type: integer
-          minimum: 1
+          minimum: 0
         failureCode:
           description: Motivo del fallo cuando el estado es `FALLIDA`; `null` en los demás casos.
           type: [string, 'null']
