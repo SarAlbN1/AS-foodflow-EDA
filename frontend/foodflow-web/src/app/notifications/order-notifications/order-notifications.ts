@@ -1,4 +1,4 @@
-import { Component, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { Subscription } from 'rxjs';
 
 import { ErrorVisible, aErrorVisible } from '../../core/problem-details';
@@ -21,6 +21,13 @@ const CANALES: Record<OrderNotification['channel'], string> = {
   EMAIL: 'Correo electrónico',
 };
 
+/** Lo que la página necesita saber de esta consulta para dibujar el flujo del pedido (HU-505). */
+export interface SituacionNotificaciones {
+  notificaciones: OrderNotification[] | null;
+  error: boolean;
+  esperando: boolean;
+}
+
 /**
  * Notificaciones de un pedido (HU-504).
  *
@@ -37,6 +44,12 @@ const CANALES: Record<OrderNotification['channel'], string> = {
 export class OrderNotifications {
   /** Identificador del pedido, ya validado por la página que contiene este componente. */
   readonly orderId = input.required<string>();
+
+  /**
+   * Avisa de cada cambio en la consulta (HU-505). La página lo usa para el flujo integral sin
+   * repetir la petición: una sola consulta alimenta la lista y el flujo.
+   */
+  readonly situacion = output<SituacionNotificaciones>();
 
   private readonly api = inject(NotificationApiService);
 
@@ -82,11 +95,13 @@ export class OrderNotifications {
         this.error.set(null);
         this.consultando.set(false);
         this.programarSiguiente(lista);
+        this.avisar();
       },
       error: (falla: unknown) => {
         this.error.set(aErrorVisible(falla));
         this.consultando.set(false);
         this.esperando.set(false);
+        this.avisar();
       },
     });
   }
@@ -100,6 +115,14 @@ export class OrderNotifications {
     if (sigue) {
       this.siguiente = setTimeout(() => this.consultar(), INTERVALO_NOTIFICACIONES_MS);
     }
+  }
+
+  private avisar(): void {
+    this.situacion.emit({
+      notificaciones: this.notificaciones(),
+      error: this.error() !== null,
+      esperando: this.esperando(),
+    });
   }
 
   private detener(): void {

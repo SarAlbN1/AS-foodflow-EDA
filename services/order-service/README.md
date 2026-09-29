@@ -1,6 +1,6 @@
 # services/order-service — Order Service
 
-> **Estado:** `POST /orders` crea y persiste el pedido en estado `CREADO` (HU-101), `GET /orders/{id}` lo consulta (HU-102), la creación publica `OrderCreated` en `orders.events` (HU-103) y `Idempotency-Key` impide crear dos pedidos con la misma solicitud (HU-107). El resto de la funcionalidad la construyen las historias indicadas.
+> **Estado:** `POST /orders` crea y persiste el pedido en estado `CREADO` (HU-101), `GET /orders/{id}` lo consulta (HU-102), la creación publica `OrderCreated` en `orders.events` (HU-103) `Idempotency-Key` impide crear dos pedidos con la misma solicitud (HU-107) y el resultado del pago pasa el pedido a `PAGADO` o `PAGO_RECHAZADO` (HU-104 y HU-105). El resto de la funcionalidad la construyen las historias indicadas.
 
 **Responsabilidad:** Crea y consulta pedidos; publica `OrderCreated` y `OrderStatusChanged`; consume `PaymentApproved` y `PaymentRejected`. Único propietario de Order DB.
 
@@ -112,6 +112,22 @@ Ver los eventos con la infraestructura levantada:
 docker exec foodflow-kafka /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 --topic orders.events --from-beginning --max-messages 1
 ```
+
+## Resultado del pago (HU-104 y HU-105)
+
+`PaymentResultEventConsumer` consume `payments.events` en su propio grupo, `order-service.payments` (`ORDER_PAYMENTS_CONSUMER_GROUP`). Notification Service consume el mismo tópico en otro grupo: los dos reaccionan al pago por su cuenta (D-6, reglas 6 y 12).
+
+| Evento | Qué hace |
+|---|---|
+| `PaymentApproved` | El pedido pasa de `CREADO` a `PAGADO` (`OrderPaymentService`) |
+| `PaymentRejected` | El pedido pasa de `CREADO` a `PAGO_RECHAZADO` (HU-105), con las mismas reglas |
+| Otro tipo | Se ignora con `DEBUG` y se confirma el offset |
+
+- **Idempotencia (ADR-09).** El `eventId` se registra en `processed_events` en la misma transacción que el cambio de estado. Un evento ya procesado se ignora con `INFO`.
+- **Transición inválida.** Si el pedido ya no está en `CREADO`, el cambio se ignora con `WARN`, sin error ([comportamiento del flujo](../../docs/wiki/02-arquitectura/comportamiento-del-flujo.md)).
+- **Pedido inexistente.** Es recuperable: la excepción sube, el offset **no** se confirma y el contenedor reintenta. Hoy, agotados los reintentos, se registra y se sigue; HU-602 lo llevará a `payments.events.dlq`.
+- **Evento fuera de contrato** (cuerpo ilegible, envelope incompleto, versión distinta de 1, campos desconocidos, `aggregateId` distinto de `payload.orderId`): se registra con `ERROR` y se confirma, porque repetirlo no lo arregla.
+- **En las pruebas el listener no arranca** (`src/test/resources/config/application.properties`): con el broker local levantado, un contexto de prueba consumiría eventos reales con el grupo real y cambiaría pedidos de la base de desarrollo. El consumo se prueba sin broker con el ejemplo válido del contrato, y el registro del contenedor con `PaymentResultListenerRegistrationTest`.
 
 ## Health check (HU-604)
 

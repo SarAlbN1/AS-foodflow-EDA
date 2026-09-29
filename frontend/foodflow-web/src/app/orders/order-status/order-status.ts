@@ -4,7 +4,11 @@ import { Subscription } from 'rxjs';
 
 import { ImportePipe } from '../../core/importe.pipe';
 import { ErrorVisible, aErrorVisible } from '../../core/problem-details';
-import { OrderNotifications } from '../../notifications/order-notifications/order-notifications';
+import {
+  OrderNotifications,
+  SituacionNotificaciones,
+} from '../../notifications/order-notifications/order-notifications';
+import { OrderFlow } from '../order-flow/order-flow';
 import { OrderApiService } from '../order-api.service';
 import { Order, OrderStatus } from '../order.model';
 
@@ -36,7 +40,7 @@ const ETIQUETAS: Record<OrderStatus, string> = {
  */
 @Component({
   selector: 'app-order-status',
-  imports: [RouterLink, OrderNotifications, ImportePipe],
+  imports: [RouterLink, OrderNotifications, OrderFlow, ImportePipe],
   templateUrl: './order-status.html',
   styleUrl: './order-status.css',
 })
@@ -51,6 +55,13 @@ export class OrderStatusPage {
   protected readonly consultando = signal(false);
   protected readonly esperandoResultado = signal(false);
   protected readonly etiquetas = ETIQUETAS;
+
+  /** Última situación de las notificaciones, para el flujo integral (HU-505). */
+  protected readonly notificaciones = signal<SituacionNotificaciones>({
+    notificaciones: null,
+    error: false,
+    esperando: false,
+  });
 
   private inicio = 0;
   private siguiente: ReturnType<typeof setTimeout> | undefined;
@@ -69,6 +80,7 @@ export class OrderStatusPage {
     this.detener();
     this.pedido.set(null);
     this.esperandoResultado.set(false);
+    this.notificaciones.set({ notificaciones: null, error: false, esperando: false });
     if (!UUID.test(id)) {
       this.error.set({
         mensaje: 'El identificador no es válido: debe tener el formato de un UUID.',
