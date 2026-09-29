@@ -9,6 +9,7 @@ import {
 import { RouterLink } from '@angular/router';
 
 import { nuevaIdempotencyKey } from '../../core/idempotency-key';
+import { ImportePipe } from '../../core/importe.pipe';
 import { ErrorVisible, aErrorVisible } from '../../core/problem-details';
 import { OrderApiService } from '../order-api.service';
 import { CreateOrderRequest, Order } from '../order.model';
@@ -55,7 +56,7 @@ function totalValido(control: AbstractControl): ValidationErrors | null {
  */
 @Component({
   selector: 'app-create-order',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, ImportePipe],
   templateUrl: './create-order.html',
   styleUrl: './create-order.css',
 })

@@ -192,28 +192,6 @@
   letter-spacing: -0.02em;
 }
 
-.ff-header-chip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--ff-success-light);
-  color: var(--ff-success-text);
-  padding: 6px 14px;
-  border-radius: var(--ff-radius-pill);
-  font-size: 0.825rem;
-  font-weight: 600;
-  border: 1px solid var(--ff-success-border);
-}
-
-.ff-chip-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: var(--ff-success);
-  display: inline-block;
-  box-shadow: 0 0 0 2px var(--ff-success-light);
-}
-
 .ff-content {
   padding: 32px;
   flex: 1;

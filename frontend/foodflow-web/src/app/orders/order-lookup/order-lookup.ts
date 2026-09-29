@@ -156,6 +156,7 @@ export class OrderLookup {
     validators: [Validators.required, Validators.pattern(UUID)],
   });
 
+  // (ngSubmit) lo emite la directiva [formGroup]; un [formControl] suelto no la activa.
   protected readonly formulario = new FormGroup({ orderId: this.orderId });
 
   protected consultar(): void {
