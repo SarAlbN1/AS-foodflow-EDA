@@ -59,7 +59,7 @@ Solo hace falta Docker (o Podman) con Compose y Bash (en Windows, Git Bash). Des
 
 Con el entorno arriba: frontend en http://localhost:4200 y API Gateway en http://localhost:8080 (`/actuator/health`). Los servicios no publican puertos en el host: el cliente solo ve el gateway.
 
-La prueba de humo también mira el estado final del pedido (`PAGADO` / `PAGO_RECHAZADO`). Mientras Order Service no consuma el resultado del pago (HU-104/105/106) el pedido sigue en `CREADO`, y eso se informa como `PENDIENTE`, no como fallo; llegar al estado equivocado sí falla.
+La prueba de humo también exige el estado final del pedido: `PAY-OK` termina en `PAGADO` y `PAY-FAIL` en `PAGO_RECHAZADO` (HU-104 y HU-105). Quedarse en `CREADO` o llegar a otro estado es un fallo.
 
 Detalle de Compose, salud y solución de problemas: [`infrastructure/compose/README.md`](infrastructure/compose/README.md).
 

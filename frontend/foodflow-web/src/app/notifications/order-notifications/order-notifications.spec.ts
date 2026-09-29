@@ -167,4 +167,18 @@ describe('OrderNotifications (HU-504)', () => {
     expect(error).toContain('no está disponible');
     expect(error).toContain('55555555-5555-5555-5555-555555555555');
   });
+
+  it('HU-505: informa de cada consulta a la página, sin peticiones adicionales', () => {
+    const avisos: unknown[] = [];
+    fixture.componentInstance.situacion.subscribe((s) => avisos.push(s));
+
+    http.expectOne(URL).flush([notificacion('PENDIENTE')]);
+    fixture.detectChanges();
+    expect(avisos.at(-1)).toEqual({ notificaciones: [notificacion('PENDIENTE')], error: false, esperando: true });
+
+    vi.advanceTimersByTime(INTERVALO_NOTIFICACIONES_MS);
+    http.expectOne(URL).flush({ status: 503 }, { status: 503, statusText: 'Service Unavailable' });
+    fixture.detectChanges();
+    expect(avisos.at(-1)).toMatchObject({ error: true, esperando: false });
+  });
 });

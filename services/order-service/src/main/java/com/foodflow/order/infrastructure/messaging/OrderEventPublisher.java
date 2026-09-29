@@ -13,6 +13,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import com.foodflow.order.config.EventJsonConfig;
 import com.foodflow.order.domain.Order;
+import com.foodflow.order.domain.OrderStatus;
 
 import tools.jackson.databind.ObjectMapper;
 
@@ -39,6 +40,7 @@ public class OrderEventPublisher {
 
     /** Nombre del evento en el catalogo. Nunca {@code OrderUpdated}. */
     static final String ORDER_CREATED = "OrderCreated";
+    static final String ORDER_STATUS_CHANGED = "OrderStatusChanged";
 
     private final KafkaTemplate<String, String> kafka;
     private final ObjectMapper jackson;
@@ -62,9 +64,27 @@ public class OrderEventPublisher {
      * propagar la excepcion solo conseguiria devolver un error por algo que si ocurrio.
      */
     public void publicarOrderCreated(Order pedido, UUID correlationId) {
-        EventEnvelope<OrderCreatedPayload> evento = EventEnvelope.de(
-                ORDER_CREATED, pedido.id(), correlationId, OrderCreatedPayload.de(pedido));
+        publicarTrasElCommit(EventEnvelope.de(
+                ORDER_CREATED, pedido.id(), correlationId, OrderCreatedPayload.de(pedido)));
+    }
 
+    /**
+     * Publica {@code OrderStatusChanged} (HU-106) con el mismo patron que {@code OrderCreated}:
+     * despues del commit de la transaccion que cambio el estado, nunca antes (ADR-08). Conserva
+     * el {@code correlationId} del flujo, que llega en el evento de pago.
+     *
+     * @param anterior estado del que partio el pedido; hoy siempre {@code CREADO}
+     */
+    public void publicarOrderStatusChanged(Order pedido, OrderStatus anterior, UUID correlationId) {
+        publicarTrasElCommit(EventEnvelope.de(
+                ORDER_STATUS_CHANGED, pedido.id(), correlationId, OrderStatusChangedPayload.de(pedido, anterior)));
+    }
+
+    /**
+     * Si hay una transaccion en curso, el envio se registra para {@code afterCommit}: un rollback
+     * no deja un evento publicado de un cambio que no ocurrio. Sin transaccion, se envia ya.
+     */
+    private void publicarTrasElCommit(EventEnvelope<?> evento) {
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
@@ -77,20 +97,7 @@ public class OrderEventPublisher {
         }
     }
 
-    /**
-     * Envia el evento <strong>sin esperar</strong> la confirmacion de Kafka.
-     *
-     * <p>Este metodo corre en {@code afterCommit}, es decir en el hilo de la peticion HTTP y
-     * antes de responder. Esperar la confirmacion aqui acoplaria el tiempo de respuesta de
-     * {@code POST /orders} al del broker: con {@code acks=all}, una replica lenta podria
-     * estirar la espera hasta el limite de entrega, el gateway cortaria primero y el cliente
-     * recibiria un {@code 503} por un pedido que <strong>si</strong> se creo.
-     *
-     * <p>El resultado se registra en {@code whenComplete}, asi que el criterio 5 se sigue
-     * cumpliendo: un fallo de publicacion deja su {@code ERROR} con {@code correlationId} y
-     * {@code orderId}, y el pedido permanece en {@code CREADO}.
-     */
-    private void enviar(EventEnvelope<OrderCreatedPayload> evento) {
+    private void enviar(EventEnvelope<?> evento) {
         // La clave es el orderId: es la clave de particion (regla 11, ADR-04), lo que
         // garantiza que todos los eventos de un pedido van a la misma particion y en orden.
         String clave = evento.aggregateId().toString();
@@ -113,8 +120,9 @@ public class OrderEventPublisher {
     }
 
     /** CA5 y ADR-08: el pedido permanece en {@code CREADO} y nadie lo reconcilia. */
-    private void registrarFallo(EventEnvelope<OrderCreatedPayload> evento, Throwable causa) {
-        log.error("No se pudo publicar {} tras el commit. El pedido queda sin evento y en CREADO. "
+    private void registrarFallo(EventEnvelope<?> evento, Throwable causa) {
+        // Sin Outbox (ADR-08): el cambio ya esta en Order DB y el evento se pierde.
+        log.error("No se pudo publicar {} tras el commit. El cambio queda persistido sin su evento. "
                         + "eventId={} orderId={} correlationId={} topic={} causa={}",
                 evento.eventType(), evento.eventId(), evento.aggregateId(),
                 evento.correlationId(), ordersTopic, causa.toString());

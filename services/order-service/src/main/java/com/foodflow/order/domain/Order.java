@@ -89,6 +89,38 @@ public class Order {
                 OrderStatus.CREADO, ahora, ahora);
     }
 
+    /**
+     * Registra que el pago fue aprobado: {@code CREADO} pasa a {@code PAGADO} (HU-104).
+     *
+     * <p>Es la unica transicion que acepta. Cualquier otro estado de partida la deja como esta
+     * y devuelve {@code false}: la maquina de estados de {@code comportamiento-del-flujo.md}
+     * ignora una transicion invalida con {@code WARN}, sin error ni evento.
+     *
+     * @return {@code true} si el pedido cambio de estado
+     */
+    public boolean marcarPagado() {
+        return transicionarDesdeCreado(OrderStatus.PAGADO);
+    }
+
+    /**
+     * Registra que el pago fue rechazado: {@code CREADO} pasa a {@code PAGO_RECHAZADO} (HU-105).
+     * Misma regla que {@link #marcarPagado()}: desde cualquier otro estado no cambia nada.
+     *
+     * @return {@code true} si el pedido cambio de estado
+     */
+    public boolean marcarPagoRechazado() {
+        return transicionarDesdeCreado(OrderStatus.PAGO_RECHAZADO);
+    }
+
+    private boolean transicionarDesdeCreado(OrderStatus destino) {
+        if (status != OrderStatus.CREADO) {
+            return false;
+        }
+        status = destino;
+        updatedAt = Instant.now();
+        return true;
+    }
+
     public UUID id() {
         return id;
     }
