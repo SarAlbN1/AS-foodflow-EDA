@@ -3,12 +3,17 @@ package com.foodflow.notification.domain;
 import java.time.Instant;
 import java.util.UUID;
 
+import org.springframework.data.domain.Persistable;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostPersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 /**
  * Notificacion de un pedido. Notification Service es su unico propietario (regla 2).
@@ -22,10 +27,16 @@ import jakarta.persistence.Table;
  *
  * <p>El mapeo debe coincidir con {@code infrastructure/postgres/notification-db/01-schema.sql}:
  * el esquema lo crean esos scripts y Hibernate solo lo valida.
+ *
+ * <p><strong>Implementa {@link Persistable}</strong> porque el identificador se asigna a mano.
+ * Sin esto Spring Data no sabe si la entidad es nueva, asume que no lo es y hace {@code merge}
+ * en lugar de {@code persist}: un {@code SELECT} por cada insercion y, con casi todas las
+ * columnas {@code updatable = false}, una escritura que podria no producir nada
+ * <strong>y tampoco lanzar excepcion</strong>. Mismo motivo que en {@link ProcessedEvent}.
  */
 @Entity
 @Table(name = "notifications")
-public class Notification {
+public class Notification implements Persistable<UUID> {
 
     @Id
     @Column(name = "id", nullable = false, updatable = false)
@@ -63,6 +74,10 @@ public class Notification {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    /** Fuera del mapeo: solo distingue una entidad recien construida de una leida. */
+    @Transient
+    private boolean nueva = true;
+
     /** Constructor exigido por JPA. */
     protected Notification() {
     }
@@ -93,6 +108,22 @@ public class Notification {
         Instant ahora = Instant.now();
         return new Notification(UUID.randomUUID(), orderId, paymentId, channel, destination,
                 content, NotificationStatus.PENDIENTE, 0, ahora, ahora);
+    }
+
+    @PostLoad
+    @PostPersist
+    void marcarComoPersistida() {
+        this.nueva = false;
+    }
+
+    @Override
+    public UUID getId() {
+        return id;
+    }
+
+    @Override
+    public boolean isNew() {
+        return nueva;
     }
 
     public UUID id() {
