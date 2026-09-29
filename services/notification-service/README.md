@@ -93,6 +93,8 @@ export NOTIFICATION_DB_URL="jdbc:postgresql://localhost:$NOTIFICATION_DB_HOST_PO
 cd services/notification-service && ./mvnw verify
 ```
 
+`NotificationQueryIntegrationTests` (HU-305) sigue la misma regla.
+
 ## Envío al proveedor externo (HU-302)
 
 `infrastructure.provider` es el **único paquete del sistema con un cliente HTTP saliente** (regla 7). Ni Order ni Payment tienen uno, y dentro de este servicio ningún otro paquete puede tenerlo: `ArchitectureTest` falla si aparece un `RestClient`, un `WebClient`, un `RestTemplate` o un `HttpClient` fuera de ahí.
@@ -148,6 +150,23 @@ Cuando el proveedor acepta el mensaje, la notificación pasa de `PENDIENTE` a `E
 **El riesgo aceptado de ADR-08, otra vez.** Si el commit sale bien y la publicación falla, la notificación queda `ENVIADA` y nadie se entera fuera del log. Es la misma ventana de escritura dual que `OrderCreated` y los eventos de pago; no hay Outbox ni reconciliación.
 
 **Por qué la entidad se vuelve a leer.** `registrarEnvio` busca la notificación por su identificador en vez de escribir sobre la que trae quien llama: esa viene de la transacción que la creó y está desligada, así que guardarla sería una fusión y no una actualización.
+## Consulta de notificaciones (HU-305)
+
+`GET /orders/{id}/notifications`, que el API Gateway enruta aquí (HU-402). Contrato: esquema `Notification` de [`contracts/api/openapi.yaml`](../../contracts/api/openapi.yaml) y [API REST](../../docs/wiki/03-contratos/api-rest.md).
+
+| Caso | Respuesta |
+|---|---|
+| El pedido tiene notificaciones | `200` con la lista, de la más reciente a la más antigua |
+| El pedido no tiene ninguna, o no existe | `200` con `[]`: el servicio no conoce el catálogo de pedidos |
+| El identificador no es un UUID | `400` `VALIDATION_ERROR` en Problem Details |
+
+- Se resuelve **solo** desde Notification DB (`NotificationQueryService`, de solo lectura). No consulta a Order Service.
+- `destination` sale **siempre enmascarado** (`a***@foodflow.test`) con `ContactMasker`, la misma regla de los registros.
+- Por el gateway:
+
+```bash
+curl -s http://localhost:8080/orders/<orderId>/notifications
+```
 
 ## Configuración
 

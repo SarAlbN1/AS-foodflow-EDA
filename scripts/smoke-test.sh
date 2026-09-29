@@ -16,10 +16,8 @@
 #       PAY-OK -> PaymentApproved, PAY-FAIL -> PaymentRejected (ADR-10). Se lee
 #       el tópico desde el contenedor de Kafka, sin grupo de consumidores, así
 #       que no altera los offsets de ningún servicio.
-#    6. El estado final del pedido: PAY-OK -> PAGADO, PAY-FAIL -> PAGO_RECHAZADO.
-#       Mientras Order Service no consuma los eventos de pago (HU-104/105/106),
-#       el pedido sigue en CREADO: eso se informa como PENDIENTE, no como fallo.
-#       Llegar al estado final equivocado sí es un fallo.
+#    6. El estado final del pedido: PAY-OK -> PAGADO, PAY-FAIL -> PAGO_RECHAZADO
+#       (HU-104 y HU-105). Quedarse en CREADO o llegar a otro estado es un fallo.
 #
 #  Variables: GATEWAY_URL (por omisión http://localhost:$GATEWAY_PORT o :8080),
 #  SMOKE_TIMEOUT (segundos de espera por evento y estado, por omisión 30).
@@ -40,10 +38,8 @@ PAYMENTS_TOPIC=$( (sed -n 's/^PAYMENTS_TOPIC=//p' .env 2>/dev/null || true) | he
 PAYMENTS_TOPIC=${PAYMENTS_TOPIC:-payments.events}
 
 fallos=0
-pendientes=0
 ok()        { echo "  ok        $*"; }
 falla()     { echo "  FALLA     $*"; fallos=$((fallos + 1)); }
-pendiente() { echo "  PENDIENTE $*"; pendientes=$((pendientes + 1)); }
 
 # Valor de un campo de texto plano de un JSON de una línea ("campo":"valor").
 campo() { sed -n "s/.*\"$1\":\"\([^\"]*\)\".*/\1/p" | head -1; }
@@ -124,8 +120,6 @@ probar() {
   done
   if [ "$estado" = "$estado_esperado" ]; then
     ok "el pedido termina en $estado_esperado"
-  elif [ "$estado" = "CREADO" ]; then
-    pendiente "el pedido sigue en CREADO: Order Service aún no consume el resultado del pago (HU-104/105/106)"
   else
     falla "el pedido terminó en '$estado' y se esperaba $estado_esperado"
   fi
@@ -145,7 +139,7 @@ probar PAY-FAIL PaymentRejected PAGO_RECHAZADO
 
 echo
 if [ "$fallos" -gt 0 ]; then
-  echo "RESULTADO: FALLA ($fallos comprobaciones fallidas, $pendientes pendientes)"
+  echo "RESULTADO: FALLA ($fallos comprobaciones fallidas)"
   exit 1
 fi
-echo "RESULTADO: OK ($pendientes comprobaciones pendientes de otras HU)"
+echo "RESULTADO: OK"
