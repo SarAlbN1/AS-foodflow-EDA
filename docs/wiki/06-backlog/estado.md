@@ -52,7 +52,7 @@
 | [HU-608](epicas/EP-06-resiliencia-y-calidad.md) | Verificar los atributos de calidad | 6 | Juan | 5 | Pendiente | | |
 | [HU-701](epicas/EP-07-entregables-y-sustentacion.md) | README, tag y release | 6 | Sara | 3 | Pendiente | | |
 | [HU-704](epicas/EP-07-entregables-y-sustentacion.md) | Diagramas exportados desde sus fuentes | 6 | Juan | 2 | Pendiente | | |
-| [HU-705](epicas/EP-07-entregables-y-sustentacion.md) | Lecciones aprendidas | 6 | Sara | 5 | En revisión | | La §4 del informe pasa de placeholder a contenido: dificultades reales de Kafka, seis decisiones que cambiaron, el efecto de ADR-08 y siete recomendaciones para replicar el stack. Sin motor LaTeX en la máquina: no se comprobó que el PDF compile |
+| [HU-705](epicas/EP-07-entregables-y-sustentacion.md) | Lecciones aprendidas | 6 | Sara | 5 | En revisión | #110 | La §4 del informe pasa de placeholder a contenido: dificultades reales de Kafka, seis decisiones que cambiaron, el efecto de ADR-08 y siete recomendaciones para replicar el stack. Sin motor LaTeX en la máquina: no se comprobó que el PDF compile |
 | [HU-706](epicas/EP-07-entregables-y-sustentacion.md) | Presentación, demo y ensayo | 6 | Juan | 5 | Pendiente | | |
 | [HU-707](epicas/EP-07-entregables-y-sustentacion.md) | Segmento de arquitectura en la sustentación | 6 | Sara | 2 | Pendiente | | |
 | [HU-007](epicas/EP-00-base-tecnica-y-estandares.md) | CI automático (opcional) | - | - | - | Opcional | | |
