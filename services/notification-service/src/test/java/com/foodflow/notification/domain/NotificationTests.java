@@ -115,4 +115,19 @@ class NotificationTests {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> pendiente().marcarFallida("  ", 3));
     }
+
+    @Test
+    @DisplayName("la guarda de la maquina de estados es una sola: vale para los dos destinos")
+    void laGuardaEsCompartida() {
+        Notification enviada = pendiente();
+        enviada.marcarEnviada(1);
+        Notification fallida = pendiente();
+        fallida.marcarFallida("PROVEEDOR_NO_DISPONIBLE", 3);
+
+        // Ninguna de las dos acepta una segunda transicion, sea al destino que sea.
+        assertThat(enviada.marcarFallida("PROVEEDOR_NO_DISPONIBLE", 3)).isFalse();
+        assertThat(fallida.marcarEnviada(1)).isFalse();
+        assertThat(enviada.status()).isEqualTo(NotificationStatus.ENVIADA);
+        assertThat(fallida.status()).isEqualTo(NotificationStatus.FALLIDA);
+    }
 }

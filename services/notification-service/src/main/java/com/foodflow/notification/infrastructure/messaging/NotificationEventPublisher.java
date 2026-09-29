@@ -1,5 +1,7 @@
 package com.foodflow.notification.infrastructure.messaging;
 
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -63,7 +65,7 @@ public class NotificationEventPublisher {
      * @param correlationId     correlacion del evento de pago que origino la notificacion
      */
     public void publicarEnviada(Notification notificacion, String providerReference,
-            java.util.UUID correlationId) {
+            UUID correlationId) {
         publicar(EventEnvelope.de(NOTIFICATION_SENT, notificacion.orderId(), correlationId,
                 NotificationSentPayload.de(notificacion, providerReference)));
     }
@@ -76,7 +78,7 @@ public class NotificationEventPublisher {
      *
      * @param correlationId correlacion del evento de pago que origino la notificacion
      */
-    public void publicarFallida(Notification notificacion, java.util.UUID correlationId) {
+    public void publicarFallida(Notification notificacion, UUID correlationId) {
         publicar(EventEnvelope.de(NOTIFICATION_FAILED, notificacion.orderId(), correlationId,
                 NotificationFailedPayload.de(notificacion)));
     }

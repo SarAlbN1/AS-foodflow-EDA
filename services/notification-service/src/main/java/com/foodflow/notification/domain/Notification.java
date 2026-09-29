@@ -148,17 +148,7 @@ public class Notification implements Persistable<UUID> {
      * @return {@code true} si la transicion ocurrio
      */
     public boolean marcarEnviada(int attempts) {
-        if (status != NotificationStatus.PENDIENTE) {
-            return false;
-        }
-        if (attempts < 1) {
-            throw new IllegalArgumentException("una notificacion enviada tiene al menos un intento");
-        }
-        this.status = NotificationStatus.ENVIADA;
-        this.attempts = attempts;
-        this.failureCode = null;
-        this.updatedAt = Instant.now();
-        return true;
+        return transicionarDesdePendiente(NotificationStatus.ENVIADA, null, attempts);
     }
 
     /**
@@ -178,16 +168,30 @@ public class Notification implements Persistable<UUID> {
      * @return {@code true} si la transicion ocurrio
      */
     public boolean marcarFallida(String failureCode, int attempts) {
-        if (status != NotificationStatus.PENDIENTE) {
-            return false;
-        }
         if (failureCode == null || failureCode.isBlank()) {
             throw new IllegalArgumentException("una notificacion fallida necesita su motivo");
         }
-        if (attempts < 1) {
-            throw new IllegalArgumentException("una notificacion fallida tiene al menos un intento");
+        return transicionarDesdePendiente(NotificationStatus.FALLIDA, failureCode, attempts);
+    }
+
+    /**
+     * La unica transicion de la notificacion, en un solo sitio.
+     *
+     * <p>La maquina de estados de {@code comportamiento-del-flujo.md} admite {@code PENDIENTE} a
+     * {@code ENVIADA} y {@code PENDIENTE} a {@code FALLIDA}, y nada mas. Escribir esa guarda una
+     * vez y no una por destino es lo que impide que un estado futuro se anada saltandosela, y que
+     * las dos ramas se separen con el tiempo.
+     *
+     * @param failureCode motivo del fallo, o {@code null} cuando la notificacion se envio
+     */
+    private boolean transicionarDesdePendiente(NotificationStatus destino, String failureCode, int attempts) {
+        if (status != NotificationStatus.PENDIENTE) {
+            return false;
         }
-        this.status = NotificationStatus.FALLIDA;
+        if (attempts < 1) {
+            throw new IllegalArgumentException("una notificacion resuelta tiene al menos un intento");
+        }
+        this.status = destino;
         this.failureCode = failureCode;
         this.attempts = attempts;
         this.updatedAt = Instant.now();

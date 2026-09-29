@@ -2,8 +2,6 @@ package com.foodflow.notification.application;
 
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.foodflow.notification.domain.Notification;
@@ -29,8 +27,6 @@ import com.foodflow.notification.domain.Notification;
  */
 @Service
 public class NotificationDispatcher {
-
-    private static final Logger log = LoggerFactory.getLogger(NotificationDispatcher.class);
 
     private final NotificationApplicationService notificaciones;
     private final NotificationSender proveedor;
