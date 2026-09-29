@@ -3,6 +3,7 @@ package com.foodflow.notification.infrastructure.messaging;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.slf4j.MDC;
 import org.springframework.kafka.support.Acknowledgment;
 
 import com.foodflow.notification.application.NotificationDispatcher;
@@ -81,6 +83,25 @@ class PaymentResultEventConsumerTests {
         assertThat(orden.channel()).isEqualTo(NotificationChannel.EMAIL);
         assertThat(orden.destination()).isEqualTo("cliente@foodflow.test");
         verify(confirmacion, times(1)).acknowledge();
+    }
+
+    @Test
+    @DisplayName("HU-603: expone el contexto del evento durante el caso de uso y lo limpia despues")
+    void propagaElContextoEstructurado() throws Exception {
+        doAnswer(invocacion -> {
+            assertThat(MDC.get("correlationId")).isEqualTo("1a2b3c4d-5e6f-4071-8293-a4b5c6d7e8f9");
+            assertThat(MDC.get("eventId")).isEqualTo("00000003-1111-4222-8333-444455556666");
+            assertThat(MDC.get("eventType")).isEqualTo("PaymentApproved");
+            assertThat(MDC.get("orderId")).isEqualTo(ORDER_ID);
+            return Optional.empty();
+        }).when(notificaciones).procesar(any());
+
+        consumidor.consumir(registro(Files.readString(EJEMPLO_APROBADO)), confirmacion);
+
+        assertThat(MDC.get("correlationId")).isNull();
+        assertThat(MDC.get("eventId")).isNull();
+        assertThat(MDC.get("eventType")).isNull();
+        assertThat(MDC.get("orderId")).isNull();
     }
 
     @Test

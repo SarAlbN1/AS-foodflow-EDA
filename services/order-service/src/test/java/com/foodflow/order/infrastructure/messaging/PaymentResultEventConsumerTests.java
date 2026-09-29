@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -18,6 +19,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.slf4j.MDC;
 import org.springframework.kafka.support.Acknowledgment;
 
 import com.foodflow.order.application.OrderNotFoundException;
@@ -64,6 +66,26 @@ class PaymentResultEventConsumerTests {
         assertThat(orden.getValue().correlationId())
                 .isEqualTo(UUID.fromString(evento.get("correlationId").asText()));
         verify(confirmacion).acknowledge();
+    }
+
+    @Test
+    @DisplayName("HU-603: expone el contexto del evento durante el caso de uso y lo limpia despues")
+    void propagaElContextoEstructurado() throws Exception {
+        ObjectNode evento = ejemplo();
+        doAnswer(invocacion -> {
+            assertThat(MDC.get("correlationId")).isEqualTo(evento.get("correlationId").asText());
+            assertThat(MDC.get("eventId")).isEqualTo(evento.get("eventId").asText());
+            assertThat(MDC.get("eventType")).isEqualTo("PaymentApproved");
+            assertThat(MDC.get("orderId")).isEqualTo(evento.get("aggregateId").asText());
+            return null;
+        }).when(pagos).registrarPagoAprobado(any());
+
+        consumidor.consumir(registro(evento.toString()), confirmacion);
+
+        assertThat(MDC.get("correlationId")).isNull();
+        assertThat(MDC.get("eventId")).isNull();
+        assertThat(MDC.get("eventType")).isNull();
+        assertThat(MDC.get("orderId")).isNull();
     }
 
     @Test

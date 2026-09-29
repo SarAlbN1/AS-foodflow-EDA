@@ -949,6 +949,7 @@ Las relaciones son: un Pedido tiene un Pago y puede generar múltiples Notificac
 % 4. LECCIONES APRENDIDAS
 % ============================================================
 \section{Lecciones Aprendidas}
+\label{sec:lecciones}
 
 Esta sección recoge lo aprendido al construir FoodFlow, no lo que se esperaba aprender. Cada dificultad descrita se observó durante la implementación y dejó rastro en el repositorio: en una decisión registrada, en una prueba que cambió de forma o en una corrección de este documento. Los umbrales numéricos de convergencia y de rendimiento pertenecen a los criterios de verificación de la sección 3 y se calibran en la verificación de atributos de calidad; aquí se describe el comportamiento observado, no una medición.
 
@@ -1034,6 +1035,40 @@ Las pruebas de integración se ejecutan contra ese mismo entorno, sin biblioteca
     \item \textbf{Registrar cada divergencia entre el documento y el código el día que aparece}, con su alcance, y no corregir ninguno de los dos lados por cuenta propia.
     \item \textbf{Documentar el comando de limpieza junto al de arranque.} Se necesita antes de lo que parece.
 \end{enumerate}
+
+% ============================================================
+% 5. PLAN DE SUSTENTACION
+% ============================================================
+\section{Plan de Sustentación}
+
+La exposición se reparte de modo que \textbf{los dos integrantes defiendan una parte propia} del trabajo, como exige el enunciado. La ventana asignada es de 10 a 20 minutos y la agenda se plantea sobre 16, con holgura por los dos lados.
+
+\footnotesize
+\begin{longtable}{P{0.06\textwidth} P{0.42\textwidth} P{0.08\textwidth} P{0.14\textwidth} P{0.16\textwidth}}
+\toprule
+\textbf{\#} & \textbf{Bloque} & \textbf{Min} & \textbf{Responsable} & \textbf{Comprimible} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Bloque} & \textbf{Min} & \textbf{Responsable} & \textbf{Comprimible} \\
+\midrule
+\endhead
+1 & Problema, alcance y por qué EDA & 2 & Juan & Sí, a 1 \\
+2 & \textbf{Arquitectura y diseño} & \textbf{5} & \textbf{Sara} & No \\
+3 & Demo en vivo: \texttt{PAY-OK} y \texttt{PAY-FAIL} & 4 & Juan & Sí, a 2 \\
+4 & \textbf{Decisiones, riesgos y lecciones aprendidas} & \textbf{3} & \textbf{Sara} & Sí, a 1 \\
+5 & Calidad verificada y cierre & 2 & Juan & Sí, a 1 \\
+\midrule
+& \textbf{Total} & \textbf{16} & & \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+El \textbf{segmento de arquitectura y diseño} (bloque 2) es el único no comprimible: es el eje de la evaluación y el resto de la exposición se apoya en él. Si la ventana se reduce a 10 minutos, los bloques quedan en 1, 5, 2, 1 y 1 minutos, respectivamente: la demo muestra un escenario en vivo y el segundo mediante una traza capturada, y el bloque de lecciones conserva solo el hallazgo principal.
+
+En el bloque 2 se defienden la coreografía sin orquestador, el aislamiento de las tres bases, el envelope común con \texttt{aggregateId} como clave de partición, la idempotencia de los consumidores y, sobre todo, \textbf{ADR-08 y sus consecuencias}: por qué la notificación consume el resultado del pago en abanico y por qué la recuperabilidad se clasifica como parcial. El bloque 4 desarrolla lo recogido en la sección \ref{sec:lecciones}. Los bloques 1, 3 y 5 corresponden al contexto, la demostración de los dos escenarios y los atributos de calidad medidos.
+
+La duración total y el criterio de participación por integrante \textbf{quedan por confirmar con el docente}; hasta entonces esta agenda es la propuesta del equipo. Ambos integrantes asisten a su sustentación y a las de los demás grupos.
 
 \section{Referencias}
 
