@@ -176,7 +176,8 @@ paths:
                       orderId: 3f6c1e0a-6c9d-4f6f-9c4b-2a9f1d5e7b10
                       paymentId: c2d3e4f5-6789-4abc-8def-0123456789ab
                       channel: EMAIL
-                      destination: ana@foodflow.test
+                      destination: a***@foodflow.test
+                      content: Tu pago del pedido PED-0001 fue aprobado.
                       status: ENVIADA
                       attempts: 1
                       failureCode: null
@@ -398,10 +399,10 @@ components:
 
     Notification:
       description: |
-        Notificación registrada por Notification Service para un pedido. No expone el
-        contenido del mensaje: la interfaz muestra el estado de la entrega, no el texto.
+        Notificación registrada por Notification Service para un pedido: a quién se envió, qué
+        se le dijo y cómo terminó la entrega.
       type: object
-      required: [id, orderId, channel, destination, status, attempts, createdAt, updatedAt]
+      required: [id, orderId, channel, destination, content, status, attempts, createdAt, updatedAt]
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
@@ -415,8 +416,21 @@ components:
         channel:
           $ref: '#/components/schemas/CanalNotificacion'
         destination:
-          description: Destino al que se envió, tomado del snapshot de contacto (ADR-11).
+          description: |
+            Destino al que se envió, tomado del snapshot de contacto (ADR-11), **siempre
+            enmascarado**: primera letra, `***` y el dominio (`a***@foodflow.test`). Es dato
+            personal y ninguna historia necesita el valor completo; se enmascara igual que en los
+            registros (`convenciones.md`). El patrón rechaza un correo completo.
           type: string
+          pattern: '^[^@][*]{3}@[^@]+$'
+        content:
+          description: |
+            Texto del mensaje enviado al cliente. Informa del resultado del pago («tu pago fue
+            aprobado» / «tu pago fue rechazado»), nunca del estado del pedido: la notificación
+            puede salir antes de que el pedido muestre su estado final (D-6,
+            `docs/wiki/03-contratos/proveedor-notificaciones.md`). No incluye el destino.
+          type: string
+          minLength: 1
         status:
           $ref: '#/components/schemas/EstadoNotificacion'
         attempts:

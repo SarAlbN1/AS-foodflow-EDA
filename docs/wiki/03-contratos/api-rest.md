@@ -94,7 +94,8 @@ El `detail` de un `400` enumera **todos** los campos rechazados, separados por `
     "orderId": "3f6c1e0a-6c9d-4f6f-9c4b-2a9f1d5e7b10",
     "paymentId": "c2d3e4f5-6789-4abc-8def-0123456789ab",
     "channel": "EMAIL",
-    "destination": "ana@foodflow.test",
+    "destination": "a***@foodflow.test",
+    "content": "Tu pago del pedido PED-0001 fue aprobado.",
     "status": "ENVIADA",
     "attempts": 1,
     "failureCode": null,
@@ -104,7 +105,9 @@ El `detail` de un `400` enumera **todos** los campos rechazados, separados por `
 ]
 ```
 
-`content` **no** se expone: la interfaz muestra el estado de la entrega, no el texto del mensaje. `paymentId` y `failureCode` pueden ser `null`. Un pedido sin notificaciones devuelve `[]`, no `404`: Notification Service no conoce el catálogo de pedidos.
+**Por qué se expone `content`.** Es la decisión de [D-6](../02-arquitectura/divergencias-informe-wiki.md) hecha visible. El mensaje habla del resultado del pago («tu pago fue aprobado») y nunca del estado del pedido, porque la notificación puede salir antes de que el pedido cambie; así no puede afirmar algo falso ([Proveedor de notificaciones](proveedor-notificaciones.md)). Si el texto no se mostrara, esa decisión quedaría escondida en la base y en los registros del proveedor simulado. Mostrarlo en la interfaz (HU-305, HU-504) permite enseñarla en lugar de explicarla. `content` **no incluye el destino**.
+
+**`destination` va enmascarado** (`a***@foodflow.test`), nunca completo. Es dato personal, ya se enmascara en los registros ([Convenciones](../04-implementacion/convenciones.md)) y ninguna historia necesita el valor completo; el contrato lo impone con un patrón. El endpoint no tiene autenticación: lo que queda expuesto para quien conozca el UUID del pedido es el texto del resultado del pago y el destino enmascarado. `paymentId` y `failureCode` pueden ser `null`. Un pedido sin notificaciones devuelve `[]`, no `404`: Notification Service no conoce el catálogo de pedidos.
 
 **Contrato ejecutable.** Todo lo anterior está en [`contracts/api/openapi.yaml`](../../../contracts/api/openapi.yaml), con ejemplos de solicitud y de respuesta. Se valida con `bash scripts/validate-openapi.sh` y se actualiza **en el mismo PR** que cambie el API.
 
