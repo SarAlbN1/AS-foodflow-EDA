@@ -1,0 +1,68 @@
+@startuml
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "com.foodflow.order" {
+
+    class OrderController {
+        + createOrder(CreateOrderRequest request)
+        + getOrder(UUID orderId)
+    }
+
+    class OrderApplicationService {
+        - OrderRepository repository
+        - OrderValidator validator
+        - OrderEventPublisher publisher
+        + createOrder(CreateOrderCommand command) : Order
+        + applyPaymentResult(PaymentResultEvent event)
+    }
+
+    class OrderValidator {
+        + validate(CreateOrderCommand command)
+    }
+
+    interface OrderRepository {
+        + save(Order order) : Order
+        + findById(UUID id) : Optional<Order>
+    }
+
+    class OrderEventPublisher {
+        - KafkaTemplate kafkaTemplate
+        + publishOrderCreated(Order order)
+        + publishOrderUpdated(Order order)
+    }
+
+    class OrderEventConsumer {
+        - OrderApplicationService service
+        + onPaymentApproved(PaymentApproved event)
+        + onPaymentRejected(PaymentRejected event)
+    }
+
+    class Order {
+        + UUID id
+        + BigDecimal total
+        + OrderStatus status
+        + markPaid()
+        + rejectPayment()
+    }
+
+    class PaymentApproved {
+        + UUID orderId
+        + UUID paymentId
+    }
+
+    class PaymentRejected {
+        + UUID orderId
+        + String reason
+    }
+
+    OrderController --> OrderApplicationService : usa
+    OrderApplicationService --> OrderValidator : valida con
+    OrderApplicationService --> OrderRepository : persiste con
+    OrderApplicationService --> OrderEventPublisher : publica mediante
+    OrderRepository --> Order : persiste
+    OrderEventConsumer --> OrderApplicationService : actualiza pedido
+    OrderEventConsumer ..> PaymentApproved : consume
+    OrderEventConsumer ..> PaymentRejected : consume
+}
+@enduml
