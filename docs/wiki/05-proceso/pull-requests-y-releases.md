@@ -74,15 +74,19 @@ Cada persona trabaja con su propio asistente, y **cada quien corrige lo suyo**. 
 
 Un PR se integra solo cuando **la otra persona** lo aprobó en su versión actual: los PR de Juan los aprueba Sara y los de Sara los aprueba Juan. Nadie integra sobre su propia aprobación ni sobre una aprobación anterior al último *push*.
 
-El asistente puede ejecutar `gh pr merge` porque una guarda lo comprueba antes de cada ejecución: [`.claude/hooks/guard-pr-merge.mjs`](../../../.claude/hooks/guard-pr-merge.mjs), registrada como *hook* `PreToolUse` en `.claude/settings.json`. Bloquea la integración si:
+El asistente puede ejecutar `gh pr merge` porque una guarda lo revisa antes de cada ejecución: [`.claude/hooks/guard-pr-merge.mjs`](../../../.claude/hooks/guard-pr-merge.mjs), registrada como *hook* `PreToolUse` en `.claude/settings.json`. **Es una barandilla contra el descuido, no una frontera de seguridad:** la barrera real sigue siendo la protección de `main` en GitHub.
 
-| Condición | Por qué |
+**Qué aporta y qué ya hacía GitHub.** Cada integración de un comando se valida por separado (`a && b; c` son tres).
+
+| Condición que bloquea | ¿Lo cubre ya GitHub? |
 |---|---|
-| El PR no está abierto, no es `MERGEABLE` o no está `APPROVED` | Lo mismo que exige la protección de `main` |
-| No hay una aprobación de alguien distinto del autor **sobre el commit actual** del PR | Aprobación cruzada; un *push* posterior obliga a revisar de nuevo |
-| Alguien tiene cambios pedidos vigentes | Una aprobación no anula los cambios que pidió la otra persona |
-| Falta `--squash`, `--subject` o `--body ""` | Historial lineal y mensaje escrito a mano, sin los *trailers* de los commits ([arriba](#la-traza-no-nombra-herramientas-de-ia)) |
-| Usa `--admin` o `--auto` | `--admin` salta la protección de `main`; `--auto` integraría más tarde sin volver a comprobar |
+| Falta `--squash`, `--subject` o `--body ""` | **No.** Es lo que la guarda aporta: sin `--body ""`, el *squash* se integra con el cuerpo que propone GitHub, que arrastra los mensajes y los *trailers* de los commits ([arriba](#la-traza-no-nombra-herramientas-de-ia)) |
+| Usa `--admin` o `--auto` | **No.** `--admin` salta la protección de `main`; `--auto` integraría más tarde sin volver a comprobar |
+| El PR no está abierto, no es `MERGEABLE` o no está `APPROVED` | Sí; la guarda lo adelanta con un mensaje claro |
+| Alguien tiene cambios pedidos vigentes | Sí |
+| No hay una aprobación de alguien distinto del autor **sobre el commit actual** | Sí, con *dismiss stale reviews*. En la guarda es **defensa en profundidad**: si esa protección se desactivara, la regla seguiría en pie. No es una redundancia que se pueda quitar |
+
+**Lo que no persigue.** Reconoce `gh` y `gh.exe` escritos en el comando, no formas indirectas de nombrar el ejecutable (`$(which gh)`, una variable): quien escribe el comando es el asistente, y ninguna expresión regular cubre todas las formas de una shell. Si el comando lleva `--repo`, el PR se consulta en ese repositorio.
 
 Forma del comando: `gh pr merge <n> --squash --subject "<tipo>(<ámbito>): <descripción> [HU-###] (#<n>)" --body ""`. La guarda necesita `node` (ya instalado para el frontend) y `gh` autenticado.
 
