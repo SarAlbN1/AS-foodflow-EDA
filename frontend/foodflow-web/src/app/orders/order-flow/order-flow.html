@@ -1,0 +1,40 @@
+<section class="flujo" aria-labelledby="flujo-titulo" data-testid="flujo">
+  <h3 id="flujo-titulo" class="flujo-titulo">Flujo del pedido</h3>
+  <ol class="flujo-pasos" aria-live="polite">
+    @for (paso of pasos(); track paso.clave; let ultimo = $last) {
+      <li
+        class="paso"
+        [attr.data-estado]="paso.estado"
+        [attr.data-testid]="'paso-' + paso.clave"
+        [class.paso-ultimo]="ultimo"
+      >
+        <span class="paso-marca" aria-hidden="true">
+          @switch (paso.estado) {
+            @case ('completado') {
+              ✓
+            }
+            @case ('rechazado') {
+              ✕
+            }
+            @case ('fallido') {
+              !
+            }
+            @case ('error') {
+              ?
+            }
+            @default {
+              <span class="paso-punto"></span>
+            }
+          }
+        </span>
+        <div class="paso-cuerpo">
+          <div class="paso-cabecera">
+            <span class="paso-titulo">{{ paso.titulo }}</span>
+            <span class="paso-estado" data-testid="paso-estado">{{ etiquetas[paso.estado] }}</span>
+          </div>
+          <p class="paso-detalle">{{ paso.detalle }}</p>
+        </div>
+      </li>
+    }
+  </ol>
+</section>

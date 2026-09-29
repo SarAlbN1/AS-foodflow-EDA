@@ -41,7 +41,7 @@
 | [HU-402](epicas/EP-04-gateway-y-contratos.md) | Enrutar la consulta de notificaciones | 4 | Juan | 3 | Terminada | #83 | Verificada contra servicios simulados; en Compose el gateway ya llega a Notification Service (404 hasta HU-305) |
 | [HU-504](epicas/EP-05-frontend.md) | Visualizar el estado de la notificación | 4 | Juan | 3 | Terminada | #90 | Muestra `content` según el contrato de #89; probada en el navegador contra el gateway real (HU-607): el 404 actual se muestra como error hasta HU-305 |
 | [HU-006](epicas/EP-00-base-tecnica-y-estandares.md) | Guardas de arquitectura ejecutables | 5 | Juan | 5 | Terminada | #85 | `bash scripts/verify-architecture.sh`; la comprobación de Compose cubre los tres servicios desde HU-607 |
-| [HU-505](epicas/EP-05-frontend.md) | Visualizar el flujo integral de un pedido | 5 | Juan | 5 | Pendiente | | |
+| [HU-505](epicas/EP-05-frontend.md) | Visualizar el flujo integral de un pedido | 5 | Juan | 5 | En revisión | | Pedido → pago → notificación en una vista; distingue aún no disponible, rechazado y fallido. Las transiciones reales llegan con #99 a #101 |
 | [HU-506](epicas/EP-05-frontend.md) | Unificar la interfaz web con un diseño base | 5 | Juan | 3 | En revisión | | HU transversal añadida el 2026-09-28. Layout común, estilos centralizados, total en formato `es-CO` y fuente alojada en el proyecto; verificada en el navegador contra el gateway real |
 | [HU-601](epicas/EP-06-resiliencia-y-calidad.md) | Hacer idempotentes los consumidores Kafka | 5 | Sara | 5 | Pendiente | | |
 | [HU-602](epicas/EP-06-resiliencia-y-calidad.md) | Aplicar reintentos y DLQ a eventos fallidos | 5 | Sara | 5 | Pendiente | | |

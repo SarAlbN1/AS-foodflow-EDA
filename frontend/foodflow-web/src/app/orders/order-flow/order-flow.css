@@ -1,0 +1,163 @@
+.flujo {
+  margin: 20px 0;
+  padding: 20px;
+  border: 1px solid var(--ff-border);
+  border-radius: var(--ff-radius);
+  background: var(--ff-bg-page);
+}
+
+.flujo-titulo {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ff-text-main);
+}
+
+.flujo-pasos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.paso {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  padding-bottom: 18px;
+}
+
+/* Línea que une cada paso con el siguiente. */
+.paso:not(.paso-ultimo)::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 32px;
+  bottom: 0;
+  width: 2px;
+  background: var(--ff-border);
+}
+
+.paso-ultimo {
+  padding-bottom: 0;
+}
+
+.paso-marca {
+  flex: 0 0 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  border: 2px solid var(--ff-border);
+  background: var(--ff-bg-surface);
+  color: var(--ff-text-muted);
+}
+
+.paso-punto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.paso-cuerpo {
+  flex: 1;
+  min-width: 0;
+}
+
+.paso-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.paso-titulo {
+  font-weight: 600;
+  color: var(--ff-text-main);
+}
+
+.paso-estado {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: var(--ff-radius-pill);
+  border: 1px solid var(--ff-border);
+  background: var(--ff-bg-surface);
+  color: var(--ff-text-muted);
+}
+
+.paso-detalle {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: var(--ff-text-muted);
+}
+
+/* Completado */
+.paso[data-estado='completado'] .paso-marca {
+  border-color: var(--ff-success);
+  background: var(--ff-success);
+  color: #fff;
+}
+.paso[data-estado='completado'] .paso-estado {
+  border-color: var(--ff-success-border);
+  background: var(--ff-success-light);
+  color: var(--ff-success-text);
+}
+
+/* En curso: el dato todavía no ha llegado. */
+.paso[data-estado='en-espera'] .paso-marca {
+  border-color: var(--ff-warning);
+  color: var(--ff-warning);
+}
+.paso[data-estado='en-espera'] .paso-punto {
+  animation: latido 1.2s ease-in-out infinite;
+}
+.paso[data-estado='en-espera'] .paso-estado {
+  border-color: var(--ff-warning-border);
+  background: var(--ff-warning-light);
+  color: var(--ff-warning-text);
+}
+
+/* Aún no disponible: gris, sin alarma. */
+.paso[data-estado='no-disponible'] .paso-marca {
+  border-style: dashed;
+}
+
+/* Rechazado (resultado de negocio) y fallido (fallo del flujo) usan el color de peligro,
+   pero con marcas distintas (✕ frente a !) y texto distinto. */
+.paso[data-estado='rechazado'] .paso-marca,
+.paso[data-estado='fallido'] .paso-marca {
+  border-color: var(--ff-danger);
+  background: var(--ff-danger);
+  color: #fff;
+}
+.paso[data-estado='rechazado'] .paso-estado,
+.paso[data-estado='fallido'] .paso-estado {
+  border-color: var(--ff-danger-border);
+  background: var(--ff-danger-light);
+  color: var(--ff-danger-text);
+}
+
+/* Sin respuesta: la consulta falló; el flujo puede estar bien. */
+.paso[data-estado='error'] .paso-marca {
+  border-color: var(--ff-danger);
+  color: var(--ff-danger);
+}
+
+@keyframes latido {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paso[data-estado='en-espera'] .paso-punto {
+    animation: none;
+  }
+}
