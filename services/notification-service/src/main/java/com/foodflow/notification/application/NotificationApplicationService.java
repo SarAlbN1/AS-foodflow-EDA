@@ -1,6 +1,7 @@
 package com.foodflow.notification.application;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.foodflow.notification.domain.Notification;
 import com.foodflow.notification.domain.ProcessedEvent;
+import com.foodflow.notification.infrastructure.messaging.NotificationEventPublisher;
 import com.foodflow.notification.infrastructure.persistence.NotificationRepository;
 import com.foodflow.notification.infrastructure.persistence.ProcessedEventRepository;
 
@@ -33,11 +35,13 @@ public class NotificationApplicationService {
 
     private final NotificationRepository notificaciones;
     private final ProcessedEventRepository procesados;
+    private final NotificationEventPublisher publicador;
 
     public NotificationApplicationService(NotificationRepository notificaciones,
-            ProcessedEventRepository procesados) {
+            ProcessedEventRepository procesados, NotificationEventPublisher publicador) {
         this.notificaciones = notificaciones;
         this.procesados = procesados;
+        this.publicador = publicador;
     }
 
     /**
@@ -79,5 +83,50 @@ public class NotificationApplicationService {
                 orden.correlationId(), ContactMasker.mask(notificacion.destination()));
 
         return Optional.of(notificacion);
+    }
+
+    /**
+     * Registra que la notificacion se envio y publica {@code NotificationSent} (HU-303).
+     *
+     * <p>Las dos cosas van en la <strong>misma transaccion</strong>, y el evento se publica
+     * <strong>despues del commit</strong>: una notificacion que no llega a quedar {@code ENVIADA}
+     * no produce evento. La ventana inversa —commit hecho y publicacion fallida— es la que ADR-08
+     * acepta, y solo deja un {@code ERROR} en el registro.
+     *
+     * <p>La entidad se vuelve a leer de la base en vez de usar la que trae quien llama: esa viene
+     * de la transaccion anterior y esta desligada, asi que escribir sobre ella no seria una
+     * actualizacion sino una fusion.
+     *
+     * <p>Si la notificacion ya no esta en {@code PENDIENTE} no se toca y no se publica nada: la
+     * maquina de estados de {@code comportamiento-del-flujo.md} ignora esa transicion con
+     * {@code WARN}, sin error, para que una reentrega no produzca un segundo
+     * {@code NotificationSent}.
+     *
+     * @return {@code true} si la notificacion paso a {@code ENVIADA}
+     */
+    @Transactional
+    public boolean registrarEnvio(UUID notificationId, String providerReference, int attempts,
+            UUID correlationId) {
+        Notification notificacion = notificaciones.findById(notificationId).orElse(null);
+        if (notificacion == null) {
+            log.warn("No existe la notificacion que se acaba de enviar notificationId={} correlationId={}",
+                    notificationId, correlationId);
+            return false;
+        }
+        if (!notificacion.marcarEnviada(attempts)) {
+            log.warn("La notificacion no estaba PENDIENTE, no se registra el envio notificationId={} "
+                            + "status={} correlationId={}",
+                    notificationId, notificacion.status(), correlationId);
+            return false;
+        }
+
+        notificaciones.saveAndFlush(notificacion);
+        publicador.publicarEnviada(notificacion, providerReference, correlationId);
+
+        log.info("Notificacion enviada notificationId={} orderId={} intentos={} providerReference={} "
+                        + "correlationId={}",
+                notificacion.id(), notificacion.orderId(), notificacion.attempts(),
+                providerReference, correlationId);
+        return true;
     }
 }

@@ -1,6 +1,6 @@
 # services/notification-service — Notification Service
 
-> **Estado:** consume el resultado del pago desde `payments.events`, crea la notificación en `PENDIENTE` (HU-301) y la entrega al proveedor externo (HU-302). El registro del resultado del envío es HU-303 y HU-304.
+> **Estado:** consume el resultado del pago desde `payments.events`, crea la notificación en `PENDIENTE` (HU-301), la entrega al proveedor externo (HU-302) y registra la entrega con `NotificationSent` (HU-303). El caso fallido es HU-304.
 
 **Responsabilidad:** Consume el resultado del pago, registra la notificación, la envía al proveedor y publica `NotificationSent` o `NotificationFailed`. Único propietario de Notification DB y único que llama al proveedor.
 
@@ -132,6 +132,24 @@ export NOTIFICATION_PROVIDER_URL="http://localhost:${NOTIFICATION_PROVIDER_HOST_
 cd services/notification-service && ./mvnw verify
 ```
 
+## Registro de la entrega (HU-303)
+
+Cuando el proveedor acepta el mensaje, la notificación pasa de `PENDIENTE` a `ENVIADA` con los intentos que costó, y se publica **`NotificationSent`** en `notifications.events`.
+
+| Qué | Cómo |
+|---|---|
+| Transición | Solo desde `PENDIENTE`. Cualquier otra se ignora con `WARN`, sin error y sin evento ([comportamiento del flujo](../../docs/wiki/02-arquitectura/comportamiento-del-flujo.md)) |
+| Cuándo se publica | **Después del commit** de la transacción que persiste el cambio. Una notificación que no llega a quedar `ENVIADA` no produce evento |
+| Clave del mensaje | El `orderId`, que es la clave de partición (regla 11, ADR-04) |
+| Garantías del productor | `acks=all` y `enable.idempotence=true`, igual que en order y payment |
+| Qué lleva el evento | `notificationId`, `orderId`, `paymentId`, `channel` y `providerReference`. **No lleva el destino ni el contenido**: dice que se envió, no lo que se envió |
+| Un fallo al publicar | Se registra como `ERROR` y ahí termina. No revierte nada ni hace fallar al consumidor |
+
+**Quién consume `notifications.events`: nadie del prototipo.** Está para observabilidad y consumidores futuros ([eventos](../../docs/wiki/03-contratos/eventos.md)). Que no tenga consumidor no lo hace prescindible: es el registro de que el flujo terminó.
+
+**El riesgo aceptado de ADR-08, otra vez.** Si el commit sale bien y la publicación falla, la notificación queda `ENVIADA` y nadie se entera fuera del log. Es la misma ventana de escritura dual que `OrderCreated` y los eventos de pago; no hay Outbox ni reconciliación.
+
+**Por qué la entidad se vuelve a leer.** `registrarEnvio` busca la notificación por su identificador en vez de escribir sobre la que trae quien llama: esa viene de la transacción que la creó y está desligada, así que guardarla sería una fusión y no una actualización.
 ## Consulta de notificaciones (HU-305)
 
 `GET /orders/{id}/notifications`, que el API Gateway enruta aquí (HU-402). Contrato: esquema `Notification` de [`contracts/api/openapi.yaml`](../../contracts/api/openapi.yaml) y [API REST](../../docs/wiki/03-contratos/api-rest.md).
@@ -160,6 +178,8 @@ Variables en [`.env.example`](../../.env.example):
 | `KAFKA_BOOTSTRAP_SERVERS` | `localhost:29092` | Broker |
 | `NOTIFICATION_PAYMENTS_CONSUMER_GROUP` | `notification-service.payments` | Grupo de consumidores propio del servicio |
 | `PAYMENTS_TOPIC` | `payments.events` | Tópico de entrada; los tópicos se leen de configuración, nunca como literales |
+| `NOTIFICATIONS_TOPIC` | `notifications.events` | Tópico de salida de `NotificationSent` y `NotificationFailed` |
+| `NOTIFICATIONS_PUBLISH_TIMEOUT_MS` | `10000` | Cuánto se espera a que Kafka confirme antes de darlo por fallido |
 | `NOTIFICATION_DB_URL` | `jdbc:postgresql://localhost:5435/notificationdb` | URL de **su** base; el servicio no recibe la de ninguna otra (regla 2) |
 | `NOTIFICATION_DB_USER`, `NOTIFICATION_DB_PASSWORD` | — | Credenciales propias de Notification DB |
 | `NOTIFICATION_PROVIDER_URL` | `http://localhost:8090` | Proveedor externo. En la red de Compose, `http://notification-provider:8080` |

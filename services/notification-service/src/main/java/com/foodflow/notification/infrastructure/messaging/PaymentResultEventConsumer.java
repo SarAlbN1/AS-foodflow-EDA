@@ -16,6 +16,8 @@ import com.foodflow.notification.application.NotifyPaymentResultCommand;
 import com.foodflow.notification.config.EventJsonConfig;
 import com.foodflow.notification.domain.NotificationChannel;
 
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
@@ -54,6 +56,10 @@ public class PaymentResultEventConsumer {
     /** Moneda unica del prototipo ({@code envelope.schema.json#/$defs/moneda}). */
     private static final String MONEDA_SOPORTADA = "COP";
 
+    /** El payload se lee como arbol: su forma depende del eventType, conocido despues. */
+    private static final TypeReference<EventEnvelope<JsonNode>> ENVELOPE_DE_LECTURA =
+            new TypeReference<>() { };
+
     private final ObjectMapper jackson;
     private final NotificationDispatcher notificaciones;
 
@@ -84,7 +90,7 @@ public class PaymentResultEventConsumer {
     }
 
     private void procesar(ConsumerRecord<String, String> registro) {
-        EventEnvelope envelope = leerEnvelope(registro);
+        EventEnvelope<JsonNode> envelope = leerEnvelope(registro);
 
         if (!TIPOS_SOPORTADOS.contains(envelope.eventType())) {
             log.debug("Evento ignorado por tipo. eventType={} eventId={} aggregateId={}",
@@ -102,13 +108,13 @@ public class PaymentResultEventConsumer {
         notificaciones.procesar(aOrdenDeNotificacion(envelope));
     }
 
-    private EventEnvelope leerEnvelope(ConsumerRecord<String, String> registro) {
+    private EventEnvelope<JsonNode> leerEnvelope(ConsumerRecord<String, String> registro) {
         String valor = registro.value();
         if (valor == null || valor.isBlank()) {
             throw new UnsupportedEventException("el registro no tiene cuerpo");
         }
         try {
-            return jackson.readValue(valor, EventEnvelope.class);
+            return jackson.readValue(valor, ENVELOPE_DE_LECTURA);
         } catch (Exception e) {
             throw new UnsupportedEventException("el cuerpo no es un envelope v1 legible: " + e.getMessage(), e);
         }
@@ -119,7 +125,7 @@ public class PaymentResultEventConsumer {
      * cuando el evento es de un tipo que este servicio procesa: un evento ajeno y mal formado se
      * ignora por tipo, no se convierte en un fallo de Notification Service.
      */
-    private void exigirEnvelopeCompleto(EventEnvelope envelope) {
+    private void exigirEnvelopeCompleto(EventEnvelope<JsonNode> envelope) {
         exigir(envelope.eventId() != null, "eventId es obligatorio");
         exigir(envelope.eventVersion() != null, "eventVersion es obligatorio");
         exigir(envelope.occurredAt() != null, "occurredAt es obligatorio");
@@ -128,7 +134,7 @@ public class PaymentResultEventConsumer {
         exigir(envelope.payload() != null && envelope.payload().isObject(), "payload es obligatorio");
     }
 
-    private NotifyPaymentResultCommand aOrdenDeNotificacion(EventEnvelope envelope) {
+    private NotifyPaymentResultCommand aOrdenDeNotificacion(EventEnvelope<JsonNode> envelope) {
         PaymentResultPayload payload;
         try {
             payload = jackson.treeToValue(envelope.payload(), PaymentResultPayload.class);

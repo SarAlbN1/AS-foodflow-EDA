@@ -133,6 +133,34 @@ public class Notification implements Persistable<UUID> {
         return nueva;
     }
 
+    /**
+     * Pasa la notificacion a {@link NotificationStatus#ENVIADA} y registra los intentos que
+     * costo (HU-303, criterios 1 y 2).
+     *
+     * <p><strong>Solo desde {@code PENDIENTE}.</strong> La maquina de estados de
+     * {@code comportamiento-del-flujo.md} admite {@code PENDIENTE -> ENVIADA} y
+     * {@code PENDIENTE -> FALLIDA}, y cualquier otra transicion se ignora sin error y sin
+     * evento. Devolver {@code false} en vez de lanzar es lo que permite ignorarla: una
+     * reentrega no puede convertirse en un fallo del consumidor ni en un segundo
+     * {@code NotificationSent}.
+     *
+     * @param attempts intentos realizados contra el proveedor, al menos 1
+     * @return {@code true} si la transicion ocurrio
+     */
+    public boolean marcarEnviada(int attempts) {
+        if (status != NotificationStatus.PENDIENTE) {
+            return false;
+        }
+        if (attempts < 1) {
+            throw new IllegalArgumentException("una notificacion enviada tiene al menos un intento");
+        }
+        this.status = NotificationStatus.ENVIADA;
+        this.attempts = attempts;
+        this.failureCode = null;
+        this.updatedAt = Instant.now();
+        return true;
+    }
+
     public UUID id() {
         return id;
     }
