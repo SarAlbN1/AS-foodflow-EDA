@@ -1,3 +1,16 @@
+/*
+ * Tipografía alojada en el propio proyecto: la demo funciona sin internet y el navegador no
+ * pide nada a terceros. Plus Jakarta Sans (SIL Open Font License 1.1), fuente variable con los
+ * pesos 400 a 700 y el subconjunto latino, que cubre el español.
+ */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/plus-jakarta-sans-latin.woff2') format('woff2');
+}
+
 /* Variables globales del sistema de diseño tomado de Modernize Angular */
 :root {
   --ff-primary: #5d87ff;

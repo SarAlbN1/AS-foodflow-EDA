@@ -55,7 +55,7 @@ El diseño visual se adaptó tomando como referencia la plantilla **Modernize An
 - **Lo tomado de la plantilla:**
   - Estructura general de layout: barra superior (header), menú de navegación lateral (sidebar) responsivo y área de contenido principal.
   - Paleta de colores principal (`#5d87ff` azul primario, `#49beff` azul secundario, `#13deb9` verde éxito, `#ffa21d` amarillo advertencia/proceso, `#fa896b` rojo error/rechazo).
-  - Tipografía base `Plus Jakarta Sans`, radios de borde de tarjetas (`12px`), bordes de controles de formulario (`8px`) y sombras suaves (`0 4px 20px rgba(0,0,0,0.05)`).
+  - Tipografía base `Plus Jakarta Sans` (SIL Open Font License 1.1), alojada en `public/fonts/` para que la demo funcione sin internet; radios de borde de tarjetas (`12px`), bordes de controles de formulario (`8px`) y sombras suaves (`0 4px 20px rgba(0,0,0,0.05)`).
   - Estilos de badges/pills de estado y botones con foco visible.
   - Iconografía vectorial SVG limpia para navegación y estados.
 
