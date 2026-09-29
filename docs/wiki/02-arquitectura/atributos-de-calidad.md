@@ -43,7 +43,7 @@ Sin las variables, las tres se omiten solas y `./mvnw verify` sigue funcionando 
 
 **Dos decisiones que las hacen fiables:**
 
-- **Grupo de consumidores propio de cada ejecución y lectura desde el final del tópico.** Un grupo nuevo leyendo desde el principio reprocesaría todo el histórico: volvería a cobrar pedidos antiguos, cambiaría estados ya finales y reenviaría notificaciones al proveedor.
+- **Grupo de consumidores propio de cada ejecución y lectura desde el final del tópico.** Leer desde el principio arrastra eventos históricos y huérfanos que retrasan la prueba al retener sus particiones durante los reintentos. ADR-09 evita duplicar los efectos ya procesados, pero no evita ese costo ni hace que esos eventos pertenezcan al escenario bajo prueba.
 - **Se espera a que el consumidor tenga particiones asignadas antes de publicar.** Sin eso el evento saldría antes de que hubiera nadie escuchando y la prueba fallaría por una carrera, no por el flujo.
 
 **Detener los servicios antes de ejecutarlas.** Si un `order-service` suelto está corriendo contra la misma base, es él quien aplica la transición y publica el evento, y la prueba pasa sin ejercitar su propia instancia. Se descubrió así: la prueba pasaba con los servicios levantados y fallaba sin ellos.
