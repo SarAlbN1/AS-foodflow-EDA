@@ -21,6 +21,7 @@ import com.foodflow.order.domain.Order;
 import com.foodflow.order.domain.OrderStatus;
 import com.foodflow.order.domain.PaymentToken;
 import com.foodflow.order.domain.ProcessedEvent;
+import com.foodflow.order.infrastructure.messaging.OrderEventPublisher;
 import com.foodflow.order.infrastructure.persistence.OrderRepository;
 import com.foodflow.order.infrastructure.persistence.ProcessedEventRepository;
 
@@ -29,7 +30,8 @@ class OrderPaymentServiceTests {
 
     private final OrderRepository pedidos = mock(OrderRepository.class);
     private final ProcessedEventRepository procesados = mock(ProcessedEventRepository.class);
-    private final OrderPaymentService servicio = new OrderPaymentService(pedidos, procesados);
+    private final OrderEventPublisher publicador = mock(OrderEventPublisher.class);
+    private final OrderPaymentService servicio = new OrderPaymentService(pedidos, procesados, publicador);
 
     @Test
     @DisplayName("CA2 y CA4: el pedido pasa de CREADO a PAGADO y el eventId se registra en la misma operacion")
@@ -46,6 +48,8 @@ class OrderPaymentServiceTests {
         verify(procesados).saveAndFlush(registro.capture());
         assertThat(registro.getValue().eventId()).isEqualTo(resultado.eventId());
         assertThat(registro.getValue().consumer()).isEqualTo("order-service.payments");
+        // HU-106 CA1 y CA3: publica el cambio con el correlationId del evento de pago.
+        verify(publicador).publicarOrderStatusChanged(pedido, OrderStatus.CREADO, resultado.correlationId());
     }
 
     @Test
@@ -58,6 +62,7 @@ class OrderPaymentServiceTests {
 
         verify(pedidos, never()).findById(any());
         verify(procesados, never()).saveAndFlush(any());
+        verify(publicador, never()).publicarOrderStatusChanged(any(), any(), any());
     }
 
     @Test
@@ -71,6 +76,8 @@ class OrderPaymentServiceTests {
 
         assertThat(aplicado.orElseThrow().status()).isEqualTo(OrderStatus.PAGADO);
         verify(procesados).saveAndFlush(any());
+        // HU-106 CA4: una transicion invalida no produce evento.
+        verify(publicador, never()).publicarOrderStatusChanged(any(), any(), any());
     }
 
     @Test
@@ -82,6 +89,7 @@ class OrderPaymentServiceTests {
         assertThatThrownBy(() -> servicio.registrarPagoAprobado(resultado))
                 .isInstanceOf(OrderNotFoundException.class);
         verify(procesados, never()).saveAndFlush(any());
+        verify(publicador, never()).publicarOrderStatusChanged(any(), any(), any());
     }
 
     @Test
@@ -94,6 +102,7 @@ class OrderPaymentServiceTests {
         assertThat(servicio.registrarPagoRechazado(resultado)).contains(pedido);
         assertThat(pedido.status()).isEqualTo(OrderStatus.PAGO_RECHAZADO);
         verify(procesados).saveAndFlush(any());
+        verify(publicador).publicarOrderStatusChanged(pedido, OrderStatus.CREADO, resultado.correlationId());
     }
 
     @Test
@@ -105,6 +114,7 @@ class OrderPaymentServiceTests {
 
         assertThat(servicio.registrarPagoRechazado(resultado(pedido.id())).orElseThrow().status())
                 .isEqualTo(OrderStatus.PAGADO);
+        verify(publicador, never()).publicarOrderStatusChanged(any(), any(), any());
     }
 
     @Test
