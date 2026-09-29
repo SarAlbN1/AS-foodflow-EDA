@@ -208,8 +208,8 @@ services:
       ORDER_DB_URL: jdbc:postgresql://order-db:5432/${ORDER_DB_NAME}
       ORDER_DB_USER: ${ORDER_DB_USER}
       ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD}
-      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
-      ORDERS_TOPIC: ${ORDERS_TOPIC}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:?falta KAFKA_BOOTSTRAP_SERVERS en .env; compara con .env.example}
+      ORDERS_TOPIC: ${ORDERS_TOPIC:?falta ORDERS_TOPIC en .env; compara con .env.example}
     healthcheck:
       # La imagen no trae curl: bash abre el socket y pide readiness (200 = listo).
       test: ["CMD", "bash", "-c", 'exec 3<>/dev/tcp/localhost/8081 && printf "GET /actuator/health/readiness HTTP/1.0\r\n\r\n" >&3 && head -1 <&3 | grep -q " 200"']
@@ -242,10 +242,10 @@ services:
       PAYMENT_DB_URL: jdbc:postgresql://payment-db:5432/${PAYMENT_DB_NAME}
       PAYMENT_DB_USER: ${PAYMENT_DB_USER}
       PAYMENT_DB_PASSWORD: ${PAYMENT_DB_PASSWORD}
-      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
-      ORDERS_TOPIC: ${ORDERS_TOPIC}
-      PAYMENTS_TOPIC: ${PAYMENTS_TOPIC}
-      PAYMENT_ORDERS_CONSUMER_GROUP: ${PAYMENT_ORDERS_CONSUMER_GROUP}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:?falta KAFKA_BOOTSTRAP_SERVERS en .env; compara con .env.example}
+      ORDERS_TOPIC: ${ORDERS_TOPIC:?falta ORDERS_TOPIC en .env; compara con .env.example}
+      PAYMENTS_TOPIC: ${PAYMENTS_TOPIC:?falta PAYMENTS_TOPIC en .env; compara con .env.example}
+      PAYMENT_ORDERS_CONSUMER_GROUP: ${PAYMENT_ORDERS_CONSUMER_GROUP:?falta PAYMENT_ORDERS_CONSUMER_GROUP en .env; compara con .env.example}
     healthcheck:
       # La imagen no trae curl: bash abre el socket y pide readiness (200 = listo).
       test: ["CMD", "bash", "-c", 'exec 3<>/dev/tcp/localhost/8082 && printf "GET /actuator/health/readiness HTTP/1.0\r\n\r\n" >&3 && head -1 <&3 | grep -q " 200"']
@@ -282,8 +282,8 @@ services:
       NOTIFICATION_DB_URL: jdbc:postgresql://notification-db:5432/${NOTIFICATION_DB_NAME}
       NOTIFICATION_DB_USER: ${NOTIFICATION_DB_USER}
       NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
-      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
-      PAYMENTS_TOPIC: ${PAYMENTS_TOPIC}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:?falta KAFKA_BOOTSTRAP_SERVERS en .env; compara con .env.example}
+      PAYMENTS_TOPIC: ${PAYMENTS_TOPIC:?falta PAYMENTS_TOPIC en .env; compara con .env.example}
       NOTIFICATION_PROVIDER_URL: ${NOTIFICATION_PROVIDER_URL}
     healthcheck:
       # La imagen no trae curl: bash abre el socket y pide readiness (200 = listo).
@@ -312,7 +312,7 @@ services:
         condition: service_started
     ports:
       # El frontend compila http://localhost:8080 como URL base (core/api-config.ts).
-      - "${GATEWAY_PORT}:8080"
+      - "${GATEWAY_PORT:?falta GATEWAY_PORT en .env; compara con .env.example}:8080"
     environment:
       ORDER_SERVICE_URL: http://order-service:8081
       NOTIFICATION_SERVICE_URL: http://notification-service:8083

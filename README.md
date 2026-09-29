@@ -53,7 +53,7 @@ Solo hace falta Docker (o Podman) con Compose y Bash (en Windows, Git Bash). Des
 
 | Acción | Comando | Qué hace |
 |---|---|---|
-| Levantar | `bash scripts/up.sh` | Crea `.env` desde `.env.example` si no existe, construye las imágenes y levanta frontend, API Gateway, los tres servicios, Kafka (con sus tópicos), las tres PostgreSQL y el proveedor simulado. Termina cuando todo está `healthy`; si algo no lo logra en 300 s (`UP_TIMEOUT`), falla y muestra el estado. `--sin-build` reutiliza las imágenes ya construidas |
+| Levantar | `bash scripts/up.sh` | Crea `.env` desde `.env.example` si no existe, construye las imágenes y levanta frontend, API Gateway, los tres servicios, Kafka (con sus tópicos), las tres PostgreSQL y el proveedor simulado. Termina cuando todo está `healthy`; si algo no lo logra en 300 s (`UP_TIMEOUT`), falla y muestra el estado. `--sin-build` reutiliza las imágenes ya construidas. Antes de arrancar comprueba que `.env` tiene todas las variables de `.env.example` y se detiene listando las que falten o estén vacías; `--completar-env` añade las que falten con el valor de ejemplo |
 | Probar | `bash scripts/smoke-test.sh` | Recorre el flujo por el gateway con `PAY-OK` y con `PAY-FAIL`: crea el pedido, repite el `POST` con la misma `Idempotency-Key`, lo consulta y comprueba que `PaymentApproved` o `PaymentRejected` llegue a `payments.events`. Sale con código distinto de 0 si algo no es lo esperado |
 | Detener | `bash scripts/down.sh` | Elimina contenedores y red; los datos de las bases se conservan. `--limpiar` borra también los volúmenes, para recrear el entorno desde cero |
 
