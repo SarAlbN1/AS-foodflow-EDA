@@ -81,12 +81,10 @@ public class PaymentResultEventConsumer {
     @KafkaListener(topics = "${foodflow.kafka.payments-topic}",
             groupId = "${foodflow.kafka.payments-consumer-group}")
     public void consumir(ConsumerRecord<String, String> registro, Acknowledgment confirmacion) {
-        try {
-            procesar(registro);
-        } catch (UnsupportedEventException e) {
-            log.error("Evento no procesable, descartado. topic={} partition={} offset={} key={} motivo={}",
-                    registro.topic(), registro.partition(), registro.offset(), registro.key(), e.getMessage());
-        }
+        // Un evento no procesable ya no se descarta en silencio: se deja subir para que el
+        // manejador de HU-602 lo publique en <topico>.dlq sin reintentarlo. El offset se
+        // confirma despues, cuando la DLQ ya lo tiene.
+        procesar(registro);
         confirmacion.acknowledge();
     }
 

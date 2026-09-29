@@ -1,6 +1,7 @@
 package com.foodflow.notification.infrastructure.messaging;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -95,34 +96,39 @@ class PaymentResultEventConsumerTests {
     void ignoraOtrosTipos() {
         consumidor.consumir(registro(evento("OrderStatusChanged", true)), confirmacion);
 
+        // Ignorado por tipo, no "no procesable": no va a la DLQ y su offset se confirma.
         verify(notificaciones, never()).procesar(any());
-        verify(confirmacion, times(1)).acknowledge();
+        verify(confirmacion).acknowledge();
     }
 
     @Test
     @DisplayName("una version de contrato distinta de la soportada no se procesa")
     void rechazaUnaVersionNoSoportada() {
-        consumidor.consumir(registro(evento("PaymentApproved", true)
-                .replace("\"eventVersion\": 1", "\"eventVersion\": 2")), confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(evento("PaymentApproved", true)
+                .replace("\"eventVersion\": 1", "\"eventVersion\": 2")), confirmacion));
 
         verify(notificaciones, never()).procesar(any());
-        verify(confirmacion, times(1)).acknowledge();
+        verify(confirmacion, never()).acknowledge();
     }
 
     @Test
-    @DisplayName("un cuerpo ilegible no crea ninguna notificacion y no tumba al consumidor")
+    @DisplayName("un cuerpo ilegible no crea notificacion y se entrega al manejador")
     void toleraUnCuerpoIlegible() {
-        consumidor.consumir(registro("{ esto no es json"), confirmacion);
-        consumidor.consumir(registro(""), confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro("{ esto no es json"), confirmacion));
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(""), confirmacion));
 
         verify(notificaciones, never()).procesar(any());
-        verify(confirmacion, times(2)).acknowledge();
+        verify(confirmacion, never()).acknowledge();
     }
 
     @Test
     @DisplayName("un PaymentApproved sin transactionReference incumple su contrato")
     void elAprobadoExigeSuCampoDistintivo() {
-        consumidor.consumir(registro(evento("PaymentApproved", false)), confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(evento("PaymentApproved", false)), confirmacion));
 
         verify(notificaciones, never()).procesar(any());
     }
@@ -130,7 +136,8 @@ class PaymentResultEventConsumerTests {
     @Test
     @DisplayName("un PaymentRejected sin reasonCode incumple su contrato")
     void elRechazadoExigeSuCampoDistintivo() {
-        consumidor.consumir(registro(evento("PaymentRejected", false)), confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(evento("PaymentRejected", false)), confirmacion));
 
         verify(notificaciones, never()).procesar(any());
     }
@@ -138,9 +145,10 @@ class PaymentResultEventConsumerTests {
     @Test
     @DisplayName("aggregateId debe ser el orderId, porque es la clave de particion (ADR-04)")
     void rechazaUnAggregateIdQueNoEsElOrderId() {
-        consumidor.consumir(registro(evento("PaymentApproved", true)
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(evento("PaymentApproved", true)
                 .replace("\"aggregateId\": \"" + ORDER_ID + "\"",
-                        "\"aggregateId\": \"9999b1c2-5a47-4d9b-8e10-7c2a6b4f9d31\"")), confirmacion);
+                        "\"aggregateId\": \"9999b1c2-5a47-4d9b-8e10-7c2a6b4f9d31\"")), confirmacion));
 
         verify(notificaciones, never()).procesar(any());
     }
@@ -151,7 +159,8 @@ class PaymentResultEventConsumerTests {
         String sinContacto = evento("PaymentApproved", true)
                 .replace(",\n    \"notificationContact\": { \"channel\": \"EMAIL\", \"destination\": \"cliente@foodflow.test\" }", "");
 
-        consumidor.consumir(registro(sinContacto), confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(sinContacto), confirmacion));
 
         verify(notificaciones, never()).procesar(any());
     }
@@ -159,8 +168,9 @@ class PaymentResultEventConsumerTests {
     @Test
     @DisplayName("una moneda distinta de COP no se procesa")
     void rechazaUnaMonedaFueraDelContrato() {
-        consumidor.consumir(registro(evento("PaymentApproved", true).replace("\"COP\"", "\"USD\"")),
-                confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(evento("PaymentApproved", true).replace("\"COP\"", "\"USD\"")),
+                confirmacion));
 
         verify(notificaciones, never()).procesar(any());
     }
@@ -168,8 +178,9 @@ class PaymentResultEventConsumerTests {
     @Test
     @DisplayName("un campo desconocido en el payload es una incompatibilidad de contrato")
     void rechazaUnCampoDesconocido() {
-        consumidor.consumir(registro(evento("PaymentApproved", true)
-                .replace("\"currency\": \"COP\",", "\"currency\": \"COP\", \"descuento\": 10,")), confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(evento("PaymentApproved", true)
+                .replace("\"currency\": \"COP\",", "\"currency\": \"COP\", \"descuento\": 10,")), confirmacion));
 
         verify(notificaciones, never()).procesar(any());
     }

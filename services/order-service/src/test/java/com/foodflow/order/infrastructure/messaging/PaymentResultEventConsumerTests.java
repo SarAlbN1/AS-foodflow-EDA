@@ -1,6 +1,7 @@
 package com.foodflow.order.infrastructure.messaging;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -88,11 +89,13 @@ class PaymentResultEventConsumerTests {
         ObjectNode conReferencia = (ObjectNode) jackson.readTree(Files.readString(EJEMPLO_RECHAZO));
         ((ObjectNode) conReferencia.get("payload")).put("transactionReference", "TXN-X");
 
-        consumidor.consumir(registro(sinMotivo.toString()), confirmacion);
-        consumidor.consumir(registro(conReferencia.toString()), confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(sinMotivo.toString()), confirmacion));
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(conReferencia.toString()), confirmacion));
 
         verifyNoInteractions(pagos);
-        verify(confirmacion, org.mockito.Mockito.times(2)).acknowledge();
+        verify(confirmacion, never()).acknowledge();
     }
 
     @Test
@@ -110,13 +113,15 @@ class PaymentResultEventConsumerTests {
     }
 
     @Test
-    @DisplayName("un cuerpo ilegible se descarta sin tumbar al consumidor y se confirma")
+    @DisplayName("un cuerpo ilegible se entrega al manejador y no se confirma directamente")
     void cuerpoIlegible() {
-        consumidor.consumir(registro("{esto no es json"), confirmacion);
-        consumidor.consumir(registro(""), confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro("{esto no es json"), confirmacion));
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(""), confirmacion));
 
         verifyNoInteractions(pagos);
-        verify(confirmacion, org.mockito.Mockito.times(2)).acknowledge();
+        verify(confirmacion, never()).acknowledge();
     }
 
     @Test
@@ -125,10 +130,11 @@ class PaymentResultEventConsumerTests {
         ObjectNode evento = ejemplo();
         evento.put("aggregateId", UUID.randomUUID().toString());
 
-        consumidor.consumir(registro(evento.toString()), confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(evento.toString()), confirmacion));
 
         verifyNoInteractions(pagos);
-        verify(confirmacion).acknowledge();
+        verify(confirmacion, never()).acknowledge();
     }
 
     @Test
@@ -137,10 +143,11 @@ class PaymentResultEventConsumerTests {
         ObjectNode evento = ejemplo();
         evento.put("eventVersion", 2);
 
-        consumidor.consumir(registro(evento.toString()), confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(evento.toString()), confirmacion));
 
         verifyNoInteractions(pagos);
-        verify(confirmacion).acknowledge();
+        verify(confirmacion, never()).acknowledge();
     }
 
     @Test
@@ -151,11 +158,13 @@ class PaymentResultEventConsumerTests {
         ObjectNode sinReferencia = ejemplo();
         ((ObjectNode) sinReferencia.get("payload")).remove("transactionReference");
 
-        consumidor.consumir(registro(extra.toString()), confirmacion);
-        consumidor.consumir(registro(sinReferencia.toString()), confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(extra.toString()), confirmacion));
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(sinReferencia.toString()), confirmacion));
 
         verifyNoInteractions(pagos);
-        verify(confirmacion, org.mockito.Mockito.times(2)).acknowledge();
+        verify(confirmacion, never()).acknowledge();
     }
 
     @Test
