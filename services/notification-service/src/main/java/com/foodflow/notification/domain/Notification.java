@@ -29,10 +29,17 @@ import jakarta.persistence.Transient;
  * el esquema lo crean esos scripts y Hibernate solo lo valida.
  *
  * <p><strong>Implementa {@link Persistable}</strong> porque el identificador se asigna a mano.
- * Sin esto Spring Data no sabe si la entidad es nueva, asume que no lo es y hace {@code merge}
- * en lugar de {@code persist}: un {@code SELECT} por cada insercion y, con casi todas las
- * columnas {@code updatable = false}, una escritura que podria no producir nada
- * <strong>y tampoco lanzar excepcion</strong>. Mismo motivo que en {@link ProcessedEvent}.
+ * Sin esto Spring Data no puede deducir que la entidad es nueva, asume que no lo es y hace
+ * {@code merge} en lugar de {@code persist}: un {@code SELECT} de mas por cada insercion. La
+ * fila se acaba escribiendo igual, porque el identificador es aleatorio y ese {@code SELECT}
+ * nunca encuentra nada; lo que se gana aqui es el coste y la coherencia con las otras entidades
+ * de identificador asignado, mas el caso en que la entidad llegara <em>detached</em>.
+ *
+ * <p><strong>No es el caso de {@link ProcessedEvent}.</strong> Alli el identificador es el
+ * {@code eventId} del evento, que por reentrega de Kafka <strong>si llega repetido</strong>: con
+ * {@code merge} y las columnas {@code updatable = false}, el duplicado no escribiria nada
+ * <strong>ni lanzaria excepcion</strong>, y la notificacion duplicada se crearia igual. Ahi
+ * {@code Persistable} sostiene la idempotencia; aqui solo evita trabajo.
  */
 @Entity
 @Table(name = "notifications")

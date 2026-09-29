@@ -28,8 +28,9 @@ class NotificationTests {
     /**
      * El identificador se asigna a mano, asi que Spring Data no puede deducir que la entidad es
      * nueva: si {@code isNew()} devolviera {@code false}, {@code save} haria {@code merge} en
-     * lugar de {@code persist} y la insercion se convertiria en una lectura mas una escritura
-     * que, con las columnas {@code updatable = false}, podria no producir nada y no fallar.
+     * lugar de {@code persist} y cada insercion pagaria un {@code SELECT} de mas. La fila se
+     * escribiria igual —el identificador es aleatorio y esa lectura nunca encuentra nada—, de
+     * modo que esto guarda el coste, no la correccion.
      */
     @Test
     @DisplayName("una notificacion recien creada se declara nueva para que save haga persist")
