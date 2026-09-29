@@ -1,6 +1,7 @@
 package com.foodflow.notification.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.util.UUID;
 
@@ -48,5 +49,39 @@ class NotificationTests {
     private static Notification pendiente() {
         return Notification.pendiente(UUID.randomUUID(), UUID.randomUUID(), NotificationChannel.EMAIL,
                 "ana@foodflow.test", "Tu pago de 45.900,00 COP fue aprobado.");
+    }
+
+    @Test
+    @DisplayName("criterio 1 de HU-303: pasa de PENDIENTE a ENVIADA con sus intentos")
+    void pasaAEnviada() {
+        Notification notificacion = pendiente();
+
+        assertThat(notificacion.marcarEnviada(2)).isTrue();
+
+        assertThat(notificacion.status()).isEqualTo(NotificationStatus.ENVIADA);
+        assertThat(notificacion.attempts()).isEqualTo(2);
+        assertThat(notificacion.failureCode()).isNull();
+        assertThat(notificacion.updatedAt()).isAfterOrEqualTo(notificacion.createdAt());
+    }
+
+    @Test
+    @DisplayName("una segunda transicion se ignora sin error, para no publicar dos veces el hecho")
+    void noVuelveAEnviarse() {
+        Notification notificacion = pendiente();
+        notificacion.marcarEnviada(1);
+
+        // comportamiento-del-flujo.md: cualquier transicion que no sea PENDIENTE -> ENVIADA o
+        // PENDIENTE -> FALLIDA se ignora con WARN, sin error y sin evento.
+        assertThat(notificacion.marcarEnviada(5)).isFalse();
+
+        assertThat(notificacion.attempts()).isEqualTo(1);
+        assertThat(notificacion.status()).isEqualTo(NotificationStatus.ENVIADA);
+    }
+
+    @Test
+    @DisplayName("un envio sin intentos no tiene sentido y se rechaza")
+    void exigeAlMenosUnIntento() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> pendiente().marcarEnviada(0));
     }
 }

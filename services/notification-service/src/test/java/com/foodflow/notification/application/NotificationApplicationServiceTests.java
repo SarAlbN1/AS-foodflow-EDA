@@ -2,12 +2,14 @@ package com.foodflow.notification.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +20,7 @@ import com.foodflow.notification.domain.Notification;
 import com.foodflow.notification.domain.NotificationChannel;
 import com.foodflow.notification.domain.NotificationStatus;
 import com.foodflow.notification.domain.ProcessedEvent;
+import com.foodflow.notification.infrastructure.messaging.NotificationEventPublisher;
 import com.foodflow.notification.infrastructure.persistence.NotificationRepository;
 import com.foodflow.notification.infrastructure.persistence.ProcessedEventRepository;
 
@@ -32,7 +35,10 @@ class NotificationApplicationServiceTests {
     private static final UUID EVENT_ID = UUID.fromString("00000003-1111-4222-8333-444455556666");
 
     private NotificationRepository notificaciones;
+    private static final UUID CORRELACION = UUID.fromString("1a2b3c4d-5e6f-4071-8293-a4b5c6d7e8f9");
+
     private ProcessedEventRepository procesados;
+    private NotificationEventPublisher publicador;
     private NotificationApplicationService servicio;
 
     @BeforeEach
@@ -41,7 +47,8 @@ class NotificationApplicationServiceTests {
         procesados = mock(ProcessedEventRepository.class);
         when(procesados.existsById(any())).thenReturn(false);
         when(notificaciones.saveAndFlush(any())).thenAnswer(i -> i.getArgument(0));
-        servicio = new NotificationApplicationService(notificaciones, procesados);
+        publicador = mock(NotificationEventPublisher.class);
+        servicio = new NotificationApplicationService(notificaciones, procesados, publicador);
     }
 
     @Test
@@ -111,5 +118,47 @@ class NotificationApplicationServiceTests {
         return new NotifyPaymentResultCommand(EVENT_ID, UUID.randomUUID(), ORDER_ID, PAYMENT_ID,
                 new BigDecimal("45900.00"), "COP", aprobado, NotificationChannel.EMAIL,
                 "cliente@foodflow.test");
+    }
+
+    @Test
+    @DisplayName("criterios 1, 2 y 3 de HU-303: registra el envio y publica NotificationSent")
+    void registraElEnvioYPublica() {
+        Notification pendiente = Notification.pendiente(UUID.randomUUID(), UUID.randomUUID(),
+                NotificationChannel.EMAIL, "ana@foodflow.test", "Tu pago de 1,00 COP fue aprobado.");
+        when(notificaciones.findById(pendiente.id())).thenReturn(Optional.of(pendiente));
+
+        boolean registrado = servicio.registrarEnvio(pendiente.id(), "MOCK-1", 2, CORRELACION);
+
+        assertThat(registrado).isTrue();
+        assertThat(pendiente.status()).isEqualTo(NotificationStatus.ENVIADA);
+        assertThat(pendiente.attempts()).isEqualTo(2);
+        verify(notificaciones).saveAndFlush(pendiente);
+        verify(publicador).publicarEnviada(pendiente, "MOCK-1", CORRELACION);
+    }
+
+    @Test
+    @DisplayName("criterio 5: una notificacion que ya no esta PENDIENTE no se toca ni publica de nuevo")
+    void noPublicaDosVecesElMismoEnvio() {
+        Notification yaEnviada = Notification.pendiente(UUID.randomUUID(), UUID.randomUUID(),
+                NotificationChannel.EMAIL, "ana@foodflow.test", "Tu pago de 1,00 COP fue aprobado.");
+        yaEnviada.marcarEnviada(1);
+        when(notificaciones.findById(yaEnviada.id())).thenReturn(Optional.of(yaEnviada));
+
+        assertThat(servicio.registrarEnvio(yaEnviada.id(), "MOCK-2", 3, CORRELACION)).isFalse();
+
+        assertThat(yaEnviada.attempts()).isEqualTo(1);
+        verify(notificaciones, never()).saveAndFlush(yaEnviada);
+        verify(publicador, never()).publicarEnviada(any(), anyString(), any());
+    }
+
+    @Test
+    @DisplayName("si la notificacion no existe no se publica nada")
+    void sinNotificacionNoPublica() {
+        UUID desconocida = UUID.randomUUID();
+        when(notificaciones.findById(desconocida)).thenReturn(Optional.empty());
+
+        assertThat(servicio.registrarEnvio(desconocida, "MOCK-3", 1, CORRELACION)).isFalse();
+
+        verify(publicador, never()).publicarEnviada(any(), anyString(), any());
     }
 }

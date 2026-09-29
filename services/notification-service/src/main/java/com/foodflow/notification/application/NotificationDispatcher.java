@@ -22,8 +22,9 @@ import com.foodflow.notification.domain.Notification;
  * Spring, asi que la transaccion no existiria. Separarlos es lo que garantiza las dos cosas: el
  * registro va en su transaccion y el envio queda fuera.
  *
- * <p>El resultado del envio todavia <strong>no se persiste</strong>: {@code ENVIADA} lo escribe
- * HU-303 y {@code FALLIDA}, HU-304. Aqui se produce y se registra, que es el alcance de HU-302.
+ * <p>Un envio aceptado deja la notificacion en {@code ENVIADA} y publica
+ * {@code NotificationSent} (HU-303). El caso fallido todavia no se persiste: {@code FALLIDA} y
+ * {@code NotificationFailed} los escribe HU-304.
  */
 @Service
 public class NotificationDispatcher {
@@ -58,10 +59,11 @@ public class NotificationDispatcher {
         DeliveryOutcome resultado = proveedor.enviar(notificacion, String.valueOf(orden.correlationId()));
 
         if (resultado.aceptado()) {
-            log.info("Notificacion aceptada por el proveedor notificationId={} orderId={} intentos={} "
-                            + "correlationId={}",
-                    notificacion.id(), notificacion.orderId(), resultado.attempts(),
-                    orden.correlationId());
+            // Fuera del envio y en su propia transaccion (HU-303). Va aqui y no dentro de
+            // notificarResultado porque el commit de la notificacion no puede esperar a que el
+            // proveedor conteste.
+            notificaciones.registrarEnvio(notificacion.id(), resultado.providerReference(),
+                    resultado.attempts(), orden.correlationId());
         } else {
             // No se relanza: un fallo del proveedor es resultado de negocio (regla 10) y no debe
             // impedir que el offset se confirme ni que Order Service registre el pago (regla 12).

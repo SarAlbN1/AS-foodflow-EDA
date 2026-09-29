@@ -34,7 +34,7 @@
 | [HU-703](epicas/EP-07-entregables-y-sustentacion.md) | Patrones, antipatrones y trazabilidad en el documento técnico | 3 | Sara | 3 | Terminada | #88 | Matriz Investigado/Diseñado/Implementado, antipatrones y riesgos aceptados |
 | [HU-301](epicas/EP-03-notificaciones.md) | Crear una notificación ante el resultado del pago | 4 | Sara | 5 | Terminada | #93 | Consume `payments.events` en abanico (D-6) y crea la notificación en `PENDIENTE`; el envío es HU-302 |
 | [HU-302](epicas/EP-03-notificaciones.md) | Enviar una notificación mediante el proveedor externo | 4 | Sara | 5 | En revisión | #96 | Adaptador HTTP al proveedor: timeouts explícitos, 3 reintentos y sin Circuit Breaker; fija el catálogo de `failureCode` |
-| [HU-303](epicas/EP-03-notificaciones.md) | Registrar y publicar una notificación enviada | 4 | Sara | 3 | Pendiente | | |
+| [HU-303](epicas/EP-03-notificaciones.md) | Registrar y publicar una notificación enviada | 4 | Sara | 3 | En revisión | | `PENDIENTE` a `ENVIADA` y `NotificationSent` en `notifications.events` tras el commit; el caso fallido es HU-304 |
 | [HU-304](epicas/EP-03-notificaciones.md) | Registrar y publicar una notificación fallida | 4 | Sara | 5 | Pendiente | | |
 | [HU-305](epicas/EP-03-notificaciones.md) | Consultar las notificaciones de un pedido | 4 | Juan | 3 | Pendiente | | |
 | [HU-306](epicas/EP-03-notificaciones.md) | Mock del proveedor de notificaciones | 4 | Juan | 3 | Terminada | #62 |  |

@@ -65,6 +65,14 @@ class ProviderNotificationSender implements NotificationSender {
      */
     private static final ObjectMapper JSON = JsonMapper.builder().build();
 
+    /**
+     * Referencia que se registra cuando el proveedor acepta el mensaje pero su respuesta no trae
+     * una legible. No es un valor inventado: dice exactamente eso. Hace falta porque
+     * {@code NotificationSent} exige {@code providerReference} con al menos un caracter
+     * ({@code contracts/events/v1/notification-sent.schema.json}), y la aceptacion es real.
+     */
+    static final String REFERENCIA_AUSENTE = "SIN-REFERENCIA";
+
     private final RestClient cliente;
     private final int intentosMaximos;
     private final Duration esperaInicial;
@@ -173,18 +181,17 @@ class ProviderNotificationSender implements NotificationSender {
      */
     private static String referenciaDe(String cuerpo, Notification notificacion, String correlationId) {
         if (cuerpo == null || cuerpo.isBlank()) {
-            return "";
+            return REFERENCIA_AUSENTE;
         }
         try {
             ProviderAcceptance aceptacion = JSON.readValue(cuerpo, ProviderAcceptance.class);
-            return aceptacion == null || aceptacion.providerReference() == null
-                    ? ""
-                    : aceptacion.providerReference();
+            String referencia = aceptacion == null ? null : aceptacion.providerReference();
+            return referencia == null || referencia.isBlank() ? REFERENCIA_AUSENTE : referencia;
         } catch (RuntimeException ilegible) {
             log.warn("El proveedor acepto la notificacion con un cuerpo que no trae la referencia "
                             + "notificationId={} correlationId={}",
                     notificacion.id(), correlationId);
-            return "";
+            return REFERENCIA_AUSENTE;
         }
     }
 
