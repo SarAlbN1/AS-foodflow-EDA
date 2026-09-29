@@ -955,7 +955,7 @@ Esta sección recoge lo aprendido al construir FoodFlow, no lo que se esperaba a
 
 \textbf{Grupos de consumidores.} El resultado del pago se publica una sola vez y lo consumen dos servicios en abanico. Para que ambos lo reciban, Order Service y Notification Service deben declarar \textit{grupos distintos}: con un único grupo compartido, Kafka habría repartido las particiones entre las dos aplicaciones y cada evento habría llegado a una sola. Lo difícil no fue declararlos, sino advertirlo, porque con un tópico de pocas particiones el reparto ocurre en silencio y el síntoma es una notificación que unas veces sale y otras no.
 
-El mismo mecanismo obligó a una decisión en las pruebas de integración: cada ejecución usa un \textbf{grupo propio y lee desde el final del tópico}. Un grupo nuevo que lea desde el principio reprocesa todo el histórico, y eso significa volver a resolver pagos de pedidos antiguos, reescribir estados ya finales y reenviar notificaciones al proveedor. El comportamiento por omisión de un consumidor nuevo es, precisamente, el que no se quiere en una prueba.
+El mismo mecanismo obligó a una decisión en las pruebas de integración: cada ejecución usa un \textbf{grupo propio y lee desde el final del tópico}. Leer desde el principio arrastra eventos históricos y huérfanos que no pertenecen al escenario bajo prueba; aunque la idempotencia evita duplicar los efectos ya registrados, esos mensajes pueden retener sus particiones durante los reintentos y retrasar el evento que la prueba intenta observar. El comportamiento por omisión de un consumidor nuevo es, precisamente, el que no se quiere en una prueba aislada.
 
 \textbf{Particiones.} Usar \texttt{aggregateId}, igual al \texttt{orderId}, como clave de partición conserva el orden relativo de los eventos de un mismo pedido, que es lo que exige el flujo. El coste apareció en las pruebas: hay que \textbf{esperar a que el consumidor tenga particiones asignadas antes de publicar}. Sin esa espera el evento sale antes de que haya alguien escuchando y la prueba falla por una carrera de arranque, no por un defecto del flujo. El rebalanceo no es instantáneo, y una prueba que lo ignora es una prueba intermitente.
 
@@ -987,7 +987,7 @@ Idempotencia del alta de pedido & \texttt{Idempotency-Key} opcional en \texttt{P
 Clasificación de la recuperabilidad & «Alta para eventos publicados, condicionada por la integración» & \textbf{Parcial}: alta para los eventos publicados e inexistente para los que nunca llegaron al \textit{broker} & ADR-08, ya aplicado a este documento \\
 Nombres de campos del envelope y del token de pago & Campo de versión, identificador en la raíz y token con sufijo de prueba, según este documento & Los contratos versionados, las columnas y el código usan otros tres nombres & Divergencias \textbf{abiertas}: se decide el nombre, no el diseño \\
 Clave de idempotencia hacia el proveedor & El adaptador enviaría el identificador de la notificación como clave de idempotencia & El contrato del proveedor y su \textit{mock} no reciben ninguna clave, así que un reintento puede producir un segundo envío & Divergencia \textbf{abierta}: añadir la clave al contrato o retirar la afirmación \\
-Estado de ADR-12 & --- & Aprobado en su contenido, con la numeración por confirmar & ADR-12 \\
+Estado de ADR-12 & --- & Propuesto: contenido acordado, con la numeración por confirmar & ADR-12 \\
 \bottomrule
 \end{longtable}
 \setlength{\tabcolsep}{6pt}
@@ -997,7 +997,7 @@ El patrón que se repite en las tres primeras filas es que la implementación no
 
 Las tres últimas filas enseñan algo distinto: un documento y un contrato versionado divergen en cuanto el código empieza a existir, y la divergencia hay que registrarla el día que aparece. Anotarla con su alcance --qué habría que renombrar y en cuántos archivos-- convierte una discusión de opiniones en una comparación de costos, y evita que las dos fuentes se separen sin que nadie lo note.
 
-\subsection{Consistencia eventual observada y el efecto de ADR-08}
+\subsection{Consistencia eventual y el efecto de ADR-08}
 
 ADR-08 acepta que el prototipo no garantice atomicidad entre PostgreSQL y Kafka. Su efecto no se quedó en el riesgo declarado: \textbf{determinó la topología del flujo}. En una cadena, la notificación habría cruzado la ventana entre el \textit{commit} y la publicación dos veces, y un fallo de publicación en Order Service habría dejado el pedido pagado y sin notificación, sin ningún mecanismo que lo reconciliara. Consumiendo el resultado del pago, la notificación solo depende de que Payment Service haya publicado. Una decisión registrada como «riesgo aceptado» acabó siendo el argumento que descartó una topología entera.
 
@@ -1007,7 +1007,7 @@ En la interfaz apareció la misma exigencia con otra forma: hubo que distinguir 
 
 Sobre la trazabilidad, el recorrido completo produjo ocho eventos en los tres tópicos y \textbf{un mismo identificador de correlación atravesando los tres} por cada pedido. Sin ese identificador, reconstruir el orden real de lo ocurrido entre tres servicios que no se llaman entre sí es adivinar: no hay una pila de llamadas que leer.
 
-Sobre la recuperación, la frontera quedó nítida. Reprocesar el tópico de pagos con un grupo nuevo reconstruye el estado sin efectos duplicados, porque cada consumidor registra el identificador del evento en su propia tabla de eventos procesados dentro de la misma transacción del efecto de negocio. Lo que nunca llegó al \textit{broker} no se recupera, y el prototipo \textbf{no tiene forma de detectarlo}, porque no existe reconciliación entre la base y el tópico. Por eso la recuperabilidad se clasifica como parcial y no como alta.
+Sobre la recuperación, la frontera del diseño quedó nítida. El registro transaccional de cada identificador de evento permite reprocesar el tópico de pagos con un grupo nuevo sin duplicar efectos; HU-608 debe comprobar esa propiedad mediante la prueba de \textit{replay}. Lo que nunca llegó al \textit{broker} no se recupera, y el prototipo \textbf{no tiene forma de detectarlo}, porque no existe reconciliación entre la base y el tópico. Por eso la recuperabilidad se clasifica como parcial y no como alta.
 
 \subsection{Contenedores y recomendaciones para replicar el stack}
 
