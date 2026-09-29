@@ -151,6 +151,8 @@ Juan presenta el repositorio completo. Para que pueda defender el sistema:
 - Cada integrante revisa los PR del otro antes de fusionarlos.
 - HU-707 reserva un segmento propio para Sara, de modo que todos los integrantes participen.
 
+El minutaje y el reparto de la palabra están en [Plan de sustentación](sustentacion.md).
+
 ## Historias opcionales (P2)
 
 - HU-205 Consultar el pago de un pedido.

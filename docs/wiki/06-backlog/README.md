@@ -10,6 +10,7 @@ El backlog vive en esta carpeta: **una página por épica** con sus historias de
 | [Priorización](priorizacion.md) | HU por prioridad P0, P1 y P2 |
 | [Plan de sprints](plan-de-sprints.md) | Sprints, puntos, responsables y reparto 60/40 |
 | [Estado](estado.md) | Estado vivo de cada HU |
+| [Plan de sustentación](sustentacion.md) | Minutaje, reparto por integrante y asistencia |
 | [`backlog.tsv`](backlog.tsv) | Datos del backlog en tabla (lo usa `scripts/create-issues.sh`) |
 
 ## Épicas
