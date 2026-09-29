@@ -34,7 +34,7 @@
 | [HU-703](epicas/EP-07-entregables-y-sustentacion.md) | Patrones, antipatrones y trazabilidad en el documento técnico | 3 | Sara | 3 | Terminada | #88 | Matriz Investigado/Diseñado/Implementado, antipatrones y riesgos aceptados |
 | [HU-301](epicas/EP-03-notificaciones.md) | Crear una notificación ante el resultado del pago | 4 | Sara | 5 | Terminada | #93 | Consume `payments.events` en abanico (D-6) y crea la notificación en `PENDIENTE`; el envío es HU-302 |
 | [HU-302](epicas/EP-03-notificaciones.md) | Enviar una notificación mediante el proveedor externo | 4 | Sara | 5 | En revisión | #96 | Adaptador HTTP al proveedor: timeouts explícitos, 3 reintentos y sin Circuit Breaker; fija el catálogo de `failureCode` |
-| [HU-303](epicas/EP-03-notificaciones.md) | Registrar y publicar una notificación enviada | 4 | Sara | 3 | En revisión | #103 | `PENDIENTE` a `ENVIADA` y `NotificationSent` en `notifications.events` tras el commit; el caso fallido es HU-304 |
+| [HU-303](epicas/EP-03-notificaciones.md) | Registrar y publicar una notificación enviada | 4 | Sara | 3 | Terminada | #103 | `PENDIENTE` a `ENVIADA` y `NotificationSent` en `notifications.events` tras el commit; el caso fallido es HU-304 |
 | [HU-304](epicas/EP-03-notificaciones.md) | Registrar y publicar una notificación fallida | 4 | Sara | 5 | En revisión | #104 | `PENDIENTE` a `FALLIDA` con su `failureCode` y `NotificationFailed`; fallo de negocio, sin DLQ y sin revertir el pago ni el pedido |
 | [HU-305](epicas/EP-03-notificaciones.md) | Consultar las notificaciones de un pedido | 4 | Juan | 3 | Terminada | #97 | Lee solo Notification DB; `destination` enmascarado; verificada por el gateway contra Compose (respuesta validada con el esquema del OpenAPI) |
 | [HU-306](epicas/EP-03-notificaciones.md) | Mock del proveedor de notificaciones | 4 | Juan | 3 | Terminada | #62 |  |
@@ -46,7 +46,7 @@
 | [HU-601](epicas/EP-06-resiliencia-y-calidad.md) | Hacer idempotentes los consumidores Kafka | 5 | Sara | 5 | Pendiente | | |
 | [HU-602](epicas/EP-06-resiliencia-y-calidad.md) | Aplicar reintentos y DLQ a eventos fallidos | 5 | Sara | 5 | Pendiente | | |
 | [HU-603](epicas/EP-06-resiliencia-y-calidad.md) | Implementar logs estructurados y correlacionados | 5 | Sara | 3 | Pendiente | | |
-| [HU-605](epicas/EP-06-resiliencia-y-calidad.md) | Automatizar pruebas de integración del flujo Kafka | 5 | Sara | 5 | En revisión | | Los tres tramos del flujo contra Kafka y PostgreSQL reales; verifican persistencia y evento resultante, no la invocación. Sin Testcontainers |
+| [HU-605](epicas/EP-06-resiliencia-y-calidad.md) | Automatizar pruebas de integración del flujo Kafka | 5 | Sara | 5 | En revisión | #105 | Los tres tramos del flujo contra Kafka y PostgreSQL reales; verifican persistencia y evento resultante, no la invocación. Sin Testcontainers |
 | [HU-607](epicas/EP-06-resiliencia-y-calidad.md) | Scripts de arranque, parada y prueba de humo | 5 | Juan | 2 | Terminada | #91 | `scripts/up.sh`, `down.sh`, `smoke-test.sh` verificados desde un clon limpio; incluye el health del gateway (A-10). La prueba de humo informa `PENDIENTE` el estado final hasta HU-104/105/106 |
 | [HU-606](epicas/EP-06-resiliencia-y-calidad.md) | Validar el flujo end-to-end contenerizado | 6 | Sara | 8 | Pendiente | | |
 | [HU-608](epicas/EP-06-resiliencia-y-calidad.md) | Verificar los atributos de calidad | 6 | Juan | 5 | Pendiente | | |

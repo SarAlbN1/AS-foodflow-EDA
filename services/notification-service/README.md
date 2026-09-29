@@ -93,8 +93,6 @@ export NOTIFICATION_DB_URL="jdbc:postgresql://localhost:$NOTIFICATION_DB_HOST_PO
 cd services/notification-service && ./mvnw verify
 ```
 
-`NotificationQueryIntegrationTests` (HU-305) sigue la misma regla.
-
 ## Envío al proveedor externo (HU-302)
 
 `infrastructure.provider` es el **único paquete del sistema con un cliente HTTP saliente** (regla 7). Ni Order ni Payment tienen uno, y dentro de este servicio ningún otro paquete puede tenerlo: `ArchitectureTest` falla si aparece un `RestClient`, un `WebClient`, un `RestTemplate` o un `HttpClient` fuera de ahí.
@@ -168,6 +166,7 @@ Si en vez de registrarlo se lanzara, el consumidor no confirmaría el offset, Ka
 `NotificationFailed` lleva `failureCode` y `attempts` para poder diagnosticar sin abrir la base (criterio 4). El catálogo de motivos está en [proveedor-notificaciones.md](../../docs/wiki/03-contratos/proveedor-notificaciones.md).
 
 Se demuestra con un pedido cuyo contacto sea `*@fail.test`, el modo del proveedor simulado que responde `503` siempre.
+
 ## Consulta de notificaciones (HU-305)
 
 `GET /orders/{id}/notifications`, que el API Gateway enruta aquí (HU-402). Contrato: esquema `Notification` de [`contracts/api/openapi.yaml`](../../contracts/api/openapi.yaml) y [API REST](../../docs/wiki/03-contratos/api-rest.md).
