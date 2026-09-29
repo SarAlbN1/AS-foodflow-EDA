@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 import { ErrorVisible, aErrorVisible } from '../../core/problem-details';
+import { OrderNotifications } from '../../notifications/order-notifications/order-notifications';
 import { OrderApiService } from '../order-api.service';
 import { Order, OrderStatus } from '../order.model';
 
@@ -34,7 +35,7 @@ const ETIQUETAS: Record<OrderStatus, string> = {
  */
 @Component({
   selector: 'app-order-status',
-  imports: [RouterLink],
+  imports: [RouterLink, OrderNotifications],
   templateUrl: './order-status.html',
   styleUrl: './order-status.css',
 })

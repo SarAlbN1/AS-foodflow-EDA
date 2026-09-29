@@ -26,6 +26,8 @@
         El pago todavía no tiene resultado. Pulsa "Actualizar" para consultar de nuevo.
       </p>
     }
+
+    <app-order-notifications [orderId]="id()" />
   }
 
   @if (error(); as falla) {

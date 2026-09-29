@@ -1,0 +1,88 @@
+.notificaciones {
+  margin-top: 2rem;
+  border-top: 1px solid #ddd;
+  padding-top: 1rem;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.notificacion {
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 0.6rem 0.9rem;
+}
+
+.notificacion[data-estado='PENDIENTE'] {
+  color: #8a5a00;
+}
+
+.notificacion[data-estado='ENVIADA'] {
+  color: #1b6e2a;
+}
+
+.notificacion[data-estado='FALLIDA'] {
+  color: #b00020;
+}
+
+.cabecera {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin: 0 0 0.4rem;
+}
+
+.estado {
+  font-weight: 600;
+}
+
+.contenido {
+  color: #222;
+  font-style: italic;
+  margin: 0 0 0.4rem;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.2rem 1rem;
+  margin: 0;
+  color: #333;
+}
+
+dt {
+  font-weight: 600;
+}
+
+dd {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  padding: 0.45rem 0.6rem;
+  cursor: pointer;
+}
+
+.error {
+  color: #b00020;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.error p {
+  margin: 0;
+}
+
+.nota,
+.referencia {
+  font-size: 0.85rem;
+  color: #555;
+}
