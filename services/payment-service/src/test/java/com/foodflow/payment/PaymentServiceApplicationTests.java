@@ -53,7 +53,7 @@ class PaymentServiceApplicationTests {
     void persisteUnPagoAprobado() {
         UUID orderId = UUID.randomUUID();
 
-        Payment pago = servicio.iniciarPago(orden(orderId, "45900.00", PaymentToken.PAY_OK));
+        Payment pago = servicio.iniciarPago(orden(orderId, "45900.00", PaymentToken.PAY_OK)).orElseThrow();
 
         try {
             Optional<Payment> guardado = repositorio.findByOrderId(orderId);
@@ -73,7 +73,7 @@ class PaymentServiceApplicationTests {
     void persisteUnPagoRechazado() {
         UUID orderId = UUID.randomUUID();
 
-        Payment pago = servicio.iniciarPago(orden(orderId, "45900.00", PaymentToken.PAY_FAIL));
+        Payment pago = servicio.iniciarPago(orden(orderId, "45900.00", PaymentToken.PAY_FAIL)).orElseThrow();
 
         try {
             Payment guardado = repositorio.findByOrderId(orderId).orElseThrow();
@@ -91,8 +91,8 @@ class PaymentServiceApplicationTests {
     void noDuplicaElPagoDeUnPedido() {
         UUID orderId = UUID.randomUUID();
 
-        Payment primero = servicio.iniciarPago(orden(orderId, "45900.00", PaymentToken.PAY_OK));
-        Payment segundo = servicio.iniciarPago(orden(orderId, "45900.00", PaymentToken.PAY_OK));
+        Payment primero = servicio.iniciarPago(orden(orderId, "45900.00", PaymentToken.PAY_OK)).orElseThrow();
+        Payment segundo = servicio.iniciarPago(orden(orderId, "45900.00", PaymentToken.PAY_OK)).orElseThrow();
 
         try {
             assertThat(segundo.id()).isEqualTo(primero.id());

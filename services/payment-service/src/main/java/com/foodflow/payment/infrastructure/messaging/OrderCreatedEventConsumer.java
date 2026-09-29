@@ -36,9 +36,10 @@ import tools.jackson.databind.ObjectMapper;
  * ({@code docs/wiki/02-arquitectura/comportamiento-del-flujo.md}).
  *
  * <p><strong>Confirmacion del offset.</strong> Se confirma despues de que el caso de uso
- * retorna, es decir despues del commit de su transaccion local (ADR-09). El registro del
- * {@code eventId} en {@code processed_events}, dentro de esa misma transaccion, lo anade
- * HU-601.
+ * retorna, es decir despues del commit de su transaccion local (ADR-09). El caso de uso registra
+ * el {@code eventId} en {@code processed_events} dentro de esa misma transaccion (HU-601), asi
+ * que una reentrega posterior del mismo evento se ignora sin cobrar de nuevo y su offset se
+ * confirma igual.
  */
 @Component
 public class OrderCreatedEventConsumer {

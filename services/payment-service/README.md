@@ -1,10 +1,10 @@
 # services/payment-service — Payment Service
 
-> **Estado:** consume `OrderCreated` (HU-201), resuelve y persiste el pago (HU-202) y publica su resultado en `payments.events`: `PaymentApproved` (HU-203) o `PaymentRejected` (HU-204).
+> **Estado:** consume `OrderCreated` (HU-201) de forma idempotente (HU-601), resuelve y persiste el pago (HU-202) y publica su resultado en `payments.events`: `PaymentApproved` (HU-203) o `PaymentRejected` (HU-204).
 
 **Responsabilidad:** Consume `OrderCreated`, decide el pago de forma determinista (`PAY-OK` / `PAY-FAIL`) y publica `PaymentApproved` o `PaymentRejected`. Único propietario de Payment DB.
 
-**Historias que lo construyen:** HU-001, HU-201 a HU-204, HU-604
+**Historias que lo construyen:** HU-001, HU-201 a HU-204, HU-601, HU-604
 
 **Reglas que aplican:** ADR-09, ADR-10. Ignora eventos de `orders.events` distintos de `OrderCreated`.
 
@@ -84,7 +84,7 @@ El pago es determinista (ADR-10): el resultado se conoce al procesar `OrderCreat
 
 **Un pedido, un pago.** `payments.order_id` es único: reprocesar el mismo `OrderCreated` devuelve el pago que ya existía y no cobra de nuevo.
 
-Dos consumidores del grupo no pueden procesar el mismo pedido a la vez: la clave de partición es el `orderId` (regla 11, ADR-04), así que todos sus eventos van a la misma partición y la atiende un solo consumidor. El índice único queda como última garantía de la base, no como el mecanismo del que depende el caso normal. El registro del `eventId` en `processed_events` (ADR-09) lo añade HU-601.
+Dos consumidores del grupo no pueden procesar el mismo pedido a la vez: la clave de partición es el `orderId` (regla 11, ADR-04), así que todos sus eventos van a la misma partición y la atiende un solo consumidor. El índice único queda como última garantía de la base, no como el mecanismo del que depende el caso normal. El registro del `eventId` en `processed_events` (ADR-09) se describe en [Idempotencia del consumidor](#idempotencia-del-consumidor-hu-601).
 
 El esquema lo crean los scripts de [`infrastructure/postgres/payment-db/`](../../infrastructure/postgres/payment-db) y Hibernate solo lo valida (`ddl-auto=validate`).
 
@@ -98,7 +98,7 @@ ALTER TABLE payments ADD CONSTRAINT payments_status_valido CHECK (status IN ('AP
 
 ### Pruebas con la base real
 
-`PaymentServiceApplicationTests` persiste contra Payment DB y solo corre cuando `PAYMENT_DB_URL` está definida, para que `./mvnw verify` funcione sin infraestructura:
+`PaymentServiceApplicationTests` y `PaymentIdempotencyIntegrationTests` persisten contra Payment DB y solo corren cuando `PAYMENT_DB_URL` está definida, para que `./mvnw verify` funcione sin infraestructura:
 
 ```bash
 docker compose --env-file .env -f infrastructure/compose/docker-compose.yml up -d payment-db
@@ -106,6 +106,24 @@ set -a && . ./.env && set +a
 export PAYMENT_DB_URL="jdbc:postgresql://localhost:$PAYMENT_DB_HOST_PORT/$PAYMENT_DB_NAME"
 cd services/payment-service && ./mvnw verify
 ```
+
+## Idempotencia del consumidor (HU-601)
+
+Kafka entrega **al menos una vez**: el mismo `OrderCreated` puede llegar dos veces si el consumidor cae entre el commit local y la confirmación del offset. Payment Service lo tolera con `processed_events` (ADR-09), su propia tabla en Payment DB.
+
+| Qué | Cómo |
+|---|---|
+| Qué se registra | El `eventId` del envelope, con el consumidor `payment-service.orders` y la marca de tiempo |
+| Cuándo se registra | En la **misma transacción local** que el pago: o quedan los dos o no queda ninguno (criterio 2) |
+| Evento ya registrado | Se ignora con `INFO`, no se cobra ni se publica nada, y el offset se confirma igual (criterio 3) |
+| Confirmación del offset | Siempre **después** de que el caso de uso retorna, es decir después del commit local (criterio 3) |
+| Pedido ya cobrado con otro `eventId` | Se devuelve el pago existente, no se publica de nuevo y el `eventId` **sí** se registra, para no volver a evaluar esa reentrega |
+
+Son **dos guardas distintas y las dos hacen falta**: el índice único de `payments.order_id` impide el segundo cobro de un pedido, y `processed_events` impide el segundo *procesamiento* de un evento. Sin la segunda, una reentrega volvería a entrar en la rama «el pedido ya tenía pago» y dejaría rastro repetido en los registros; sin la primera, un `OrderCreated` republicado con otro `eventId` cobraría dos veces.
+
+`ProcessedEvent` implementa `Persistable` y se marca siempre como nuevo: así Spring Data hace `persist` y no `merge`, de modo que un duplicado que se colara choca con la clave primaria y deshace la transacción, en vez de pasar en silencio. Mismo patrón que en Order y Notification Service; ninguno comparte código con otro (regla 8).
+
+`PaymentIdempotencyIntegrationTests` entrega el mismo evento dos veces contra Payment DB real —aprobado y rechazado— y comprueba que queda un solo pago y un solo registro en `processed_events` (criterios 4 y 5).
 
 ## Publicación del resultado (HU-203 y HU-204)
 
