@@ -11,6 +11,7 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import com.foodflow.order.application.OrderApplicationService;
 import com.foodflow.order.application.OrderPaymentService;
 import com.foodflow.order.application.PaymentResultCommand;
 import com.foodflow.order.domain.NotificationChannel;
@@ -37,6 +38,9 @@ class OrderPaymentIntegrationTests {
 
     @Autowired
     private OrderRepository pedidos;
+
+    @Autowired
+    private OrderApplicationService consultas;
 
     @Autowired
     private ProcessedEventRepository procesados;
@@ -80,6 +84,27 @@ class OrderPaymentIntegrationTests {
         } finally {
             procesados.deleteById(primero.eventId());
             procesados.deleteById(segundo.eventId());
+            pedidos.deleteById(pedido.id());
+        }
+    }
+
+    @Test
+    @DisplayName("HU-105 CA2 a CA5: PAGO_RECHAZADO persistido una vez y visible en la consulta del pedido")
+    void rechazaUnaSolaVezYSeConsulta() {
+        Order pedido = pedidos.saveAndFlush(Order.crear("PED-HU105", NotificationChannel.EMAIL,
+                "ana@foodflow.test", PaymentToken.PAY_FAIL, new BigDecimal("12500.50")));
+        PaymentResultCommand resultado =
+                new PaymentResultCommand(UUID.randomUUID(), UUID.randomUUID(), pedido.id(), UUID.randomUUID());
+
+        try {
+            assertThat(pagos.registrarPagoRechazado(resultado)).isPresent();
+            assertThat(pagos.registrarPagoRechazado(resultado)).as("reentrega del mismo eventId").isEmpty();
+
+            // CA5: la misma consulta que atiende GET /orders/{id} ve el estado nuevo.
+            assertThat(consultas.consultarPedido(pedido.id()).status()).isEqualTo(OrderStatus.PAGO_RECHAZADO);
+            assertThat(procesados.findById(resultado.eventId())).isPresent();
+        } finally {
+            procesados.deleteById(resultado.eventId());
             pedidos.deleteById(pedido.id());
         }
     }

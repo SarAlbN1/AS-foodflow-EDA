@@ -2,6 +2,7 @@ package com.foodflow.order.infrastructure.messaging;
 
 import java.math.BigDecimal;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
@@ -20,15 +21,15 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.ObjectReader;
 
 /**
- * Consume {@code payments.events} y aplica el resultado del pago al pedido (HU-104).
+ * Consume {@code payments.events} y aplica el resultado del pago al pedido (HU-104 y HU-105).
  *
  * <p>Es el unico punto de Order Service que lee de Kafka ({@code convenciones.md}). Tiene su
  * propio grupo, distinto del de Notification Service: los dos reciben cada resultado de pago de
  * forma independiente (D-6, reglas 6 y 12).
  *
- * <p><strong>Tipos.</strong> Procesa {@code PaymentApproved}. Cualquier otro tipo se ignora con
- * {@code DEBUG} y confirmacion de offset, igual que Payment Service con {@code orders.events};
- * {@code PaymentRejected} lo incorpora HU-105.
+ * <p><strong>Tipos.</strong> {@code PaymentApproved} pasa el pedido a {@code PAGADO} (HU-104) y
+ * {@code PaymentRejected} a {@code PAGO_RECHAZADO} (HU-105). Cualquier otro tipo se ignora con
+ * {@code DEBUG} y confirmacion de offset, igual que Payment Service con {@code orders.events}.
  *
  * <p><strong>Tres salidas distintas.</strong>
  * <ul>
@@ -46,8 +47,9 @@ public class PaymentResultEventConsumer {
     private static final Logger log = LoggerFactory.getLogger(PaymentResultEventConsumer.class);
 
     private static final String PAYMENT_APPROVED = "PaymentApproved";
+    private static final String PAYMENT_REJECTED = "PaymentRejected";
 
-    private static final Set<String> TIPOS_SOPORTADOS = Set.of(PAYMENT_APPROVED);
+    private static final Set<String> TIPOS_SOPORTADOS = Set.of(PAYMENT_APPROVED, PAYMENT_REJECTED);
 
     /** Version del contrato que este consumidor entiende ({@code contracts/events/v1}). */
     private static final int VERSION_SOPORTADA = 1;
@@ -62,6 +64,7 @@ public class PaymentResultEventConsumer {
      */
     private final ObjectReader lectorEnvelope;
     private final ObjectReader lectorPagoAprobado;
+    private final ObjectReader lectorPagoRechazado;
     private final OrderPaymentService pagos;
 
     public PaymentResultEventConsumer(@Qualifier(EventJsonConfig.EVENT_OBJECT_MAPPER) ObjectMapper jackson,
@@ -69,6 +72,8 @@ public class PaymentResultEventConsumer {
         this.lectorEnvelope = jackson.readerFor(ReceivedEventEnvelope.class)
                 .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         this.lectorPagoAprobado = jackson.readerFor(PaymentApprovedPayload.class)
+                .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        this.lectorPagoRechazado = jackson.readerFor(PaymentRejectedPayload.class)
                 .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         this.pagos = pagos;
     }
@@ -100,7 +105,11 @@ public class PaymentResultEventConsumer {
                     .formatted(envelope.eventVersion(), VERSION_SOPORTADA));
         }
 
-        pagos.registrarPagoAprobado(aResultado(envelope));
+        if (PAYMENT_APPROVED.equals(envelope.eventType())) {
+            pagos.registrarPagoAprobado(aprobado(envelope));
+        } else {
+            pagos.registrarPagoRechazado(rechazado(envelope));
+        }
     }
 
     private ReceivedEventEnvelope leerEnvelope(ConsumerRecord<String, String> registro) {
@@ -124,32 +133,47 @@ public class PaymentResultEventConsumer {
         exigir(envelope.payload() != null && envelope.payload().isObject(), "payload es obligatorio");
     }
 
-    private PaymentResultCommand aResultado(ReceivedEventEnvelope envelope) {
-        PaymentApprovedPayload payload;
-        try {
-            payload = lectorPagoAprobado.readValue(envelope.payload());
-        } catch (Exception e) {
-            throw new UnsupportedEventException(
-                    "el payload no cumple el contrato de PaymentApproved v1: " + e.getMessage(), e);
-        }
-
-        exigir(payload.paymentId() != null, "payload.paymentId es obligatorio");
-        exigir(payload.orderId() != null, "payload.orderId es obligatorio");
-        exigir(payload.amount() != null, "payload.amount es obligatorio");
-        exigir(payload.currency() != null, "payload.currency es obligatorio");
+    private PaymentResultCommand aprobado(ReceivedEventEnvelope envelope) {
+        PaymentApprovedPayload payload = leerPayload(lectorPagoAprobado, envelope);
+        // Cada tipo exige su propio campo distintivo.
         exigir(payload.transactionReference() != null, "PaymentApproved exige payload.transactionReference");
-        exigir(payload.notificationContact() != null, "payload.notificationContact es obligatorio");
-        // Regla arquitectonica 11 y ADR-04: aggregateId es SIEMPRE el orderId.
-        exigir(envelope.aggregateId().equals(payload.orderId()),
-                "aggregateId %s no coincide con payload.orderId %s"
-                        .formatted(envelope.aggregateId(), payload.orderId()));
-        exigir(payload.amount().compareTo(BigDecimal.ZERO) > 0, "payload.amount debe ser mayor que cero");
-        exigir(MONEDA_SOPORTADA.equals(payload.currency()),
-                "moneda %s no soportada: el prototipo solo opera en %s"
-                        .formatted(payload.currency(), MONEDA_SOPORTADA));
+        return comun(envelope, payload.paymentId(), payload.orderId(), payload.amount(), payload.currency(),
+                payload.notificationContact());
+    }
 
-        return new PaymentResultCommand(envelope.eventId(), envelope.correlationId(), payload.orderId(),
-                payload.paymentId());
+    private PaymentResultCommand rechazado(ReceivedEventEnvelope envelope) {
+        PaymentRejectedPayload payload = leerPayload(lectorPagoRechazado, envelope);
+        exigir(payload.reasonCode() != null && !payload.reasonCode().isBlank(),
+                "PaymentRejected exige payload.reasonCode");
+        return comun(envelope, payload.paymentId(), payload.orderId(), payload.amount(), payload.currency(),
+                payload.notificationContact());
+    }
+
+    private static <T> T leerPayload(ObjectReader lector, ReceivedEventEnvelope envelope) {
+        try {
+            return lector.readValue(envelope.payload());
+        } catch (Exception e) {
+            throw new UnsupportedEventException("el payload no cumple el contrato de %s v1: %s"
+                    .formatted(envelope.eventType(), e.getMessage()), e);
+        }
+    }
+
+    /** Comprobaciones comunes a los dos resultados del pago y construccion de la orden. */
+    private static PaymentResultCommand comun(ReceivedEventEnvelope envelope, UUID paymentId, UUID orderId,
+            BigDecimal amount, String currency, PaymentApprovedPayload.Contacto contacto) {
+        exigir(paymentId != null, "payload.paymentId es obligatorio");
+        exigir(orderId != null, "payload.orderId es obligatorio");
+        exigir(amount != null, "payload.amount es obligatorio");
+        exigir(currency != null, "payload.currency es obligatorio");
+        exigir(contacto != null, "payload.notificationContact es obligatorio");
+        // Regla arquitectonica 11 y ADR-04: aggregateId es SIEMPRE el orderId.
+        exigir(envelope.aggregateId().equals(orderId),
+                "aggregateId %s no coincide con payload.orderId %s".formatted(envelope.aggregateId(), orderId));
+        exigir(amount.compareTo(BigDecimal.ZERO) > 0, "payload.amount debe ser mayor que cero");
+        exigir(MONEDA_SOPORTADA.equals(currency),
+                "moneda %s no soportada: el prototipo solo opera en %s".formatted(currency, MONEDA_SOPORTADA));
+
+        return new PaymentResultCommand(envelope.eventId(), envelope.correlationId(), orderId, paymentId);
     }
 
     private static void exigir(boolean condicion, String mensaje) {

@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** Maquina de estados del pedido ({@code comportamiento-del-flujo.md}): solo CREADO puede pasar a PAGADO. */
+/** Maquina de estados del pedido ({@code comportamiento-del-flujo.md}): solo CREADO cambia, a PAGADO o a PAGO_RECHAZADO. */
 class OrderTransitionTests {
 
     @Test
@@ -35,5 +35,18 @@ class OrderTransitionTests {
         assertThat(pedido.marcarPagado()).isFalse();
         assertThat(pedido.status()).isEqualTo(OrderStatus.PAGADO);
         assertThat(pedido.updatedAt()).isEqualTo(actualizado);
+    }
+
+    @Test
+    @DisplayName("CREADO pasa a PAGO_RECHAZADO; desde PAGO_RECHAZADO ni se paga ni se vuelve a rechazar")
+    void creadoAPagoRechazado() {
+        Order pedido = Order.crear("PED-3", NotificationChannel.EMAIL, "ana@foodflow.test", PaymentToken.PAY_FAIL,
+                new BigDecimal("10.00"));
+
+        assertThat(pedido.marcarPagoRechazado()).isTrue();
+        assertThat(pedido.status()).isEqualTo(OrderStatus.PAGO_RECHAZADO);
+        assertThat(pedido.marcarPagado()).isFalse();
+        assertThat(pedido.marcarPagoRechazado()).isFalse();
+        assertThat(pedido.status()).isEqualTo(OrderStatus.PAGO_RECHAZADO);
     }
 }

@@ -23,8 +23,8 @@
 | [HU-501](epicas/EP-05-frontend.md) | Crear un pedido desde Angular | 2 | Juan | 5 | Terminada | #74 | Criterios verificados con pruebas de componente y en el navegador contra el gateway real en Compose (HU-607) |
 | [HU-502](epicas/EP-05-frontend.md) | Consultar y visualizar el estado del pedido | 2 | Juan | 2 | Terminada | #75 | Criterios verificados con pruebas de componente y en el navegador contra el gateway real en Compose (HU-607) |
 | [HU-604](epicas/EP-06-resiliencia-y-calidad.md) | Exponer health checks de componentes | 2 | Sara | 2 | Terminada | #68 | Health checks de los tres servicios; el del gateway lo añade HU-607, que cierra el punto abierto A-10 |
-| [HU-104](epicas/EP-01-pedidos.md) | Actualizar el pedido ante un pago aprobado | 3 | Juan | 3 | En revisión | #99 | Consume `payments.events` en su grupo; `CREADO` a `PAGADO` idempotente con `processed_events`. La prueba de humo ya ve `PAGADO` |
-| [HU-105](epicas/EP-01-pedidos.md) | Actualizar el pedido ante un pago rechazado | 3 | Juan | 2 | Pendiente | | |
+| [HU-104](epicas/EP-01-pedidos.md) | Actualizar el pedido ante un pago aprobado | 3 | Juan | 3 | Terminada | #99 | Consume `payments.events` en su grupo; `CREADO` a `PAGADO` idempotente con `processed_events`. La prueba de humo ya ve `PAGADO` |
+| [HU-105](epicas/EP-01-pedidos.md) | Actualizar el pedido ante un pago rechazado | 3 | Juan | 2 | En revisión | #100 | `CREADO` a `PAGO_RECHAZADO` sobre el consumidor de HU-104. La prueba de humo pasa a exigir los dos estados finales |
 | [HU-106](epicas/EP-01-pedidos.md) | Publicar OrderStatusChanged al cambiar el estado del pedido | 3 | Juan | 3 | Pendiente | | |
 | [HU-201](epicas/EP-02-pagos.md) | Consumir OrderCreated para iniciar un pago | 3 | Sara | 3 | Terminada | #71 | Consume OrderCreated; el pago se crea en HU-202 |
 | [HU-202](epicas/EP-02-pagos.md) | Procesar y persistir el resultado del pago | 3 | Sara | 5 | Terminada | #73 | Resuelve y persiste el pago; la publicación es HU-203 y HU-204 |
@@ -41,7 +41,7 @@
 | [HU-402](epicas/EP-04-gateway-y-contratos.md) | Enrutar la consulta de notificaciones | 4 | Juan | 3 | Terminada | #83 | Verificada contra servicios simulados; en Compose el gateway ya llega a Notification Service (404 hasta HU-305) |
 | [HU-504](epicas/EP-05-frontend.md) | Visualizar el estado de la notificación | 4 | Juan | 3 | Terminada | #90 | Muestra `content` según el contrato de #89; probada en el navegador contra el gateway real (HU-607): el 404 actual se muestra como error hasta HU-305 |
 | [HU-006](epicas/EP-00-base-tecnica-y-estandares.md) | Guardas de arquitectura ejecutables | 5 | Juan | 5 | Terminada | #85 | `bash scripts/verify-architecture.sh`; la comprobación de Compose cubre los tres servicios desde HU-607 |
-| [HU-505](epicas/EP-05-frontend.md) | Visualizar el flujo integral de un pedido | 5 | Juan | 5 | En revisión | #102 | Pedido → pago → notificación en una vista; distingue aún no disponible, rechazado y fallido. Las transiciones reales llegan con #99 a #101 |
+| [HU-505](epicas/EP-05-frontend.md) | Visualizar el flujo integral de un pedido | 5 | Juan | 5 | Terminada | #102 | Pedido → pago → notificación en una vista; distingue aún no disponible, rechazado y fallido. Las transiciones reales llegan con #99 a #101 |
 | [HU-506](epicas/EP-05-frontend.md) | Unificar la interfaz web con un diseño base | 5 | Juan | 3 | Terminada | #94 | HU transversal añadida el 2026-09-28. Layout común, estilos centralizados, total en formato `es-CO` y fuente alojada en el proyecto; verificada en el navegador contra el gateway real |
 | [HU-601](epicas/EP-06-resiliencia-y-calidad.md) | Hacer idempotentes los consumidores Kafka | 5 | Sara | 5 | Pendiente | | |
 | [HU-602](epicas/EP-06-resiliencia-y-calidad.md) | Aplicar reintentos y DLQ a eventos fallidos | 5 | Sara | 5 | Pendiente | | |
