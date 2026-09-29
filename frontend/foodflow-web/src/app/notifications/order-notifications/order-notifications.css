@@ -1,7 +1,37 @@
-.notificaciones {
+.notificaciones,
+.ff-notifications-section {
   margin-top: 2rem;
-  border-top: 1px solid #ddd;
-  padding-top: 1rem;
+  border-top: 1px solid var(--ff-border);
+  padding-top: 1.5rem;
+}
+
+.ff-notifications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.ff-notifications-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ff-text-main);
+  margin: 0;
+}
+
+.ff-count-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--ff-primary-light);
+  color: var(--ff-primary);
+  padding: 2px 8px;
+  border-radius: var(--ff-radius-pill);
 }
 
 ul {
@@ -9,80 +39,139 @@ ul {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
+  margin: 0 0 16px 0;
 }
 
-.notificacion {
-  border: 1px solid currentColor;
-  border-radius: 4px;
-  padding: 0.6rem 0.9rem;
+.notificacion,
+.ff-notification-card {
+  background: var(--ff-bg-page);
+  border: 1px solid var(--ff-border-muted);
+  border-radius: var(--ff-radius-sm);
+  padding: 16px 20px;
+  transition: all 0.15s ease-in-out;
 }
 
 .notificacion[data-estado='PENDIENTE'] {
-  color: #8a5a00;
+  border-left: 4px solid var(--ff-warning);
 }
 
 .notificacion[data-estado='ENVIADA'] {
-  color: #1b6e2a;
+  border-left: 4px solid var(--ff-success);
 }
 
 .notificacion[data-estado='FALLIDA'] {
-  color: #b00020;
+  border-left: 4px solid var(--ff-danger);
 }
 
-.cabecera {
+.cabecera,
+.ff-notification-card-header {
   display: flex;
-  gap: 0.75rem;
+  gap: 10px;
   align-items: center;
-  margin: 0 0 0.4rem;
+  margin: 0 0 10px 0;
 }
 
-.estado {
+.estado,
+.ff-notification-badge {
   font-weight: 600;
+  font-size: 0.825rem;
+  padding: 3px 10px;
+  border-radius: var(--ff-radius-pill);
 }
 
-.contenido {
-  color: #222;
-  font-style: italic;
-  margin: 0 0 0.4rem;
+.notificacion[data-estado='PENDIENTE'] .estado {
+  background: var(--ff-warning-light);
+  color: var(--ff-warning-text);
 }
 
-dl {
+.notificacion[data-estado='ENVIADA'] .estado {
+  background: var(--ff-success-light);
+  color: var(--ff-success-text);
+}
+
+.notificacion[data-estado='FALLIDA'] .estado {
+  background: var(--ff-danger-light);
+  color: var(--ff-danger-text);
+}
+
+.ff-notification-code {
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--ff-text-subtle);
+  background: #ffffff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--ff-border-muted);
+}
+
+.contenido,
+.ff-notification-content {
+  color: var(--ff-text-main);
+  font-size: 0.925rem;
+  font-weight: 500;
+  background: #ffffff;
+  padding: 12px 14px;
+  border-radius: var(--ff-radius-sm);
+  border: 1px solid var(--ff-border);
+  margin: 0 0 14px 0;
+}
+
+dl,
+.ff-notification-dl {
   display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 0.2rem 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
   margin: 0;
-  color: #333;
+}
+
+.ff-notif-dl-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 dt {
-  font-weight: 600;
+  font-size: 0.725rem;
+  font-weight: 700;
+  color: var(--ff-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 dd {
   margin: 0;
-}
-
-button {
-  font: inherit;
-  padding: 0.45rem 0.6rem;
-  cursor: pointer;
-}
-
-.error {
-  color: #b00020;
-  border: 1px solid currentColor;
-  border-radius: 4px;
-  padding: 0.5rem 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.error p {
-  margin: 0;
-}
-
-.nota,
-.referencia {
   font-size: 0.85rem;
-  color: #555;
+  font-weight: 600;
+  color: var(--ff-text-main);
+  word-break: break-all;
+}
+
+.ff-notif-dl-error dd {
+  color: var(--ff-danger-text);
+  font-weight: 700;
+}
+
+.ff-empty-state {
+  background: var(--ff-bg-page);
+  border: 1px dashed var(--ff-border-muted);
+  border-radius: var(--ff-radius-sm);
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.ff-empty-icon {
+  font-size: 1.8rem;
+  margin-bottom: 8px;
+}
+
+.ff-empty-text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--ff-text-muted);
+}
+
+.ff-notifications-actions {
+  margin-top: 16px;
 }

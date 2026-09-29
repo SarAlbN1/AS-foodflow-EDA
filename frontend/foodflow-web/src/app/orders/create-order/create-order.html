@@ -1,81 +1,193 @@
-@if (creado(); as pedido) {
-  <section class="resultado" aria-live="polite" data-testid="resultado">
-    <h2>Pedido creado</h2>
-    <p>
-      Identificador: <code data-testid="pedido-id">{{ pedido.id }}</code>
+<div class="ff-page-container">
+  <div class="ff-page-header">
+    <h2 class="ff-page-title">Nuevo pedido</h2>
+    <p class="ff-page-subtitle">
+      Diligencia los datos del pedido para registrarlo en el sistema y simular el resultado del pago.
     </p>
-    <p>
-      Estado: <strong data-testid="pedido-estado">{{ pedido.status }}</strong>
-    </p>
-    <p class="nota">
-      El pago se procesa en segundo plano: el estado cambiará a PAGADO o PAGO_RECHAZADO en unos
-      instantes.
-    </p>
-    <a [routerLink]="['/orders', pedido.id]" data-testid="ver-estado">Ver el estado del pedido</a>
-    <button type="button" (click)="nuevoPedido()">Crear otro pedido</button>
-  </section>
-} @else {
-  <form [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
-    <h2>Nuevo pedido</h2>
+  </div>
 
-    <label for="customerReference">Referencia del pedido</label>
-    <input id="customerReference" formControlName="customerReference" maxlength="60" />
-    @if (invalido('customerReference')) {
-      <p class="campo-error" data-testid="error-customerReference">
-        La referencia es obligatoria (máximo 60 caracteres).
-      </p>
-    }
-
-    <label for="customerContact">Correo de contacto</label>
-    <input id="customerContact" type="email" formControlName="customerContact" />
-    @if (invalido('customerContact')) {
-      <p class="campo-error" data-testid="error-customerContact">
-        @if (tieneError('customerContact', 'required')) {
-          El correo es obligatorio.
-        } @else {
-          Escribe un correo válido, por ejemplo ana&#64;foodflow.test.
-        }
-      </p>
-    }
-
-    <label for="notificationChannel">Canal de notificación</label>
-    <select id="notificationChannel" formControlName="notificationChannel">
-      <option value="EMAIL">Correo electrónico</option>
-    </select>
-
-    <label for="total">Total (COP)</label>
-    <input id="total" type="number" min="0.01" step="0.01" formControlName="total" />
-    @if (invalido('total')) {
-      <p class="campo-error" data-testid="error-total">
-        @if (tieneError('total', 'required')) {
-          El total es obligatorio.
-        } @else if (tieneError('total', 'decimales')) {
-          El total admite máximo dos decimales.
-        } @else if (tieneError('total', 'maximo')) {
-          El total supera el máximo permitido.
-        } @else {
-          El total debe ser mayor que cero.
-        }
-      </p>
-    }
-
-    <label for="paymentToken">Resultado de pago simulado</label>
-    <select id="paymentToken" formControlName="paymentToken">
-      <option value="PAY-OK">PAY-OK — pago aprobado</option>
-      <option value="PAY-FAIL">PAY-FAIL — pago rechazado</option>
-    </select>
-
-    @if (error(); as falla) {
-      <div class="error" role="alert" data-testid="error">
-        <p>{{ falla.mensaje }}</p>
-        @if (falla.referencia) {
-          <p class="referencia">Referencia: {{ falla.referencia }}</p>
-        }
+  @if (creado(); as pedido) {
+    <div class="ff-card ff-card-success" aria-live="polite" data-testid="resultado">
+      <div class="ff-card-header">
+        <div class="ff-icon-badge ff-badge-success">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <div>
+          <h3 class="ff-card-title">Pedido creado exitosamente</h3>
+          <p class="ff-card-subtitle">
+            El pedido se guardó con el estado inicial <strong data-testid="pedido-estado">{{ pedido.status }}</strong>.
+          </p>
+        </div>
       </div>
-    }
 
-    <button type="submit" [disabled]="enviando()">
-      {{ enviando() ? 'Enviando…' : error()?.reintentable ? 'Reintentar' : 'Crear pedido' }}
-    </button>
-  </form>
-}
+      <div class="ff-card-body">
+        <div class="ff-details-box">
+          <div class="ff-detail-row">
+            <span class="ff-detail-label">Identificador del pedido:</span>
+            <span class="ff-detail-value">
+              <code data-testid="pedido-id" class="ff-code-badge">{{ pedido.id }}</code>
+            </span>
+          </div>
+
+          <div class="ff-detail-row">
+            <span class="ff-detail-label">Referencia:</span>
+            <span class="ff-detail-value">{{ pedido.customerReference }}</span>
+          </div>
+
+          <div class="ff-detail-row">
+            <span class="ff-detail-label">Contacto:</span>
+            <span class="ff-detail-value">{{ pedido.customerContact }}</span>
+          </div>
+
+          <div class="ff-detail-row">
+            <span class="ff-detail-label">Total:</span>
+            <span class="ff-detail-value ff-text-primary ff-font-bold">{{ pedido.total }} COP</span>
+          </div>
+        </div>
+
+        <div class="ff-alert ff-alert-info">
+          <span class="ff-alert-icon">💡</span>
+          <p class="nota">
+            El pago se procesa en segundo plano: el estado cambiará a PAGADO o PAGO_RECHAZADO en unos instantes.
+          </p>
+        </div>
+      </div>
+
+      <div class="ff-card-actions">
+        <a [routerLink]="['/orders', pedido.id]" class="ff-btn ff-btn-primary" data-testid="ver-estado">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          Ver el estado del pedido
+        </a>
+        <button type="button" class="ff-btn ff-btn-outline" (click)="nuevoPedido()">
+          Crear otro pedido
+        </button>
+      </div>
+    </div>
+  } @else {
+    <div class="ff-card">
+      <form [formGroup]="formulario" (ngSubmit)="enviar()" novalidate class="ff-form">
+        <div class="ff-form-grid">
+          <!-- Referencia del pedido -->
+          <div class="ff-form-group">
+            <label for="customerReference" class="ff-label">Referencia del pedido</label>
+            <input
+              id="customerReference"
+              formControlName="customerReference"
+              maxlength="60"
+              placeholder="Ej. PED-0001"
+              class="ff-input"
+              [class.ff-input-error]="invalido('customerReference')"
+            />
+            @if (invalido('customerReference')) {
+              <p class="campo-error" data-testid="error-customerReference">
+                La referencia es obligatoria (máximo 60 caracteres).
+              </p>
+            }
+          </div>
+
+          <!-- Correo de contacto -->
+          <div class="ff-form-group">
+            <label for="customerContact" class="ff-label">Correo de contacto</label>
+            <input
+              id="customerContact"
+              type="email"
+              formControlName="customerContact"
+              placeholder="ana@foodflow.test"
+              class="ff-input"
+              [class.ff-input-error]="invalido('customerContact')"
+            />
+            @if (invalido('customerContact')) {
+              <p class="campo-error" data-testid="error-customerContact">
+                @if (tieneError('customerContact', 'required')) {
+                  El correo es obligatorio.
+                } @else {
+                  Escribe un correo válido, por ejemplo ana&#64;foodflow.test.
+                }
+              </p>
+            }
+          </div>
+
+          <!-- Canal de notificación -->
+          <div class="ff-form-group">
+            <label for="notificationChannel" class="ff-label">Canal de notificación</label>
+            <div class="ff-select-wrapper">
+              <select id="notificationChannel" formControlName="notificationChannel" class="ff-select">
+                <option value="EMAIL">Correo electrónico</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Total (COP) -->
+          <div class="ff-form-group">
+            <label for="total" class="ff-label">Total (COP)</label>
+            <div class="ff-input-group">
+              <span class="ff-input-prefix">$</span>
+              <input
+                id="total"
+                type="number"
+                min="0.01"
+                step="0.01"
+                formControlName="total"
+                placeholder="45000.00"
+                class="ff-input ff-input-has-prefix"
+                [class.ff-input-error]="invalido('total')"
+              />
+            </div>
+            @if (invalido('total')) {
+              <p class="campo-error" data-testid="error-total">
+                @if (tieneError('total', 'required')) {
+                  El total es obligatorio.
+                } @else if (tieneError('total', 'decimales')) {
+                  El total admite máximo dos decimales.
+                } @else if (tieneError('total', 'maximo')) {
+                  El total supera el máximo permitido.
+                } @else {
+                  El total debe ser mayor que cero.
+                }
+              </p>
+            }
+          </div>
+
+          <!-- Resultado de pago simulado -->
+          <div class="ff-form-group ff-form-full">
+            <label for="paymentToken" class="ff-label">Resultado de pago simulado</label>
+            <div class="ff-select-wrapper">
+              <select id="paymentToken" formControlName="paymentToken" class="ff-select">
+                <option value="PAY-OK">PAY-OK — pago aprobado</option>
+                <option value="PAY-FAIL">PAY-FAIL — pago rechazado</option>
+              </select>
+            </div>
+            <p class="ff-help-text">
+              Simula la respuesta determinista del procesador de pagos (ADR-10).
+            </p>
+          </div>
+        </div>
+
+        @if (error(); as falla) {
+          <div class="error ff-alert ff-alert-danger" role="alert" data-testid="error">
+            <p class="ff-alert-message">{{ falla.mensaje }}</p>
+            @if (falla.referencia) {
+              <p class="referencia">Referencia: {{ falla.referencia }}</p>
+            }
+          </div>
+        }
+
+        <div class="ff-form-actions">
+          <button type="submit" class="ff-btn ff-btn-primary ff-btn-lg" [disabled]="enviando()">
+            @if (enviando()) {
+              <span class="ff-spinner"></span>
+              <span>Enviando…</span>
+            } @else {
+              {{ error()?.reintentable ? 'Reintentar' : 'Crear pedido' }}
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+</div>

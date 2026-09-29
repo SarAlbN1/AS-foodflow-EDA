@@ -1,1 +1,276 @@
-/* You can add global styles to this file, and also import other style files */
+/* Variables globales del sistema de diseño tomado de Modernize Angular */
+:root {
+  --ff-primary: #5d87ff;
+  --ff-primary-hover: #4570ea;
+  --ff-primary-light: #ecf2ff;
+  --ff-primary-dark: #3758c5;
+
+  --ff-secondary: #49beff;
+  --ff-secondary-light: #e8f7ff;
+
+  --ff-success: #13deb9;
+  --ff-success-light: #e8f9f5;
+  --ff-success-text: #0e8770;
+  --ff-success-border: #bbf2e7;
+
+  --ff-warning: #ffa21d;
+  --ff-warning-light: #fef5e5;
+  --ff-warning-text: #a16207;
+  --ff-warning-border: #ffe8c5;
+
+  --ff-danger: #fa896b;
+  --ff-danger-light: #fdede8;
+  --ff-danger-text: #c62828;
+  --ff-danger-border: #fccac0;
+
+  --ff-bg-page: #f4f6f9;
+  --ff-bg-surface: #ffffff;
+  --ff-bg-sidebar: #ffffff;
+  --ff-bg-header: #ffffff;
+
+  --ff-border: #ebf1f6;
+  --ff-border-muted: #e5eaef;
+
+  --ff-text-main: #2a3547;
+  --ff-text-muted: #5a6a85;
+  --ff-text-subtle: #7c8ba1;
+
+  --ff-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.04);
+  --ff-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.05);
+  --ff-shadow-lg: 0 8px 30px 0 rgba(93, 135, 255, 0.12);
+
+  --ff-radius-sm: 8px;
+  --ff-radius: 12px;
+  --ff-radius-lg: 16px;
+  --ff-radius-pill: 50px;
+
+  --ff-font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--ff-font-family);
+  background-color: var(--ff-bg-page);
+  color: var(--ff-text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Foco visible accesible */
+:focus-visible {
+  outline: 2px solid var(--ff-primary);
+  outline-offset: 2px;
+}
+
+a {
+  color: var(--ff-primary);
+  text-decoration: none;
+  transition: color 0.15s ease-in-out;
+}
+
+a:hover {
+  color: var(--ff-primary-hover);
+}
+
+button {
+  font-family: inherit;
+}
+
+/* Tarjetas y contenedores comunes */
+.ff-card {
+  background: var(--ff-bg-surface);
+  border-radius: var(--ff-radius);
+  border: 1px solid var(--ff-border);
+  box-shadow: var(--ff-shadow);
+  padding: 28px;
+}
+
+/* Badges y código */
+.ff-code-badge {
+  background: #ffffff;
+  border: 1px solid var(--ff-border-muted);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: var(--ff-primary);
+  font-weight: 600;
+}
+
+/* Alertas y mensajes */
+.ff-alert {
+  padding: 12px 16px;
+  border-radius: var(--ff-radius-sm);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 0.875rem;
+}
+
+.ff-alert-info {
+  background: var(--ff-primary-light);
+  color: var(--ff-text-main);
+  border: 1px solid rgba(93, 135, 255, 0.2);
+}
+
+.ff-alert-polling {
+  background: var(--ff-primary-light);
+  color: var(--ff-primary);
+  border: 1px solid rgba(93, 135, 255, 0.2);
+}
+
+.ff-alert-warning {
+  background: var(--ff-warning-light);
+  color: var(--ff-warning-text);
+  border: 1px solid var(--ff-warning-border);
+}
+
+.ff-alert-danger,
+.error {
+  background: var(--ff-danger-light);
+  color: var(--ff-danger-text);
+  border: 1px solid var(--ff-danger-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ff-alert-message {
+  margin: 0;
+  font-weight: 500;
+}
+
+.referencia {
+  margin: 0;
+  font-size: 0.825rem;
+  opacity: 0.85;
+}
+
+.nota {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ff-text-muted);
+}
+
+.campo-error {
+  font-size: 0.825rem;
+  color: var(--ff-danger-text);
+  margin: 2px 0 0 0;
+  font-weight: 500;
+}
+
+/* Botones */
+.ff-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 10px 18px;
+  border-radius: var(--ff-radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease-in-out;
+}
+
+.ff-btn-primary {
+  background: var(--ff-primary);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(93, 135, 255, 0.3);
+}
+
+.ff-btn-primary:hover:not(:disabled) {
+  background: var(--ff-primary-hover);
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(93, 135, 255, 0.4);
+}
+
+.ff-btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.ff-btn-outline {
+  background: transparent;
+  color: var(--ff-text-main);
+  border-color: var(--ff-border-muted);
+}
+
+.ff-btn-outline:hover {
+  background: var(--ff-bg-page);
+  border-color: var(--ff-text-muted);
+}
+
+.ff-btn-outline-primary {
+  background: transparent;
+  color: var(--ff-primary);
+  border: 1px solid var(--ff-primary);
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 8px 16px;
+  border-radius: var(--ff-radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease-in-out;
+}
+
+.ff-btn-outline-primary:hover:not(:disabled) {
+  background: var(--ff-primary-light);
+}
+
+.ff-btn-outline-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ff-btn-lg {
+  padding: 12px 24px;
+  font-size: 0.95rem;
+}
+
+/* Spinners */
+.ff-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: ff-spin 0.8s linear infinite;
+}
+
+.ff-spinner-small {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(93, 135, 255, 0.2);
+  border-top-color: var(--ff-primary);
+  border-radius: 50%;
+  animation: ff-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+.ff-spinner-primary {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(93, 135, 255, 0.3);
+  border-top-color: var(--ff-primary);
+  border-radius: 50%;
+  animation: ff-spin 0.8s linear infinite;
+}
+
+@keyframes ff-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

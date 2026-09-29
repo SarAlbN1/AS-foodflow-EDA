@@ -48,4 +48,21 @@ La pantalla `/orders/:id` incluye la sección **Notificaciones**, que consulta `
 
 Que todavía no haya notificaciones es normal: se crean cuando Notification Service conoce el resultado del pago. Mientras no haya ninguna, o alguna siga `PENDIENTE`, la sección se vuelve a consultar cada segundo durante 30 s como máximo; después queda el botón **Actualizar notificaciones**.
 
+## Diseño base y referencia visual (HU-506)
+
+El diseño visual se adaptó tomando como referencia la plantilla **Modernize Angular Free** (`modernize-angular-free-main`), bajo su licencia original MIT (Copyright (c) 2025 AdminMart).
+
+- **Lo tomado de la plantilla:**
+  - Estructura general de layout: barra superior (header), menú de navegación lateral (sidebar) responsivo y área de contenido principal.
+  - Paleta de colores principal (`#5d87ff` azul primario, `#49beff` azul secundario, `#13deb9` verde éxito, `#ffa21d` amarillo advertencia/proceso, `#fa896b` rojo error/rechazo).
+  - Tipografía base `Plus Jakarta Sans`, radios de borde de tarjetas (`12px`), bordes de controles de formulario (`8px`) y sombras suaves (`0 4px 20px rgba(0,0,0,0.05)`).
+  - Estilos de badges/pills de estado y botones con foco visible.
+  - Iconografía vectorial SVG limpia para navegación y estados.
+
+- **Lo descartado:**
+  - No se copiaron dependencias de `package.json` ni archivos fuente completos de la plantilla.
+  - Se descartaron pantallas de autenticación, registro, gráficos de analítica (ApexCharts), tableros backoffice y datos falsos de ejemplo.
+  - Se implementaron los estilos mediante CSS nativo sin instalar librerías pesadas.
+
 Referencias: [`CLAUDE.md`](../../CLAUDE.md) · [Wiki](../../docs/wiki/Home.md)
+
