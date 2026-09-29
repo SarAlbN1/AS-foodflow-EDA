@@ -161,4 +161,39 @@ class NotificationApplicationServiceTests {
 
         verify(publicador, never()).publicarEnviada(any(), anyString(), any());
     }
+
+    @Test
+    @DisplayName("criterios 1 y 2 de HU-304: deja la notificacion FALLIDA y publica NotificationFailed")
+    void registraElFalloYPublica() {
+        Notification pendiente = Notification.pendiente(UUID.randomUUID(), UUID.randomUUID(),
+                NotificationChannel.EMAIL, "ana@foodflow.test", "Tu pago de 1,00 COP fue aprobado.");
+        when(notificaciones.findById(pendiente.id())).thenReturn(Optional.of(pendiente));
+
+        boolean registrado = servicio.registrarFallo(pendiente.id(), "PROVEEDOR_NO_DISPONIBLE", 3,
+                CORRELACION);
+
+        assertThat(registrado).isTrue();
+        assertThat(pendiente.status()).isEqualTo(NotificationStatus.FALLIDA);
+        assertThat(pendiente.failureCode()).isEqualTo("PROVEEDOR_NO_DISPONIBLE");
+        assertThat(pendiente.attempts()).isEqualTo(3);
+        verify(notificaciones).saveAndFlush(pendiente);
+        verify(publicador).publicarFallida(pendiente, CORRELACION);
+    }
+
+    @Test
+    @DisplayName("criterio 3: registrar un fallo no lanza, para que el offset se confirme y nada se revierta")
+    void elFalloNoSePropaga() {
+        Notification yaEnviada = Notification.pendiente(UUID.randomUUID(), UUID.randomUUID(),
+                NotificationChannel.EMAIL, "ana@foodflow.test", "Tu pago de 1,00 COP fue aprobado.");
+        yaEnviada.marcarEnviada(1);
+        when(notificaciones.findById(yaEnviada.id())).thenReturn(Optional.of(yaEnviada));
+
+        // Ni siquiera cuando la transicion es imposible: si lanzara, el consumidor no confirmaria
+        // el offset, Kafka reentregaria y el pago quedaria sin registrar en Order (reglas 10 y 12).
+        assertThat(servicio.registrarFallo(yaEnviada.id(), "PROVEEDOR_NO_DISPONIBLE", 3, CORRELACION))
+                .isFalse();
+
+        assertThat(yaEnviada.status()).isEqualTo(NotificationStatus.ENVIADA);
+        verify(publicador, never()).publicarFallida(any(), any());
+    }
 }

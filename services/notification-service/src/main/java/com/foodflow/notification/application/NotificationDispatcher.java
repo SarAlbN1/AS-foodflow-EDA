@@ -23,8 +23,9 @@ import com.foodflow.notification.domain.Notification;
  * registro va en su transaccion y el envio queda fuera.
  *
  * <p>Un envio aceptado deja la notificacion en {@code ENVIADA} y publica
- * {@code NotificationSent} (HU-303). El caso fallido todavia no se persiste: {@code FALLIDA} y
- * {@code NotificationFailed} los escribe HU-304.
+ * {@code NotificationSent} (HU-303); uno fallido la deja en {@code FALLIDA} y publica
+ * {@code NotificationFailed} (HU-304). Los dos son resultados de negocio: ninguno lanza, ninguno
+ * va a DLQ y ninguno impide que Order Service registre el resultado del pago (reglas 10 y 12).
  */
 @Service
 public class NotificationDispatcher {
@@ -67,9 +68,7 @@ public class NotificationDispatcher {
         } else {
             // No se relanza: un fallo del proveedor es resultado de negocio (regla 10) y no debe
             // impedir que el offset se confirme ni que Order Service registre el pago (regla 12).
-            log.warn("El proveedor no acepto la notificacion notificationId={} orderId={} fallo={} "
-                            + "intentos={} correlationId={}",
-                    notificacion.id(), notificacion.orderId(), resultado.failure(),
+            notificaciones.registrarFallo(notificacion.id(), resultado.failure().name(),
                     resultado.attempts(), orden.correlationId());
         }
         return Optional.of(resultado);

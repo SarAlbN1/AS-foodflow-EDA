@@ -35,7 +35,7 @@
 | [HU-301](epicas/EP-03-notificaciones.md) | Crear una notificación ante el resultado del pago | 4 | Sara | 5 | Terminada | #93 | Consume `payments.events` en abanico (D-6) y crea la notificación en `PENDIENTE`; el envío es HU-302 |
 | [HU-302](epicas/EP-03-notificaciones.md) | Enviar una notificación mediante el proveedor externo | 4 | Sara | 5 | En revisión | #96 | Adaptador HTTP al proveedor: timeouts explícitos, 3 reintentos y sin Circuit Breaker; fija el catálogo de `failureCode` |
 | [HU-303](epicas/EP-03-notificaciones.md) | Registrar y publicar una notificación enviada | 4 | Sara | 3 | En revisión | | `PENDIENTE` a `ENVIADA` y `NotificationSent` en `notifications.events` tras el commit; el caso fallido es HU-304 |
-| [HU-304](epicas/EP-03-notificaciones.md) | Registrar y publicar una notificación fallida | 4 | Sara | 5 | Pendiente | | |
+| [HU-304](epicas/EP-03-notificaciones.md) | Registrar y publicar una notificación fallida | 4 | Sara | 5 | En revisión | | `PENDIENTE` a `FALLIDA` con su `failureCode` y `NotificationFailed`; fallo de negocio, sin DLQ y sin revertir el pago ni el pedido |
 | [HU-305](epicas/EP-03-notificaciones.md) | Consultar las notificaciones de un pedido | 4 | Juan | 3 | Pendiente | | |
 | [HU-306](epicas/EP-03-notificaciones.md) | Mock del proveedor de notificaciones | 4 | Juan | 3 | Terminada | #62 |  |
 | [HU-402](epicas/EP-04-gateway-y-contratos.md) | Enrutar la consulta de notificaciones | 4 | Juan | 3 | Terminada | #83 | Verificada contra servicios simulados; en Compose el gateway ya llega a Notification Service (404 hasta HU-305) |

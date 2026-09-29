@@ -161,6 +161,39 @@ public class Notification implements Persistable<UUID> {
         return true;
     }
 
+    /**
+     * Pasa la notificacion a {@link NotificationStatus#FALLIDA} con el motivo del proveedor
+     * (HU-304, criterio 1).
+     *
+     * <p><strong>Es un resultado de negocio, no una averia.</strong> El proveedor contesto y dijo
+     * que no; el evento de pago no va a DLQ y su offset se confirma (regla 10). Por eso esta
+     * transicion es tan valida como {@link #marcarEnviada(int)} y no un error.
+     *
+     * <p>Misma regla que ella: solo desde {@code PENDIENTE}, y si no se ignora devolviendo
+     * {@code false}.
+     *
+     * @param failureCode motivo del fallo, del catalogo de
+     *                    {@code docs/wiki/03-contratos/proveedor-notificaciones.md}
+     * @param attempts    intentos realizados contra el proveedor, al menos 1
+     * @return {@code true} si la transicion ocurrio
+     */
+    public boolean marcarFallida(String failureCode, int attempts) {
+        if (status != NotificationStatus.PENDIENTE) {
+            return false;
+        }
+        if (failureCode == null || failureCode.isBlank()) {
+            throw new IllegalArgumentException("una notificacion fallida necesita su motivo");
+        }
+        if (attempts < 1) {
+            throw new IllegalArgumentException("una notificacion fallida tiene al menos un intento");
+        }
+        this.status = NotificationStatus.FALLIDA;
+        this.failureCode = failureCode;
+        this.attempts = attempts;
+        this.updatedAt = Instant.now();
+        return true;
+    }
+
     public UUID id() {
         return id;
     }
