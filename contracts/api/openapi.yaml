@@ -177,7 +177,7 @@ paths:
                       paymentId: c2d3e4f5-6789-4abc-8def-0123456789ab
                       channel: EMAIL
                       destination: a***@foodflow.test
-                      content: Tu pago del pedido PED-0001 fue aprobado.
+                      content: Tu pago de 45.000,00 COP fue aprobado. Estamos preparando tu pedido.
                       status: ENVIADA
                       attempts: 1
                       failureCode: null

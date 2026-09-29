@@ -1,5 +1,6 @@
 package com.foodflow.notification.infrastructure.persistence;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,4 +12,10 @@ import com.foodflow.notification.domain.Notification;
  * repositorio ni esta base (regla arquitectonica 2).
  */
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
+
+    /**
+     * Notificaciones de un pedido, de la mas reciente a la mas antigua (HU-305). Usa el indice
+     * {@code idx_notifications_order_id}; un pedido sin notificaciones devuelve lista vacia.
+     */
+    List<Notification> findByOrderIdOrderByCreatedAtDesc(UUID orderId);
 }

@@ -95,7 +95,7 @@ El `detail` de un `400` enumera **todos** los campos rechazados, separados por `
     "paymentId": "c2d3e4f5-6789-4abc-8def-0123456789ab",
     "channel": "EMAIL",
     "destination": "a***@foodflow.test",
-    "content": "Tu pago del pedido PED-0001 fue aprobado.",
+    "content": "Tu pago de 45.000,00 COP fue aprobado. Estamos preparando tu pedido.",
     "status": "ENVIADA",
     "attempts": 1,
     "failureCode": null,
@@ -110,6 +110,8 @@ El `detail` de un `400` enumera **todos** los campos rechazados, separados por `
 **`attempts` empieza en `0`.** La notificación nace `PENDIENTE` al conocerse el resultado del pago (HU-301) y todavía no se ha intentado nada; el primer intento contra el proveedor lo hace HU-302. El esquema del contrato admitía antes un mínimo de `1`, que habría dejado fuera de contrato a toda notificación pendiente; la columna de Notification DB siempre tuvo `DEFAULT 0` y `CHECK (attempts >= 0)`.
 
 **`destination` va enmascarado** (`a***@foodflow.test`), nunca completo. Es dato personal, ya se enmascara en los registros ([Convenciones](../04-implementacion/convenciones.md)) y ninguna historia necesita el valor completo; el contrato lo impone con un patrón. El endpoint no tiene autenticación: lo que queda expuesto para quien conozca el UUID del pedido es el texto del resultado del pago y el destino enmascarado. `paymentId` y `failureCode` pueden ser `null`. Un pedido sin notificaciones devuelve `[]`, no `404`: Notification Service no conoce el catálogo de pedidos.
+
+**Implementación (HU-305).** `NotificationController` en Notification Service, que lee solo de Notification DB (`findByOrderIdOrderByCreatedAtDesc`, sobre el índice `idx_notifications_order_id`). El `content` del ejemplo es el texto real que redacta HU-301. Un identificador que no es UUID responde `400` `VALIDATION_ERROR` en Problem Details, con el mismo formato que Order Service.
 
 **Contrato ejecutable.** Todo lo anterior está en [`contracts/api/openapi.yaml`](../../../contracts/api/openapi.yaml), con ejemplos de solicitud y de respuesta. Se valida con `bash scripts/validate-openapi.sh` y se actualiza **en el mismo PR** que cambie el API.
 
