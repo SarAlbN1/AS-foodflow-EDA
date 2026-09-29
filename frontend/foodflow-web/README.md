@@ -1,6 +1,6 @@
 # frontend/foodflow-web — Aplicación Angular
 
-> **Estado:** HU-501 y HU-502 en revisión: crear un pedido y consultar su estado a través del API Gateway. Notificaciones (HU-504) y flujo integral (HU-505) los añaden sus historias.
+> **Estado:** crear un pedido (HU-501), consultar su estado (HU-502) y ver sus notificaciones (HU-504, en revisión), siempre a través del API Gateway. El flujo integral lo añade HU-505.
 
 **Responsabilidad:** Interfaz para crear pedidos y consultar su estado y sus notificaciones. Se publica con Nginx. Solo consume APIs REST del API Gateway.
 
@@ -41,5 +41,11 @@ La aplicación solo habla con el API Gateway. Su URL es el token `API_BASE_URL` 
 | `/orders/:id` | Estado del pedido: `CREADO`, `PAGADO` o `PAGO_RECHAZADO` |
 
 La consistencia es eventual: mientras el pedido está en `CREADO`, la pantalla vuelve a consultar `GET /orders/{id}` cada segundo durante 30 s como máximo (la meta es converger en menos de 5 s, [atributos de calidad](../../docs/wiki/02-arquitectura/atributos-de-calidad.md)) y se detiene al ver un estado final. Después queda el botón **Actualizar**. Toda consulta es `GET`: refrescar nunca crea un pedido ni repite una operación.
+
+## Notificaciones del pedido (HU-504)
+
+La pantalla `/orders/:id` incluye la sección **Notificaciones**, que consulta `GET /orders/{id}/notifications` a través del gateway (HU-402). Cada notificación muestra su **estado** (`PENDIENTE` «Enviando», `ENVIADA` «Enviada», `FALLIDA` «No se pudo enviar», con su motivo), el **contenido** enviado al cliente, el canal, el destino, los intentos y la última actualización.
+
+Que todavía no haya notificaciones es normal: se crean cuando Notification Service conoce el resultado del pago. Mientras no haya ninguna, o alguna siga `PENDIENTE`, la sección se vuelve a consultar cada segundo durante 30 s como máximo; después queda el botón **Actualizar notificaciones**.
 
 Referencias: [`CLAUDE.md`](../../CLAUDE.md) · [Wiki](../../docs/wiki/Home.md)
