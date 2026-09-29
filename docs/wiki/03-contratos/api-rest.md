@@ -105,7 +105,7 @@ El `detail` de un `400` enumera **todos** los campos rechazados, separados por `
 ]
 ```
 
-**Por qué se expone `content`.** Es la decisión de [D-6](../02-arquitectura/divergencias-informe-wiki.md) hecha visible. El mensaje habla del resultado del pago («tu pago fue aprobado») y nunca del estado del pedido, porque la notificación puede salir antes de que el pedido cambie; así no puede afirmar algo falso ([Proveedor de notificaciones](proveedor-notificaciones.md)). Si el texto no se mostrara, esa decisión quedaría escondida en la base y en los registros del proveedor simulado. Mostrarlo en la interfaz (HU-305, HU-504) permite enseñarla en lugar de explicarla. `content` **no incluye el destino**.
+**Por qué se expone `content`.** El mensaje habla del resultado del pago («tu pago fue aprobado») y nunca del estado del pedido, porque la notificación puede salir antes de que el pedido cambie; así no puede afirmar algo falso ([Proveedor de notificaciones](proveedor-notificaciones.md)). Si el texto no se mostrara, esa decisión quedaría escondida en la base y en los registros del proveedor simulado. Mostrarlo en la interfaz (HU-305, HU-504) permite enseñarla en lugar de explicarla. `content` **no incluye el destino**.
 
 **`attempts` empieza en `0`.** La notificación nace `PENDIENTE` al conocerse el resultado del pago (HU-301) y todavía no se ha intentado nada; el primer intento contra el proveedor lo hace HU-302. El esquema del contrato admitía antes un mínimo de `1`, que habría dejado fuera de contrato a toda notificación pendiente; la columna de Notification DB siempre tuvo `DEFAULT 0` y `CHECK (attempts >= 0)`.
 

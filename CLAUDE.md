@@ -15,7 +15,7 @@ Este archivo es corto a propósito. **La fuente de verdad es la wiki del reposit
 
 **`main.tex` lo edita únicamente Sara.** Ninguna herramienta ni asistente lo modifica: una corrección al informe **se propone, no se aplica**.
 
-Una contradicción no se resuelve en silencio. Si la wiki se desvía del informe, se corrige la wiki. Si parece que el equivocado es el informe, se registra en [Divergencias informe–wiki](docs/wiki/02-arquitectura/divergencias-informe-wiki.md) y decide Sara.
+Una contradicción no se resuelve en silencio. Si la wiki se desvía del informe, se corrige la wiki. Si parece que el equivocado es el informe, se documenta en el PR o en un comentario de la HU para que la otra persona lo verifique antes de cambiarlo. Tanto Sara como Juan aprueban esos cambios.
 
 ## 2. Qué leer según la tarea
 
@@ -31,7 +31,7 @@ Una contradicción no se resuelve en silencio. Si la wiki se desvía del informe
 | Pruebas y calidad | `docs/wiki/02-arquitectura/atributos-de-calidad.md` y `docs/wiki/05-proceso/dor-y-dod.md` |
 | Qué está hecho | `docs/wiki/06-backlog/estado.md` |
 | Duda de alcance | `docs/wiki/01-producto/vision-y-alcance.md` y `docs/wiki/02-arquitectura/puntos-abiertos.md` |
-| El informe y la wiki no coinciden | `docs/wiki/02-arquitectura/divergencias-informe-wiki.md` |
+| El informe y la wiki no coinciden | El PR o la HU correspondiente; decide Sara tras revisión de Juan |
 
 Índice completo: `docs/wiki/Home.md`.
 

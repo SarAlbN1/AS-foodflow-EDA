@@ -51,11 +51,11 @@ Dos salidas, cualquiera cierra el criterio:
 
 Recomendación: citarla, porque el mecanismo de reintentos de Spring Kafka es justo el que implementa esa táctica y la referencia aporta respaldo.
 
-> **Las propuestas 3 a 5 no son criterios de HU-008.** Son mejoras detectadas al revisar el documento, y las tres primeras coinciden con divergencias que siguen pendientes de decisión: los nombres de campo son [D-7, D-8 y D-9](../wiki/02-arquitectura/divergencias-informe-wiki.md). Se deciden allí, no aquí.
+> **Las propuestas 3 a 5 no son criterios de HU-008.** Son mejoras detectadas al revisar el documento. Los nombres de campo se deciden mediante revisión cruzada en el PR o la HU que aplique cada cambio, no en esta propuesta.
 
 ## Propuesta 3 — Nombres de campos que ya viven en contratos y código
 
-Cada una de estas cuatro es un **nombre**, no una decisión de diseño, y hoy el informe y los contratos versionados dicen cosas distintas. El detalle, el alcance de cada alternativa y la recomendación están en [Divergencias informe–wiki](../wiki/02-arquitectura/divergencias-informe-wiki.md); aquí va solo el cambio propuesto al informe:
+Cada una de estas cuatro es un **nombre**, no una decisión de diseño, y hoy el informe y los contratos versionados dicen cosas distintas. Aquí se conserva el cambio propuesto al informe; cualquier aplicación requiere revisión cruzada en su PR:
 
 | Dónde | Actual | Propuesto | Líneas |
 |---|---|---|---|
