@@ -47,11 +47,11 @@ Si la ventana se reduce a 10 minutos, los bloques quedan en **1 + 5 + 2 + 1 + 1 
 
 | Qué se confirma | Pregunta exacta | Estado | Fecha | Respuesta |
 |---|---|---|---|---|
-| Duración total asignada al grupo | «¿La sustentación del grupo es de 10 o de 20 minutos?» | **Pendiente** | — | — |
-| Criterio de participación por integrante | «¿Cada integrante debe exponer un tiempo mínimo, o basta con que participe?» | **Pendiente** | — | — |
+| Duración total asignada al grupo | «¿La sustentación del grupo es de 10 o de 20 minutos?» | **Confirmada por el enunciado** | 2026-09-29 | Ventana de 10 a 20 minutos por grupo |
+| Criterio de participación por integrante | «¿Cada integrante debe exponer un tiempo mínimo, o basta con que participe?» | **Confirmado por el enunciado** | 2026-09-29 | Todos los integrantes deben participar; no fija un mínimo individual |
 | Si las preguntas cuentan dentro del tiempo | «¿Los minutos de preguntas van dentro de la ventana o aparte?» | **Pendiente** | — | — |
 
-Las tres filas las confirma **Sara** ante el docente, y se anotan aquí con la fecha. Hasta entonces la agenda de arriba es la propuesta del equipo, no un hecho acordado: **el criterio 2 de HU-707 no se puede marcar cumplido desde el repositorio.**
+Las dos primeras respuestas salen directamente del enunciado. Sara confirma ante el docente solo si las preguntas cuentan dentro de la ventana y anota aquí la respuesta; hasta entonces ese reparto concreto sigue siendo una propuesta del equipo.
 
 Si la respuesta a la segunda pregunta fija un mínimo por integrante mayor que los 8 minutos de Sara o los 8 de Juan, la tabla de la agenda se recalcula y se anota el cambio en esta misma página.
 
@@ -62,7 +62,7 @@ Si la respuesta a la segunda pregunta fija un mínimo por integrante mayor que l
 | Integrante | Sustentación propia | Sustentaciones de los demás grupos |
 |---|---|---|
 | Sara | Confirmada | Confirmada |
-| Juan | Pendiente de confirmación | Pendiente de confirmación |
+| Juan | Confirmada | Confirmada |
 
 ## Antes de la sustentación
 
