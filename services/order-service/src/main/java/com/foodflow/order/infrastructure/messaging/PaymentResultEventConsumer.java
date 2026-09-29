@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
@@ -103,10 +104,15 @@ public class PaymentResultEventConsumer {
                     .formatted(envelope.eventVersion(), VERSION_SOPORTADA));
         }
 
-        if (PAYMENT_APPROVED.equals(envelope.eventType())) {
-            pagos.registrarPagoAprobado(aprobado(envelope));
-        } else {
-            pagos.registrarPagoRechazado(rechazado(envelope));
+        try (var correlation = MDC.putCloseable("correlationId", envelope.correlationId().toString());
+                var eventId = MDC.putCloseable("eventId", envelope.eventId().toString());
+                var eventType = MDC.putCloseable("eventType", envelope.eventType());
+                var orderId = MDC.putCloseable("orderId", envelope.aggregateId().toString())) {
+            if (PAYMENT_APPROVED.equals(envelope.eventType())) {
+                pagos.registrarPagoAprobado(aprobado(envelope));
+            } else {
+                pagos.registrarPagoRechazado(rechazado(envelope));
+            }
         }
     }
 

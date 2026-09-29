@@ -72,6 +72,21 @@ La de Order es la más estricta: comprobar solo el estado no distinguiría «no 
 
 **Payment tiene dos guardas y las dos hacen falta.** `payments.order_id` es único y responde a «¿este pedido ya tiene pago?», que es lo que evita el doble cobro; `processed_events` responde a «¿este evento ya se procesó?», que es lo que ADR-09 pide y lo que distingue una reentrega de un evento nuevo sobre el mismo pedido.
 
+## Logs estructurados y correlacionados (HU-603)
+
+Los tres servicios escriben por consola una línea JSON por entrada. Spring Boot aporta `timestamp`, `level` y `message`; cada servicio añade su nombre en `service`. Durante el procesamiento de un evento, el consumidor incorpora al contexto `correlationId`, `eventId`, `eventType` y `orderId`, por lo que esos campos aparecen como propiedades JSON en todos los logs emitidos por el caso de uso. El contexto se elimina al terminar para que un hilo reutilizado no mezcle pedidos.
+
+El flujo también conserva la política de datos: los contactos se registran mediante `ContactMasker` y no se escriben credenciales. Esto es correlación por logs, no tracing distribuido.
+
+Para reconstruir un pedido durante la demostración:
+
+```bash
+docker compose -f infrastructure/compose/docker-compose.yml logs order-service payment-service notification-service \
+  | grep '"correlationId":"<correlation-id>"'
+```
+
+La prueba unitaria de cada consumidor comprueba que los cuatro campos del evento están presentes mientras se ejecuta el caso de uso y que se limpian después. La prueba de punta a punta de HU-606 comprueba que el mismo `correlationId` viaja por los ocho eventos del recorrido.
+
 ## Reintentos y DLQ (HU-602)
 
 Cada servicio registra su propio `DefaultErrorHandler` en `infrastructure.messaging`, con `ExponentialBackOff` y un `DeadLetterPublishingRecoverer` hacia `<tópico>.dlq`.

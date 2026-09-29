@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
@@ -100,8 +101,13 @@ public class OrderCreatedEventConsumer {
                     .formatted(envelope.eventVersion(), VERSION_SOPORTADA));
         }
 
-        StartPaymentCommand orden = aOrdenDePago(envelope);
-        pagos.iniciarPago(orden);
+        try (var correlation = MDC.putCloseable("correlationId", envelope.correlationId().toString());
+                var eventId = MDC.putCloseable("eventId", envelope.eventId().toString());
+                var eventType = MDC.putCloseable("eventType", envelope.eventType());
+                var orderId = MDC.putCloseable("orderId", envelope.aggregateId().toString())) {
+            StartPaymentCommand orden = aOrdenDePago(envelope);
+            pagos.iniciarPago(orden);
+        }
     }
 
     private EventEnvelope<JsonNode> leerEnvelope(ConsumerRecord<String, String> registro) {

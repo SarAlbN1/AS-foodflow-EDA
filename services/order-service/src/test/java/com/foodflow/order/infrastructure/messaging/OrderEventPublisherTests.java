@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,10 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 
 import com.foodflow.order.config.EventJsonConfig;
 import com.foodflow.order.domain.NotificationChannel;
@@ -55,6 +60,7 @@ class OrderEventPublisherTests {
     private KafkaTemplate<String, String> kafka;
     private ObjectMapper jackson;
     private OrderEventPublisher publicador;
+    private final ListAppender<ILoggingEvent> logs = new ListAppender<>();
 
     @SuppressWarnings("unchecked")
     @BeforeEach
@@ -64,6 +70,12 @@ class OrderEventPublisherTests {
                 .thenReturn(CompletableFuture.completedFuture(mock(SendResult.class)));
         jackson = new EventJsonConfig().eventObjectMapper();
         publicador = new OrderEventPublisher(kafka, jackson, TOPICO);
+    }
+
+    @AfterEach
+    void retirarCapturaDeLogs() {
+        ((ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(OrderEventPublisher.class))
+                .detachAppender(logs);
     }
 
     @Test
@@ -152,6 +164,33 @@ class OrderEventPublisherTests {
         publicador.publicarOrderCreated(pedido(), UUID.randomUUID());
 
         verify(kafka).send(eq(TOPICO), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("HU-603 CA1: el callback asincrono registra el fallo con el contexto del evento")
+    void elFalloAsincronoConservaElContextoEstructurado() {
+        CompletableFuture<SendResult<String, String>> resultado = new CompletableFuture<>();
+        when(kafka.send(anyString(), anyString(), anyString())).thenReturn(resultado);
+        ch.qos.logback.classic.Logger logger =
+                (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(OrderEventPublisher.class);
+        logs.start();
+        logger.addAppender(logs);
+        Order pedido = pedido();
+        UUID correlationId = UUID.randomUUID();
+
+        publicador.publicarOrderCreated(pedido, correlationId);
+        String eventId = jackson.readTree(cuerpoPublicado()).get("eventId").asString();
+        resultado.completeExceptionally(new IllegalStateException("broker caido"));
+
+        ILoggingEvent fallo = logs.list.stream()
+                .filter(evento -> evento.getLevel() == Level.ERROR)
+                .findFirst()
+                .orElseThrow();
+        assertThat(fallo.getMDCPropertyMap())
+                .containsEntry("correlationId", correlationId.toString())
+                .containsEntry("eventId", eventId)
+                .containsEntry("eventType", "OrderCreated")
+                .containsEntry("orderId", pedido.id().toString());
     }
 
     @Test
