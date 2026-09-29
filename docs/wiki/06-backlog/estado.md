@@ -24,8 +24,8 @@
 | [HU-502](epicas/EP-05-frontend.md) | Consultar y visualizar el estado del pedido | 2 | Juan | 2 | Terminada | #75 | Criterios verificados con pruebas de componente y en el navegador contra el gateway real en Compose (HU-607) |
 | [HU-604](epicas/EP-06-resiliencia-y-calidad.md) | Exponer health checks de componentes | 2 | Sara | 2 | Terminada | #68 | Health checks de los tres servicios; el del gateway lo añade HU-607, que cierra el punto abierto A-10 |
 | [HU-104](epicas/EP-01-pedidos.md) | Actualizar el pedido ante un pago aprobado | 3 | Juan | 3 | Terminada | #99 | Consume `payments.events` en su grupo; `CREADO` a `PAGADO` idempotente con `processed_events`. La prueba de humo ya ve `PAGADO` |
-| [HU-105](epicas/EP-01-pedidos.md) | Actualizar el pedido ante un pago rechazado | 3 | Juan | 2 | En revisión | #100 | `CREADO` a `PAGO_RECHAZADO` sobre el consumidor de HU-104. La prueba de humo pasa a exigir los dos estados finales |
-| [HU-106](epicas/EP-01-pedidos.md) | Publicar OrderStatusChanged al cambiar el estado del pedido | 3 | Juan | 3 | Pendiente | | |
+| [HU-105](epicas/EP-01-pedidos.md) | Actualizar el pedido ante un pago rechazado | 3 | Juan | 2 | Terminada | #100 | `CREADO` a `PAGO_RECHAZADO` sobre el consumidor de HU-104. La prueba de humo pasa a exigir los dos estados finales |
+| [HU-106](epicas/EP-01-pedidos.md) | Publicar OrderStatusChanged al cambiar el estado del pedido | 3 | Juan | 3 | En revisión | #101 | Publica tras el commit con el `correlationId` del flujo; eventos reales validados contra el esquema v1 |
 | [HU-201](epicas/EP-02-pagos.md) | Consumir OrderCreated para iniciar un pago | 3 | Sara | 3 | Terminada | #71 | Consume OrderCreated; el pago se crea en HU-202 |
 | [HU-202](epicas/EP-02-pagos.md) | Procesar y persistir el resultado del pago | 3 | Sara | 5 | Terminada | #73 | Resuelve y persiste el pago; la publicación es HU-203 y HU-204 |
 | [HU-203](epicas/EP-02-pagos.md) | Publicar PaymentApproved | 3 | Sara | 2 | Terminada | #84 | Publica PaymentApproved tras el commit; el rechazo es HU-204 |
