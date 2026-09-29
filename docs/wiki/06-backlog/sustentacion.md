@@ -14,13 +14,13 @@ El enunciado fija una ventana de **10 a 20 minutos**. La agenda se plantea sobre
 |---:|---|---:|---:|---|---|
 | 1 | Problema, alcance y por qué EDA | 2 | 2 | Juan | Sí, a 1 |
 | 2 | **Arquitectura y diseño** | **5** | 7 | **Sara** | No |
-| 3 | Demo en vivo: `PAY-OK` y `PAY-FAIL` | 4 | 11 | Juan | Sí, a 3 |
-| 4 | **Decisiones, riesgos y lecciones aprendidas** | **3** | 14 | **Sara** | Sí, a 2 |
+| 3 | Demo en vivo: `PAY-OK` y `PAY-FAIL` | 4 | 11 | Juan | Sí, a 2 |
+| 4 | **Decisiones, riesgos y lecciones aprendidas** | **3** | 14 | **Sara** | Sí, a 1 |
 | 5 | Calidad verificada y cierre | 2 | 16 | Juan | Sí, a 1 |
 
 **Sara: 8 de 16 minutos** en dos bloques (2 y 4). El bloque 2 es el **segmento de arquitectura y diseño** que reserva HU-707 y es el único marcado como no comprimible: es el eje de la evaluación y el resto de la exposición se apoya en él.
 
-Si la ventana se reduce a 10 minutos, los bloques comprimibles bajan al mínimo y el total queda en 11; el minuto que falta sale del bloque 4, que pasa a 2. **El bloque 2 no se toca en ningún escenario.**
+Si la ventana se reduce a 10 minutos, los bloques quedan en **1 + 5 + 2 + 1 + 1 = 10**. La demo muestra un escenario en vivo y el segundo mediante la traza capturada; las lecciones se reducen al hallazgo principal. **El bloque 2 no se toca en ningún escenario.**
 
 ## Qué defiende cada integrante
 
@@ -62,7 +62,7 @@ Si la respuesta a la segunda pregunta fija un mínimo por integrante mayor que l
 | Integrante | Sustentación propia | Sustentaciones de los demás grupos |
 |---|---|---|
 | Sara | Confirmada | Confirmada |
-| Juan | Confirmada | Confirmada |
+| Juan | Pendiente de confirmación | Pendiente de confirmación |
 
 ## Antes de la sustentación
 
