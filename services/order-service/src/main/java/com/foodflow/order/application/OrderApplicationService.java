@@ -69,29 +69,29 @@ public class OrderApplicationService {
             return yaCreado;
         }
 
-        try {
-            Order pedido = transaccion.crear(comando, requestHash, key, correlationId);
-            try (var correlation = MDC.putCloseable("correlationId", correlationId.toString());
-                    var orderId = MDC.putCloseable("orderId", pedido.id().toString())) {
-                log.info("Pedido creado orderId={} status={} total={} canal={} correlationId={} contacto={}",
-                        pedido.id(), pedido.status(), pedido.total(), pedido.notificationChannel(),
-                        correlationId, ContactMasker.mask(pedido.customerContact()));
+        try (var correlation = MDC.putCloseable("correlationId", correlationId.toString())) {
+            try {
+                Order pedido = transaccion.crear(comando, requestHash, key, correlationId);
+                try (var orderId = MDC.putCloseable("orderId", pedido.id().toString())) {
+                    log.info("Pedido creado orderId={} status={} total={} canal={} correlationId={} contacto={}",
+                            pedido.id(), pedido.status(), pedido.total(), pedido.notificationChannel(),
+                            correlationId, ContactMasker.mask(pedido.customerContact()));
+                }
+                return pedido;
+            } catch (DataIntegrityViolationException e) {
+                // Otra solicitud con la misma clave gano la carrera y escribio primero. La clave
+                // primaria de idempotency_keys hizo su trabajo: esta transaccion se deshizo entera,
+                // asi que no quedo ningun pedido a medias. Se relee ya fuera de ella.
+                Order delOtro = pedidoDeClaveExistente(key, requestHash);
+                if (delOtro == null) {
+                    throw e;
+                }
+                try (var orderId = MDC.putCloseable("orderId", delOtro.id().toString())) {
+                    log.info("Solicitud simultanea con la misma Idempotency-Key: se devuelve el pedido que gano. "
+                            + "orderId={} correlationId={}", delOtro.id(), correlationId);
+                }
+                return delOtro;
             }
-            return pedido;
-        } catch (DataIntegrityViolationException e) {
-            // Otra solicitud con la misma clave gano la carrera y escribio primero. La clave
-            // primaria de idempotency_keys hizo su trabajo: esta transaccion se deshizo entera,
-            // asi que no quedo ningun pedido a medias. Se relee ya fuera de ella.
-            Order delOtro = pedidoDeClaveExistente(key, requestHash);
-            if (delOtro == null) {
-                throw e;
-            }
-            try (var correlation = MDC.putCloseable("correlationId", correlationId.toString());
-                    var orderId = MDC.putCloseable("orderId", delOtro.id().toString())) {
-                log.info("Solicitud simultanea con la misma Idempotency-Key: se devuelve el pedido que gano. "
-                        + "orderId={} correlationId={}", delOtro.id(), correlationId);
-            }
-            return delOtro;
         }
     }
 

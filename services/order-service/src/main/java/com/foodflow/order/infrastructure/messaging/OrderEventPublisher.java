@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -104,18 +105,28 @@ public class OrderEventPublisher {
         try {
             kafka.send(ordersTopic, clave, jackson.writeValueAsString(evento))
                     .whenComplete((resultado, fallo) -> {
-                        if (fallo == null) {
-                            log.info("Evento publicado eventType={} eventId={} orderId={} correlationId={} topic={}",
-                                    evento.eventType(), evento.eventId(), evento.aggregateId(),
-                                    evento.correlationId(), ordersTopic);
-                        } else {
-                            registrarFallo(evento, fallo);
+                        try (var correlation = MDC.putCloseable("correlationId", evento.correlationId().toString());
+                                var eventId = MDC.putCloseable("eventId", evento.eventId().toString());
+                                var eventType = MDC.putCloseable("eventType", evento.eventType());
+                                var orderId = MDC.putCloseable("orderId", evento.aggregateId().toString())) {
+                            if (fallo == null) {
+                                log.info("Evento publicado eventType={} eventId={} orderId={} correlationId={} topic={}",
+                                        evento.eventType(), evento.eventId(), evento.aggregateId(),
+                                        evento.correlationId(), ordersTopic);
+                            } else {
+                                registrarFallo(evento, fallo);
+                            }
                         }
                     });
         } catch (Exception e) {
             // Un fallo sincrono de send: serializacion, o metadatos no disponibles al agotarse
             // max.block.ms con el broker caido.
-            registrarFallo(evento, e);
+            try (var correlation = MDC.putCloseable("correlationId", evento.correlationId().toString());
+                    var eventId = MDC.putCloseable("eventId", evento.eventId().toString());
+                    var eventType = MDC.putCloseable("eventType", evento.eventType());
+                    var orderId = MDC.putCloseable("orderId", evento.aggregateId().toString())) {
+                registrarFallo(evento, e);
+            }
         }
     }
 
