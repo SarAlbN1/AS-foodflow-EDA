@@ -76,17 +76,18 @@ Un PR se integra solo cuando **la otra persona** lo aprobó en su versión actua
 
 El asistente puede ejecutar `gh pr merge` porque una guarda lo revisa antes de cada ejecución: [`.claude/hooks/guard-pr-merge.mjs`](../../../.claude/hooks/guard-pr-merge.mjs), registrada como *hook* `PreToolUse` en `.claude/settings.json`. **Es una barandilla contra el descuido, no una frontera de seguridad:** la barrera real sigue siendo la protección de `main` en GitHub.
 
-**Qué aporta y qué ya hacía GitHub.** Cada integración de un comando se valida por separado (`a && b; c` son tres).
+**Qué aporta y qué ya hacía GitHub.**
 
 | Condición que bloquea | ¿Lo cubre ya GitHub? |
 |---|---|
+| Más de una integración en el mismo comando | **No.** Una por comando: con varias, las banderas de una podrían validar a otra |
 | Falta `--squash`, `--subject` o `--body ""` | **No.** Es lo que la guarda aporta: sin `--body ""`, el *squash* se integra con el cuerpo que propone GitHub, que arrastra los mensajes y los *trailers* de los commits ([arriba](#la-traza-no-nombra-herramientas-de-ia)) |
 | Usa `--admin` o `--auto` | **No.** `--admin` salta la protección de `main`; `--auto` integraría más tarde sin volver a comprobar |
 | El PR no está abierto, no es `MERGEABLE` o no está `APPROVED` | Sí; la guarda lo adelanta con un mensaje claro |
 | Alguien tiene cambios pedidos vigentes | Sí |
 | No hay una aprobación de alguien distinto del autor **sobre el commit actual** | Sí, con *dismiss stale reviews*. En la guarda es **defensa en profundidad**: si esa protección se desactivara, la regla seguiría en pie. No es una redundancia que se pueda quitar |
 
-**Lo que no persigue.** Reconoce `gh` y `gh.exe` escritos en el comando, no formas indirectas de nombrar el ejecutable (`$(which gh)`, una variable): quien escribe el comando es el asistente, y ninguna expresión regular cubre todas las formas de una shell. Si el comando lleva `--repo`, el PR se consulta en ese repositorio.
+**Lo que no persigue.** Reconoce `gh` y `gh.exe` escritos en el comando, no formas indirectas de nombrar el ejecutable (`$(which gh)`, una variable), ni interpreta `--repo`: quien escribe el comando es el asistente, y ninguna expresión regular cubre todas las formas de una shell. Perseguirlo daría una guarda complicada que aparenta una garantía que no tiene.
 
 Forma del comando: `gh pr merge <n> --squash --subject "<tipo>(<ámbito>): <descripción> [HU-###] (#<n>)" --body ""`. La guarda necesita `node` (ya instalado para el frontend) y `gh` autenticado.
 
