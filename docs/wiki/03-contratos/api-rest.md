@@ -95,6 +95,7 @@ El `detail` de un `400` enumera **todos** los campos rechazados, separados por `
     "paymentId": "c2d3e4f5-6789-4abc-8def-0123456789ab",
     "channel": "EMAIL",
     "destination": "ana@foodflow.test",
+    "content": "Tu pago del pedido PED-0001 fue aprobado.",
     "status": "ENVIADA",
     "attempts": 1,
     "failureCode": null,
@@ -104,7 +105,7 @@ El `detail` de un `400` enumera **todos** los campos rechazados, separados por `
 ]
 ```
 
-`content` **no** se expone: la interfaz muestra el estado de la entrega, no el texto del mensaje. `paymentId` y `failureCode` pueden ser `null`. Un pedido sin notificaciones devuelve `[]`, no `404`: Notification Service no conoce el catálogo de pedidos.
+`content` es el texto enviado al cliente y **se expone** para que la interfaz lo muestre junto al estado de la entrega (HU-305, HU-504). Habla del resultado del pago, nunca del estado del pedido ([D-6](../02-arquitectura/divergencias-informe-wiki.md), [Proveedor de notificaciones](proveedor-notificaciones.md)). Como el endpoint no tiene autenticación, queda visible para quien conozca el UUID del pedido: es el mismo riesgo aceptado que el correo en `GET /orders/{id}`. `paymentId` y `failureCode` pueden ser `null`. Un pedido sin notificaciones devuelve `[]`, no `404`: Notification Service no conoce el catálogo de pedidos.
 
 **Contrato ejecutable.** Todo lo anterior está en [`contracts/api/openapi.yaml`](../../../contracts/api/openapi.yaml), con ejemplos de solicitud y de respuesta. Se valida con `bash scripts/validate-openapi.sh` y se actualiza **en el mismo PR** que cambie el API.
 

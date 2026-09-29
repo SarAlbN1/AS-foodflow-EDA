@@ -177,6 +177,7 @@ paths:
                       paymentId: c2d3e4f5-6789-4abc-8def-0123456789ab
                       channel: EMAIL
                       destination: ana@foodflow.test
+                      content: Tu pago del pedido PED-0001 fue aprobado.
                       status: ENVIADA
                       attempts: 1
                       failureCode: null
@@ -398,10 +399,10 @@ components:
 
     Notification:
       description: |
-        Notificación registrada por Notification Service para un pedido. No expone el
-        contenido del mensaje: la interfaz muestra el estado de la entrega, no el texto.
+        Notificación registrada por Notification Service para un pedido: a quién se envió, qué
+        se le dijo y cómo terminó la entrega.
       type: object
-      required: [id, orderId, channel, destination, status, attempts, createdAt, updatedAt]
+      required: [id, orderId, channel, destination, content, status, attempts, createdAt, updatedAt]
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
@@ -417,6 +418,14 @@ components:
         destination:
           description: Destino al que se envió, tomado del snapshot de contacto (ADR-11).
           type: string
+        content:
+          description: |
+            Texto del mensaje enviado al cliente. Informa del resultado del pago («tu pago fue
+            aprobado» / «tu pago fue rechazado»), nunca del estado del pedido: la notificación
+            puede salir antes de que el pedido muestre su estado final (D-6,
+            `docs/wiki/03-contratos/proveedor-notificaciones.md`).
+          type: string
+          minLength: 1
         status:
           $ref: '#/components/schemas/EstadoNotificacion'
         attempts:
