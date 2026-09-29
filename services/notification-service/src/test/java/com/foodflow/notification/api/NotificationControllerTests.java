@@ -126,4 +126,29 @@ class NotificationControllerTests {
 
         org.assertj.core.api.Assertions.assertThat(cuerpo).doesNotContain("jdbc");
     }
+
+    @Test
+    @DisplayName("un error que ya clasifica Spring (405) sale con code del catalogo y correlationId")
+    void errorDeSpringConCode() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .post("/orders/{id}/notifications", PEDIDO)
+                        .header("X-Correlation-Id", "22222222-2222-2222-2222-222222222222"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(405))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.correlationId").value("22222222-2222-2222-2222-222222222222"));
+
+        verifyNoInteractions(consultas);
+    }
+
+    @Test
+    @DisplayName("cada estado de Spring se traduce a un code del catalogo del contrato")
+    void catalogoDeCodes() {
+        org.assertj.core.api.Assertions.assertThat(ApiExceptionHandler.codigoPara(404)).isEqualTo("NOT_FOUND");
+        org.assertj.core.api.Assertions.assertThat(ApiExceptionHandler.codigoPara(405)).isEqualTo("VALIDATION_ERROR");
+        org.assertj.core.api.Assertions.assertThat(ApiExceptionHandler.codigoPara(415)).isEqualTo("VALIDATION_ERROR");
+        org.assertj.core.api.Assertions.assertThat(ApiExceptionHandler.codigoPara(503)).isEqualTo("DEPENDENCY_UNAVAILABLE");
+        org.assertj.core.api.Assertions.assertThat(ApiExceptionHandler.codigoPara(500)).isEqualTo("INTERNAL_ERROR");
+    }
 }

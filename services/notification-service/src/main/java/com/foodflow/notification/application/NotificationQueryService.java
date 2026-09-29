@@ -31,6 +31,6 @@ public class NotificationQueryService {
     /** Notificaciones del pedido, de la mas reciente a la mas antigua; posiblemente ninguna. */
     @Transactional(readOnly = true)
     public List<Notification> notificacionesDelPedido(UUID orderId) {
-        return notificaciones.findByOrderIdOrderByCreatedAtDesc(orderId);
+        return notificaciones.findByOrderIdOrderByCreatedAtDescIdDesc(orderId);
     }
 }
