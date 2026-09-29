@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.kafka.support.Acknowledgment;
 
-import com.foodflow.notification.application.NotificationApplicationService;
+import com.foodflow.notification.application.NotificationDispatcher;
 import com.foodflow.notification.application.NotifyPaymentResultCommand;
 import com.foodflow.notification.config.EventJsonConfig;
 import com.foodflow.notification.domain.NotificationChannel;
@@ -50,15 +50,15 @@ class PaymentResultEventConsumerTests {
             Path.of("../../contracts/events/v1/examples/validos/payment-rejected.json");
 
     private ObjectMapper jackson;
-    private NotificationApplicationService notificaciones;
+    private NotificationDispatcher notificaciones;
     private Acknowledgment confirmacion;
     private PaymentResultEventConsumer consumidor;
 
     @BeforeEach
     void prepararConsumidor() {
         jackson = new EventJsonConfig().eventObjectMapper();
-        notificaciones = mock(NotificationApplicationService.class);
-        when(notificaciones.notificarResultado(any())).thenReturn(Optional.empty());
+        notificaciones = mock(NotificationDispatcher.class);
+        when(notificaciones.procesar(any())).thenReturn(Optional.empty());
         confirmacion = mock(Acknowledgment.class);
         consumidor = new PaymentResultEventConsumer(jackson, notificaciones);
     }
@@ -95,7 +95,7 @@ class PaymentResultEventConsumerTests {
     void ignoraOtrosTipos() {
         consumidor.consumir(registro(evento("OrderStatusChanged", true)), confirmacion);
 
-        verify(notificaciones, never()).notificarResultado(any());
+        verify(notificaciones, never()).procesar(any());
         verify(confirmacion, times(1)).acknowledge();
     }
 
@@ -105,7 +105,7 @@ class PaymentResultEventConsumerTests {
         consumidor.consumir(registro(evento("PaymentApproved", true)
                 .replace("\"eventVersion\": 1", "\"eventVersion\": 2")), confirmacion);
 
-        verify(notificaciones, never()).notificarResultado(any());
+        verify(notificaciones, never()).procesar(any());
         verify(confirmacion, times(1)).acknowledge();
     }
 
@@ -115,7 +115,7 @@ class PaymentResultEventConsumerTests {
         consumidor.consumir(registro("{ esto no es json"), confirmacion);
         consumidor.consumir(registro(""), confirmacion);
 
-        verify(notificaciones, never()).notificarResultado(any());
+        verify(notificaciones, never()).procesar(any());
         verify(confirmacion, times(2)).acknowledge();
     }
 
@@ -124,7 +124,7 @@ class PaymentResultEventConsumerTests {
     void elAprobadoExigeSuCampoDistintivo() {
         consumidor.consumir(registro(evento("PaymentApproved", false)), confirmacion);
 
-        verify(notificaciones, never()).notificarResultado(any());
+        verify(notificaciones, never()).procesar(any());
     }
 
     @Test
@@ -132,7 +132,7 @@ class PaymentResultEventConsumerTests {
     void elRechazadoExigeSuCampoDistintivo() {
         consumidor.consumir(registro(evento("PaymentRejected", false)), confirmacion);
 
-        verify(notificaciones, never()).notificarResultado(any());
+        verify(notificaciones, never()).procesar(any());
     }
 
     @Test
@@ -142,7 +142,7 @@ class PaymentResultEventConsumerTests {
                 .replace("\"aggregateId\": \"" + ORDER_ID + "\"",
                         "\"aggregateId\": \"9999b1c2-5a47-4d9b-8e10-7c2a6b4f9d31\"")), confirmacion);
 
-        verify(notificaciones, never()).notificarResultado(any());
+        verify(notificaciones, never()).procesar(any());
     }
 
     @Test
@@ -153,7 +153,7 @@ class PaymentResultEventConsumerTests {
 
         consumidor.consumir(registro(sinContacto), confirmacion);
 
-        verify(notificaciones, never()).notificarResultado(any());
+        verify(notificaciones, never()).procesar(any());
     }
 
     @Test
@@ -162,7 +162,7 @@ class PaymentResultEventConsumerTests {
         consumidor.consumir(registro(evento("PaymentApproved", true).replace("\"COP\"", "\"USD\"")),
                 confirmacion);
 
-        verify(notificaciones, never()).notificarResultado(any());
+        verify(notificaciones, never()).procesar(any());
     }
 
     @Test
@@ -171,13 +171,13 @@ class PaymentResultEventConsumerTests {
         consumidor.consumir(registro(evento("PaymentApproved", true)
                 .replace("\"currency\": \"COP\",", "\"currency\": \"COP\", \"descuento\": 10,")), confirmacion);
 
-        verify(notificaciones, never()).notificarResultado(any());
+        verify(notificaciones, never()).procesar(any());
     }
 
     private NotifyPaymentResultCommand ordenCapturada() {
         ArgumentCaptor<NotifyPaymentResultCommand> captor =
                 ArgumentCaptor.forClass(NotifyPaymentResultCommand.class);
-        verify(notificaciones).notificarResultado(captor.capture());
+        verify(notificaciones).procesar(captor.capture());
         return captor.getValue();
     }
 

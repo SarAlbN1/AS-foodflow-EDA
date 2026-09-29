@@ -27,8 +27,8 @@ class NotificationContentTests {
         assertThat(rechazado).contains("pago").contains("rechazado");
         // Si el texto afirmara algo del pedido podria ser falso: la notificacion puede salir
         // antes de que Order Service aplique su copia del evento, o aunque no llegue a hacerlo.
-        assertThat(aprobado).doesNotContain("PAGADO").doesNotContain("pedido está");
-        assertThat(rechazado).doesNotContain("PAGO_RECHAZADO").doesNotContain("pedido está");
+        assertThat(aprobado).doesNotContain("PAGADO").doesNotContain("pedido");
+        assertThat(rechazado).doesNotContain("PAGO_RECHAZADO").doesNotContain("pedido");
     }
 
     @Test
@@ -41,7 +41,7 @@ class NotificationContentTests {
     @Test
     @DisplayName("un rechazo deja claro que no hubo cobro")
     void elRechazoNoDejaDudaDeCobro() {
-        assertThat(NotificationContent.rechazado(IMPORTE, "COP")).contains("No se realizo ningun cobro");
+        assertThat(NotificationContent.rechazado(IMPORTE, "COP")).contains("No se realizó ningún cobro");
     }
 
     @Test

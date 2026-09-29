@@ -11,7 +11,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 
-import com.foodflow.notification.application.NotificationApplicationService;
+import com.foodflow.notification.application.NotificationDispatcher;
 import com.foodflow.notification.application.NotifyPaymentResultCommand;
 import com.foodflow.notification.config.EventJsonConfig;
 import com.foodflow.notification.domain.NotificationChannel;
@@ -55,11 +55,11 @@ public class PaymentResultEventConsumer {
     private static final String MONEDA_SOPORTADA = "COP";
 
     private final ObjectMapper jackson;
-    private final NotificationApplicationService notificaciones;
+    private final NotificationDispatcher notificaciones;
 
     public PaymentResultEventConsumer(
             @Qualifier(EventJsonConfig.EVENT_OBJECT_MAPPER) ObjectMapper jackson,
-            NotificationApplicationService notificaciones) {
+            NotificationDispatcher notificaciones) {
         this.jackson = jackson;
         this.notificaciones = notificaciones;
     }
@@ -99,7 +99,7 @@ public class PaymentResultEventConsumer {
                     .formatted(envelope.eventVersion(), VERSION_SOPORTADA));
         }
 
-        notificaciones.notificarResultado(aOrdenDeNotificacion(envelope));
+        notificaciones.procesar(aOrdenDeNotificacion(envelope));
     }
 
     private EventEnvelope leerEnvelope(ConsumerRecord<String, String> registro) {

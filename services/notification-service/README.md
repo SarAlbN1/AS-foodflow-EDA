@@ -1,6 +1,6 @@
 # services/notification-service — Notification Service
 
-> **Estado:** consume el resultado del pago desde `payments.events` y crea la notificación en `PENDIENTE` (HU-301). El envío al proveedor es HU-302, y el registro de su resultado, HU-303 y HU-304.
+> **Estado:** consume el resultado del pago desde `payments.events`, crea la notificación en `PENDIENTE` (HU-301) y la entrega al proveedor externo (HU-302). El registro del resultado del envío es HU-303 y HU-304.
 
 **Responsabilidad:** Consume el resultado del pago, registra la notificación, la envía al proveedor y publica `NotificationSent` o `NotificationFailed`. Único propietario de Notification DB y único que llama al proveedor.
 
@@ -67,8 +67,8 @@ El texto habla **del resultado del pago**, nunca del estado del pedido:
 
 | Resultado | `content` |
 |---|---|
-| Aprobado | `Tu pago de 45.900,00 COP fue aprobado. Estamos preparando tu pedido.` |
-| Rechazado | `Tu pago de 45.900,00 COP fue rechazado. No se realizo ningun cobro.` |
+| Aprobado | `Tu pago de 45.900,00 COP fue aprobado.` |
+| Rechazado | `Tu pago de 45.900,00 COP fue rechazado. No se realizó ningún cobro.` |
 
 La notificación puede salir **antes** de que Order Service registre el cambio de estado, porque los dos reaccionan al mismo evento en paralelo. Un mensaje que afirmara «tu pedido está PAGADO» podría ser falso en ese instante; uno que habla del pago no lo es nunca. El `content` **no incluye el destino**: ya está en su propia columna y repetirlo lo duplicaría en el contrato REST, que lo devuelve enmascarado. Contrato completo: [proveedor-notificaciones.md](../../docs/wiki/03-contratos/proveedor-notificaciones.md).
 
@@ -93,6 +93,43 @@ export NOTIFICATION_DB_URL="jdbc:postgresql://localhost:$NOTIFICATION_DB_HOST_PO
 cd services/notification-service && ./mvnw verify
 ```
 
+## Envío al proveedor externo (HU-302)
+
+`infrastructure.provider` es el **único paquete del sistema con un cliente HTTP saliente** (regla 7). Ni Order ni Payment tienen uno, y dentro de este servicio ningún otro paquete puede tenerlo: `ArchitectureTest` falla si aparece un `RestClient`, un `WebClient`, un `RestTemplate` o un `HttpClient` fuera de ahí.
+
+Contrato: `POST /v1/messages` con `{channel, destination, content, correlationId}` → `202` con `providerReference` ([proveedor-notificaciones.md](../../docs/wiki/03-contratos/proveedor-notificaciones.md)). Se envía además el `notificationId` en la cabecera `Idempotency-Key`, como fija el informe.
+
+| Qué | Cómo |
+|---|---|
+| Timeouts | **Explícitos**: 2 s de conexión y 3 s de lectura. Sin ellos el cliente esperaría indefinidamente y bloquearía el hilo del consumidor de Kafka, deteniendo el consumo de todos los demás eventos |
+| Reintentos | 3 intentos con espera de 500 ms que se duplica (500 ms y 1 s). Configurables por variable de entorno |
+| Circuit Breaker | **No**. Está en la lista de no implementar: con un único proveedor no hay riesgo de fallo en cascada que lo justifique |
+| Un `5xx`, un tiempo agotado o una conexión rechazada | Se reintentan, y al agotarse producen un resultado con su `failureCode` |
+| Un `4xx` | **No se reintenta**: dice que el mensaje no es aceptable, y repetirlo produce el mismo rechazo |
+| Un `2xx` con un cuerpo que no se entiende | Es una **aceptación**: el mensaje ya fue aceptado. Se registra sin `providerReference` y con un aviso |
+| Una respuesta fuera de contrato (un `3xx`) o un fallo del cliente al tratarla | `RESPUESTA_INESPERADA`, sin reintento: no cambia por repetir la petición |
+| Un fallo | Devuelve un resultado, **no lanza excepción**. Es resultado de negocio: el offset se confirma, no va a DLQ (regla 10) y el pago sigue registrado en Order Service (regla 12) |
+
+El catálogo de `failureCode` está en el [contrato del proveedor](../../docs/wiki/03-contratos/proveedor-notificaciones.md#catálogo-de-failurecode-hu-302) y lo implementa el enum `DeliveryFailure`.
+
+**Por qué el envío va fuera de la transacción.** `NotificationDispatcher` separa los dos pasos a propósito: `NotificationApplicationService` registra la notificación en su transacción y el envío ocurre después. Con 3 intentos y 3 s de lectura, hacerlo dentro mantendría la conexión a Notification DB tomada hasta 9 s por notificación. Y llamar a un método `@Transactional` desde otro método de la misma clase no pasa por el proxy de Spring, así que la transacción no existiría: son dos componentes, no dos métodos.
+
+### Pruebas del envío
+
+| Prueba | Contra qué | Qué cubre |
+|---|---|---|
+| `ProviderNotificationSenderTests` | Un servidor HTTP real del JDK | Cuerpo y cabecera que recibe el proveedor, reintento del fallo transitorio, agotamiento, el `4xx` sin reintento, el timeout de lectura y el proveedor inalcanzable |
+| `ProviderDeliveryIntegrationTest` | **El proveedor simulado de HU-306**, por red | Los tres modos por destino: `*@flaky.test` entrega al tercer intento, `*@fail.test` agota, `*@slow.test` agota el tiempo de lectura |
+
+La segunda se omite si `NOTIFICATION_PROVIDER_URL` no está definida:
+
+```bash
+set -a && . ./.env && set +a
+docker compose -f infrastructure/compose/docker-compose.yml up -d notification-provider
+export NOTIFICATION_PROVIDER_URL="http://localhost:${NOTIFICATION_PROVIDER_HOST_PORT:-8090}"
+cd services/notification-service && ./mvnw verify
+```
+
 ## Configuración
 
 Variables en [`.env.example`](../../.env.example):
@@ -105,5 +142,11 @@ Variables en [`.env.example`](../../.env.example):
 | `PAYMENTS_TOPIC` | `payments.events` | Tópico de entrada; los tópicos se leen de configuración, nunca como literales |
 | `NOTIFICATION_DB_URL` | `jdbc:postgresql://localhost:5435/notificationdb` | URL de **su** base; el servicio no recibe la de ninguna otra (regla 2) |
 | `NOTIFICATION_DB_USER`, `NOTIFICATION_DB_PASSWORD` | — | Credenciales propias de Notification DB |
+| `NOTIFICATION_PROVIDER_URL` | `http://localhost:8090` | Proveedor externo. En la red de Compose, `http://notification-provider:8080` |
+| `NOTIFICATION_PROVIDER_CONNECT_TIMEOUT` | `2s` | Tiempo de conexión con el proveedor |
+| `NOTIFICATION_PROVIDER_READ_TIMEOUT` | `3s` | Tiempo de lectura; menor que la espera de `*@slow.test` |
+| `NOTIFICATION_PROVIDER_MAX_ATTEMPTS` | `3` | Intentos contra el proveedor |
+| `NOTIFICATION_PROVIDER_INITIAL_BACKOFF` | `500ms` | Espera del primer reintento |
+| `NOTIFICATION_PROVIDER_BACKOFF_MULTIPLIER` | `2` | Factor por el que crece la espera |
 
 Referencias: [`CLAUDE.md`](../../CLAUDE.md) · [Wiki](../../docs/wiki/Home.md)
