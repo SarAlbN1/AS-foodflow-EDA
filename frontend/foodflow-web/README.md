@@ -48,6 +48,23 @@ La pantalla `/orders/:id` incluye la sección **Notificaciones**, que consulta `
 
 Que todavía no haya notificaciones es normal: se crean cuando Notification Service conoce el resultado del pago. Mientras no haya ninguna, o alguna siga `PENDIENTE`, la sección se vuelve a consultar cada segundo durante 30 s como máximo; después queda el botón **Actualizar notificaciones**.
 
+## Flujo integral del pedido (HU-505)
+
+La pantalla `/orders/:id` abre con **Flujo del pedido**, tres pasos en una sola vista: **Pedido registrado → Resultado del pago → Notificación al cliente**. No hace consultas propias: usa las mismas `GET /orders/{id}` y `GET /orders/{id}/notifications` que ya hacen la página y la sección de notificaciones, así que avanza sola mientras dura la espera automática y nunca accede a una base de datos.
+
+Cada paso distingue lo que **aún no está disponible** de lo que **salió mal** (`orders/order-flow/flujo.ts`, función pura con sus pruebas):
+
+| Estado | Significa |
+|---|---|
+| Completado | El paso terminó bien (pedido guardado, pago aprobado, notificación enviada) |
+| En curso | El dato todavía no ha llegado y la pantalla sigue consultando (consistencia eventual) |
+| Aún no disponible | Todavía no puede existir (por ejemplo, la notificación antes del resultado del pago) o se agotó la espera automática |
+| Rechazado | Resultado de negocio: el pago se procesó y fue rechazado (`PAY-FAIL`). No es un fallo |
+| Falló | La notificación no se pudo entregar (`FALLIDA`), con su motivo e intentos |
+| Sin respuesta | La consulta no obtuvo respuesta; no dice nada del flujo |
+
+Para demostrarlo: crea un pedido con `PAY-OK` y otro con `PAY-FAIL` y abre «Ver el estado del pedido». El primero termina con el pago **Completado** y el segundo con el pago **Rechazado**.
+
 ## Diseño base y referencia visual (HU-506)
 
 El diseño visual se adaptó tomando como referencia la plantilla **Modernize Angular Free** (`modernize-angular-free-main`), bajo su licencia original MIT (Copyright (c) 2025 AdminMart).
