@@ -1,10 +1,94 @@
-<main>
-  <h1>FoodFlow</h1>
-  <nav>
-    <a routerLink="/" routerLinkActive="activo" [routerLinkActiveOptions]="{ exact: true }"
-      >Nuevo pedido</a
-    >
-    <a routerLink="/orders" routerLinkActive="activo">Consultar pedido</a>
-  </nav>
-  <router-outlet />
-</main>
+<div class="ff-layout">
+  <!-- Navegación lateral (Sidebar) -->
+  <aside class="ff-sidebar" [class.ff-sidebar-open]="sidebarAbierto()">
+    <div class="ff-sidebar-header">
+      <a routerLink="/" class="ff-brand">
+        <span class="ff-brand-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#5d87ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 17L12 22L22 17" stroke="#5d87ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 12L12 17L22 12" stroke="#49beff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="ff-brand-text">FoodFlow <span class="ff-brand-badge">EDA</span></span>
+      </a>
+      <button type="button" class="ff-sidebar-close" (click)="toggleSidebar()" aria-label="Cerrar menú">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <nav class="ff-sidebar-nav">
+      <div class="ff-nav-section-title">NAVEGACIÓN</div>
+      <a
+        routerLink="/"
+        routerLinkActive="activo"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="ff-nav-item"
+        (click)="cerrarSidebarEnMovil()"
+      >
+        <span class="ff-nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="16"></line>
+            <line x1="8" y1="12" x2="16" y2="12"></line>
+          </svg>
+        </span>
+        <span class="ff-nav-text">Nuevo pedido</span>
+      </a>
+      <a
+        routerLink="/orders"
+        routerLinkActive="activo"
+        class="ff-nav-item"
+        (click)="cerrarSidebarEnMovil()"
+      >
+        <span class="ff-nav-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </span>
+        <span class="ff-nav-text">Consultar pedido</span>
+      </a>
+    </nav>
+
+    <div class="ff-sidebar-footer">
+      <div class="ff-info-card">
+        <div class="ff-info-card-header">
+          <span class="ff-info-badge">PROTOTIPO</span>
+        </div>
+        <div class="ff-info-title">FoodFlow EDA</div>
+        <div class="ff-info-desc">Arquitectura basada en eventos</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Fondo oscuro para móviles -->
+  @if (sidebarAbierto()) {
+    <div class="ff-sidebar-backdrop" (click)="toggleSidebar()"></div>
+  }
+
+  <!-- Contenedor principal -->
+  <div class="ff-main-wrapper">
+    <!-- Encabezado superior -->
+    <header class="ff-header">
+      <div class="ff-header-left">
+        <button type="button" class="ff-menu-toggle" (click)="toggleSidebar()" aria-label="Abrir menú">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        <h1 class="ff-header-title">FoodFlow</h1>
+      </div>
+    </header>
+
+    <!-- Área de contenido de rutas -->
+    <main class="ff-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

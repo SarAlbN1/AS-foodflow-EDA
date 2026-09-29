@@ -1,69 +1,175 @@
+.ff-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 850px;
+}
+
+.ff-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+}
+
+.ff-breadcrumb-link {
+  color: var(--ff-primary);
+  text-decoration: none;
+}
+
+.ff-breadcrumb-sep {
+  color: var(--ff-text-subtle);
+}
+
+.ff-breadcrumb-current {
+  color: var(--ff-text-muted);
+}
+
+.ff-page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ff-text-main);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.ff-status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--ff-border);
+}
+
+.ff-order-id-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ff-label-muted {
+  font-size: 0.875rem;
+  color: var(--ff-text-muted);
+  font-weight: 500;
+}
+
+/* Status Pill */
+.ff-status-pill,
 .estado {
   display: inline-flex;
-  gap: 0.75rem;
   align-items: center;
-  padding: 0.5rem 0.9rem;
-  border-radius: 4px;
-  font-size: 1.15rem;
-  border: 1px solid currentColor;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: var(--ff-radius-pill);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid transparent;
 }
 
 .estado[data-estado='CREADO'] {
-  color: #8a5a00;
+  background: var(--ff-warning-light);
+  color: var(--ff-warning-text);
+  border-color: var(--ff-warning-border);
 }
 
 .estado[data-estado='PAGADO'] {
-  color: #1b6e2a;
+  background: var(--ff-success-light);
+  color: var(--ff-success-text);
+  border-color: var(--ff-success-border);
 }
 
 .estado[data-estado='PAGO_RECHAZADO'] {
-  color: #b00020;
+  background: var(--ff-danger-light);
+  color: var(--ff-danger-text);
+  border-color: var(--ff-danger-border);
 }
 
-.etiqueta {
-  font-weight: 600;
+.ff-status-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--ff-warning);
+  box-shadow: 0 0 0 0 rgba(255, 162, 29, 0.7);
+  animation: ff-pulse 1.5s infinite;
 }
 
-dl {
+@keyframes ff-pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(255, 162, 29, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(255, 162, 29, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(255, 162, 29, 0);
+  }
+}
+
+.ff-status-code {
+  font-family: monospace;
+  font-size: 0.775rem;
+  opacity: 0.75;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Details grid */
+.ff-details-grid {
+  padding: 20px 0;
+}
+
+.ff-dl {
   display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 0.25rem 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+
+.ff-dl-item {
+  background: var(--ff-bg-page);
+  padding: 14px 16px;
+  border-radius: var(--ff-radius-sm);
+  border: 1px solid var(--ff-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 dt {
-  font-weight: 600;
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: var(--ff-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 dd {
   margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ff-text-main);
+  word-break: break-all;
 }
 
-.acciones {
+.ff-text-bold {
+  color: var(--ff-primary);
+  font-weight: 700;
+}
+
+/* Card footer actions */
+.acciones,
+.ff-card-footer {
   display: flex;
-  gap: 1rem;
   align-items: center;
-  margin-top: 1rem;
-}
-
-button {
-  font: inherit;
-  padding: 0.45rem 0.6rem;
-  cursor: pointer;
-}
-
-.error {
-  color: #b00020;
-  border: 1px solid currentColor;
-  border-radius: 4px;
-  padding: 0.5rem 0.75rem;
-}
-
-.error p {
-  margin: 0;
-}
-
-.nota,
-.referencia {
-  font-size: 0.85rem;
-  color: #555;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--ff-border);
 }

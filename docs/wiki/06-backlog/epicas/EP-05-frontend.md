@@ -92,3 +92,22 @@ Como evaluador del prototipo, quiero visualizar en una misma experiencia la evol
 2. Diferencia estados “aún no disponible” de estados fallidos.
 3. Permite observar la transición eventual sin necesitar acceso a las bases de datos.
 4. El flujo aprobado y el flujo rechazado pueden demostrarse de manera reproducible.
+
+## HU-506 — Unificar la interfaz web con un diseño base
+
+**Orden:** 6  
+**Prioridad:** P1  
+**Sprint:** 5 · **Puntos:** 3 · **Responsable:** Juan  
+**Tipo:** Enabler (transversal a HU-501, HU-502, HU-504 y HU-505)  
+**INVEST:** I✅ N✅ V✅ E✅ S✅ T✅
+
+**Historia**  
+Como desarrollador frontend, quiero una estructura visual común (layout, navegación y estilos compartidos) tomada de una plantilla de referencia, para construir y mantener las pantallas de FoodFlow de forma consistente sin repetir estilos en cada componente.
+
+**Criterios de aceptación**
+
+1. Las rutas `/`, `/orders` y `/orders/:id` comparten un layout común: encabezado, navegación y área de contenido.
+2. Los estilos se centralizan (colores, tipografía y espaciado definidos una sola vez); la interfaz es *responsive* y accesible (etiquetas, contraste y foco visible).
+3. Las pantallas de HU-501, HU-502 y HU-504 conservan su comportamiento y su contrato REST: `npm run build` y `npm test -- --watch=false` pasan y la ruta de salida del build no cambia.
+4. No se incorporan pantallas, datos ni funciones fuera del alcance (autenticación, *dashboards*, analítica, datos de ejemplo). Toda dependencia nueva se registra antes en [versiones.md](../../04-implementacion/versiones.md).
+5. El README del frontend indica qué se tomó de la plantilla de referencia y bajo qué licencia.

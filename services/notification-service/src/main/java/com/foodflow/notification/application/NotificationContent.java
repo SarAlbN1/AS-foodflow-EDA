@@ -28,15 +28,21 @@ public final class NotificationContent {
     private NotificationContent() {
     }
 
-    /** Texto de un pago aprobado. */
+    /**
+     * Texto de un pago aprobado.
+     *
+     * <p>Habla solo del pago, sin anadir nada sobre el avance del pedido. Decir «estamos
+     * preparando tu pedido» seria una afirmacion sobre Order Service, que reacciona al mismo
+     * evento por su cuenta y puede no haberlo procesado: D-6 pide justamente que el mensaje no
+     * dependa de eso. Lo senalo Juan al revisar HU-301.
+     */
     public static String aprobado(BigDecimal amount, String currency) {
-        return "Tu pago de %s fue aprobado. Estamos preparando tu pedido."
-                .formatted(importe(amount, currency));
+        return "Tu pago de %s fue aprobado.".formatted(importe(amount, currency));
     }
 
     /** Texto de un pago rechazado. */
     public static String rechazado(BigDecimal amount, String currency) {
-        return "Tu pago de %s fue rechazado. No se realizo ningun cobro."
+        return "Tu pago de %s fue rechazado. No se realizó ningún cobro."
                 .formatted(importe(amount, currency));
     }
 

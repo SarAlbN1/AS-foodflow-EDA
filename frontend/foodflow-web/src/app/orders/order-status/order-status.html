@@ -1,53 +1,105 @@
-<section>
-  <h2>Estado del pedido</h2>
-  <p>
-    Identificador: <code data-testid="pedido-id">{{ id() }}</code>
-  </p>
+<div class="ff-page-container">
+  <div class="ff-page-header">
+    <div class="ff-breadcrumbs">
+      <a routerLink="/orders" class="ff-breadcrumb-link">Consultar pedido</a>
+      <span class="ff-breadcrumb-sep">/</span>
+      <span class="ff-breadcrumb-current">Estado</span>
+    </div>
+    <h2 class="ff-page-title">Estado del pedido</h2>
+  </div>
 
-  @if (pedido(); as p) {
-    <p class="estado" [attr.data-estado]="p.status" data-testid="estado">
-      <span class="etiqueta">{{ etiquetas[p.status] }}</span>
-      <code data-testid="estado-codigo">{{ p.status }}</code>
-    </p>
-    <dl>
-      <dt>Referencia</dt>
-      <dd>{{ p.customerReference }}</dd>
-      <dt>Total</dt>
-      <dd>{{ p.total }} COP</dd>
-      <dt>Última actualización</dt>
-      <dd>{{ p.updatedAt }}</dd>
-    </dl>
-    @if (esperandoResultado()) {
-      <p class="nota" data-testid="esperando" aria-live="polite">
-        Esperando el resultado del pago; esta pantalla se actualiza sola.
-      </p>
-    } @else if (p.status === 'CREADO') {
-      <p class="nota" data-testid="sin-resultado">
-        El pago todavía no tiene resultado. Pulsa "Actualizar" para consultar de nuevo.
-      </p>
-    }
+  <section class="ff-card">
+    <div class="ff-status-header">
+      <div class="ff-order-id-group">
+        <span class="ff-label-muted">Identificador:</span>
+        <code data-testid="pedido-id" class="ff-code-badge">{{ id() }}</code>
+      </div>
 
-    <app-order-notifications [orderId]="id()" />
-  }
-
-  @if (error(); as falla) {
-    <div class="error" role="alert" data-testid="error">
-      <p>{{ falla.mensaje }}</p>
-      @if (falla.referencia) {
-        <p class="referencia">Referencia: {{ falla.referencia }}</p>
+      @if (pedido(); as p) {
+        <div class="estado ff-status-pill" [attr.data-estado]="p.status" data-testid="estado">
+          @if (p.status === 'CREADO') {
+            <span class="ff-status-pulse"></span>
+          } @else if (p.status === 'PAGADO') {
+            <span class="ff-status-icon">✓</span>
+          } @else {
+            <span class="ff-status-icon">✕</span>
+          }
+          <span class="etiqueta">{{ etiquetas[p.status] }}</span>
+          <code data-testid="estado-codigo" class="ff-status-code">{{ p.status }}</code>
+        </div>
       }
     </div>
-  }
 
-  <div class="acciones">
-    <button
-      type="button"
-      (click)="actualizar()"
-      [disabled]="consultando()"
-      data-testid="actualizar"
-    >
-      {{ consultando() ? 'Consultando…' : 'Actualizar' }}
-    </button>
-    <a routerLink="/">Crear otro pedido</a>
-  </div>
-</section>
+    @if (pedido(); as p) {
+      <div class="ff-details-grid">
+        <dl class="ff-dl">
+          <div class="ff-dl-item">
+            <dt>Referencia</dt>
+            <dd>{{ p.customerReference }}</dd>
+          </div>
+          <div class="ff-dl-item">
+            <dt>Contacto (snapshot)</dt>
+            <dd>{{ p.customerContact }}</dd>
+          </div>
+          <div class="ff-dl-item">
+            <dt>Total</dt>
+            <dd class="ff-text-bold">{{ p.total | importe }}</dd>
+          </div>
+          <div class="ff-dl-item">
+            <dt>Última actualización</dt>
+            <dd>{{ p.updatedAt }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      @if (esperandoResultado()) {
+        <div class="ff-alert ff-alert-polling">
+          <div class="ff-spinner-small"></div>
+          <p class="nota" data-testid="esperando" aria-live="polite">
+            Esperando el resultado del pago; esta pantalla se actualiza sola.
+          </p>
+        </div>
+      } @else if (p.status === 'CREADO') {
+        <div class="ff-alert ff-alert-warning">
+          <span class="ff-alert-icon">⏱️</span>
+          <p class="nota" data-testid="sin-resultado">
+            El pago todavía no tiene resultado. Pulsa "Actualizar" para consultar de nuevo.
+          </p>
+        </div>
+      }
+
+      <app-order-notifications [orderId]="id()" />
+    }
+
+    @if (error(); as falla) {
+      <div class="error ff-alert ff-alert-danger" role="alert" data-testid="error">
+        <p class="ff-alert-message">{{ falla.mensaje }}</p>
+        @if (falla.referencia) {
+          <p class="referencia">Referencia: {{ falla.referencia }}</p>
+        }
+      </div>
+    }
+
+    <div class="acciones ff-card-footer">
+      <button
+        type="button"
+        (click)="actualizar()"
+        [disabled]="consultando()"
+        data-testid="actualizar"
+        class="ff-btn ff-btn-primary"
+      >
+        @if (consultando()) {
+          <span class="ff-spinner"></span>
+        } @else {
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6"></path>
+            <path d="M1 20v-6h6"></path>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+        }
+        {{ consultando() ? 'Consultando…' : 'Actualizar' }}
+      </button>
+      <a routerLink="/" class="ff-btn ff-btn-outline">Crear otro pedido</a>
+    </div>
+  </section>
+</div>

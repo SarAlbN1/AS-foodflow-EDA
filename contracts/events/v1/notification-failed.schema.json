@@ -41,10 +41,15 @@
               "$ref": "https://foodflow.local/contracts/events/v1/envelope.schema.json#/$defs/canal"
             },
             "failureCode": {
-              "description": "Código del fallo del proveedor. Sin enum: el catálogo no está fijado en la wiki, se define en HU-302.",
+              "description": "Código del fallo del proveedor. Catálogo fijado en HU-302 (docs/wiki/03-contratos/proveedor-notificaciones.md): PROVEEDOR_NO_DISPONIBLE (5xx en todos los intentos), TIEMPO_DE_ESPERA_AGOTADO (se agotó la conexión o la lectura), ERROR_DE_CONEXION (el proveedor no responde en esa dirección) y PROVEEDOR_RECHAZO_EL_MENSAJE (4xx: no se reintenta) y RESPUESTA_INESPERADA (respondió fuera de contrato o su respuesta no se pudo tratar).",
               "type": "string",
-              "minLength": 1,
-              "maxLength": 50
+              "enum": [
+                "PROVEEDOR_NO_DISPONIBLE",
+                "TIEMPO_DE_ESPERA_AGOTADO",
+                "ERROR_DE_CONEXION",
+                "PROVEEDOR_RECHAZO_EL_MENSAJE",
+                "RESPUESTA_INESPERADA"
+              ]
             },
             "attempts": {
               "description": "Intentos realizados contra el proveedor. Política: 3 intentos, espera inicial 500 ms que se duplica.",

@@ -32,8 +32,8 @@
 | [HU-204](epicas/EP-02-pagos.md) | Publicar PaymentRejected | 3 | Sara | 2 | Terminada | #86 | Publica PaymentRejected; un pago produce un solo evento |
 | [HU-702](epicas/EP-07-entregables-y-sustentacion.md) | Proyección laboral en la matriz de mercado | 3 | Juan | 2 | En revisión | [#76](https://github.com/SarAlbN1/AS-foodflow-EDA/pull/76) | Propuesta a `main.tex`: la aplica Sara |
 | [HU-703](epicas/EP-07-entregables-y-sustentacion.md) | Patrones, antipatrones y trazabilidad en el documento técnico | 3 | Sara | 3 | Terminada | #88 | Matriz Investigado/Diseñado/Implementado, antipatrones y riesgos aceptados |
-| [HU-301](epicas/EP-03-notificaciones.md) | Crear una notificación ante el resultado del pago | 4 | Sara | 5 | En revisión | #93 | Consume `payments.events` en abanico (D-6) y crea la notificación en `PENDIENTE`; el envío es HU-302 |
-| [HU-302](epicas/EP-03-notificaciones.md) | Enviar una notificación mediante el proveedor externo | 4 | Sara | 5 | Pendiente | | |
+| [HU-301](epicas/EP-03-notificaciones.md) | Crear una notificación ante el resultado del pago | 4 | Sara | 5 | Terminada | #93 | Consume `payments.events` en abanico (D-6) y crea la notificación en `PENDIENTE`; el envío es HU-302 |
+| [HU-302](epicas/EP-03-notificaciones.md) | Enviar una notificación mediante el proveedor externo | 4 | Sara | 5 | En revisión | #96 | Adaptador HTTP al proveedor: timeouts explícitos, 3 reintentos y sin Circuit Breaker; fija el catálogo de `failureCode` |
 | [HU-303](epicas/EP-03-notificaciones.md) | Registrar y publicar una notificación enviada | 4 | Sara | 3 | Pendiente | | |
 | [HU-304](epicas/EP-03-notificaciones.md) | Registrar y publicar una notificación fallida | 4 | Sara | 5 | Pendiente | | |
 | [HU-305](epicas/EP-03-notificaciones.md) | Consultar las notificaciones de un pedido | 4 | Juan | 3 | En revisión | #97 | Lee solo Notification DB; `destination` enmascarado; verificada por el gateway contra Compose (respuesta validada con el esquema del OpenAPI) |
@@ -42,6 +42,7 @@
 | [HU-504](epicas/EP-05-frontend.md) | Visualizar el estado de la notificación | 4 | Juan | 3 | Terminada | #90 | Muestra `content` según el contrato de #89; probada en el navegador contra el gateway real (HU-607): el 404 actual se muestra como error hasta HU-305 |
 | [HU-006](epicas/EP-00-base-tecnica-y-estandares.md) | Guardas de arquitectura ejecutables | 5 | Juan | 5 | Terminada | #85 | `bash scripts/verify-architecture.sh`; la comprobación de Compose cubre los tres servicios desde HU-607 |
 | [HU-505](epicas/EP-05-frontend.md) | Visualizar el flujo integral de un pedido | 5 | Juan | 5 | Pendiente | | |
+| [HU-506](epicas/EP-05-frontend.md) | Unificar la interfaz web con un diseño base | 5 | Juan | 3 | En revisión | | HU transversal añadida el 2026-09-28. Layout común, estilos centralizados, total en formato `es-CO` y fuente alojada en el proyecto; verificada en el navegador contra el gateway real |
 | [HU-601](epicas/EP-06-resiliencia-y-calidad.md) | Hacer idempotentes los consumidores Kafka | 5 | Sara | 5 | Pendiente | | |
 | [HU-602](epicas/EP-06-resiliencia-y-calidad.md) | Aplicar reintentos y DLQ a eventos fallidos | 5 | Sara | 5 | Pendiente | | |
 | [HU-603](epicas/EP-06-resiliencia-y-calidad.md) | Implementar logs estructurados y correlacionados | 5 | Sara | 3 | Pendiente | | |
