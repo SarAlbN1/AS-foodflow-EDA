@@ -40,25 +40,6 @@ Como cliente, quiero visualizar el estado actual de mi pedido, para saber si est
 3. La pantalla tolera que el estado cambie de manera eventual después de la creación.
 4. Puede refrescarse sin crear un pedido nuevo ni duplicar operaciones.
 
-## HU-503 — Visualizar el resultado del pago
-
-**Orden:** 3  
-**Prioridad:** P2  
-**Sprint:** — (opcional, fuera del plan) · **Puntos:** — · **Responsable:** —  
-**INVEST:** I✅ N✅ V✅ E✅ S✅ T✅
-
-**Historia**  
-Como cliente, quiero visualizar el resultado del pago asociado al pedido, para conocer si fue aprobado o rechazado.
-
-**Criterios de aceptación**
-
-1. La interfaz consulta Payment mediante el API Gateway.
-2. Muestra `APROBADO` o `RECHAZADO` cuando el pago existe.
-3. Si el pago aún no existe por consistencia eventual, se muestra un estado de procesamiento y no un error engañoso.
-4. La vista no accede directamente a Payment Service.
-
-> **Nota (opcional, fuera del plan de sprints):** depende de un endpoint de consulta de pagos que la API mínima no incluye. El resultado del pago se muestra mediante el estado del pedido en HU-502 y HU-505 (punto abierto A-3).
-
 ## HU-504 — Visualizar el estado de la notificación
 
 **Orden:** 4  

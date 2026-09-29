@@ -153,16 +153,6 @@ Juan presenta el repositorio completo. Para que pueda defender el sistema:
 
 El minutaje y el reparto de la palabra están en [Plan de sustentación](sustentacion.md).
 
-## Historias opcionales (P2)
-
-- HU-205 Consultar el pago de un pedido.
-- HU-503 Visualizar el resultado del pago.
-- HU-007 CI automático (opcional).
-- HU-010 Versionado de esquemas con Flyway (opcional).
-- HU-011 Pruebas de integración con Testcontainers (opcional).
-
-Se toman solo si sobra capacidad y **no** cuentan para el 60/40 ni para la finalización del prototipo.
-
 ## Ruta crítica del Sprint 1
 
 `HU-001` (Juan) es la ruta crítica: crea el esqueleto compilable de los proyectos sobre el que construyen las demás.

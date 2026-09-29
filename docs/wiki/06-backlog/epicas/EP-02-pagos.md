@@ -74,22 +74,3 @@ Como Order Service y Notification Service, queremos recibir `PaymentRejected` cu
 2. El evento sigue el catálogo de la página [Eventos Kafka](../../03-contratos/eventos.md): contiene `paymentId`, `orderId`, `amount`, `currency`, `reasonCode` y el `notificationContact` recibido en `OrderCreated`, además del `correlationId` en el envelope.
 3. No se emite un evento de aprobación para el mismo resultado lógico.
 4. La publicación no requiere una llamada REST hacia Order Service o Notification Service.
-
-## HU-205 — Consultar el pago de un pedido
-
-**Orden:** 5  
-**Prioridad:** P2  
-**Sprint:** — (opcional, fuera del plan) · **Puntos:** — · **Responsable:** —  
-**INVEST:** I✅ N✅ V✅ E✅ S✅ T✅
-
-**Historia**  
-Como cliente, quiero consultar el resultado del pago asociado a mi pedido, para visualizar si fue aprobado o rechazado.
-
-**Criterios de aceptación**
-
-1. El API permite consultar el pago mediante un identificador explícito o por `orderId` según el contrato OpenAPI.
-2. La respuesta contiene estado, monto y referencia cuando corresponda.
-3. Si todavía no existe pago por consistencia eventual, la API responde de forma definida y documentada sin inventar un resultado.
-4. La consulta solo utiliza Payment DB.
-
-> **Nota (opcional, fuera del plan de sprints):** la API mínima obligatoria (página [API REST](../../03-contratos/api-rest.md)) no incluye un endpoint de consulta de pagos; el resultado del pago es visible mediante el estado del pedido. Solo se implementa si sobra capacidad y con una decisión explícita (punto abierto A-3).
