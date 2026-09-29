@@ -47,3 +47,27 @@ Sin las variables, las tres se omiten solas y `./mvnw verify` sigue funcionando 
 - **Se espera a que el consumidor tenga particiones asignadas antes de publicar.** Sin eso el evento saldría antes de que hubiera nadie escuchando y la prueba fallaría por una carrera, no por el flujo.
 
 **Detener los servicios antes de ejecutarlas.** Si un `order-service` suelto está corriendo contra la misma base, es él quien aplica la transición y publica el evento, y la prueba pasa sin ejercitar su propia instancia. Se descubrió así: la prueba pasaba con los servicios levantados y fallaba sin ellos.
+
+## Idempotencia de los consumidores (HU-601)
+
+Los tres servicios implementan ADR-09: tabla `processed_events` propia con `event_id` como clave primaria, escrita en la **misma transacción local** que el efecto de negocio. Si el registro falla, el efecto tampoco queda.
+
+| Servicio | Consumidor | Efecto que protege |
+|---|---|---|
+| Order | `order-service.payments` | El cambio de estado del pedido y su `OrderStatusChanged` |
+| Payment | `payment-service.orders` | El cobro y su evento de resultado |
+| Notification | `notification-service.payments` | La notificación y su envío al proveedor |
+
+Un evento ya registrado se ignora con `INFO` y su offset se confirma: una reentrega no es un error.
+
+**El criterio 4 se cumple entregando el evento dos veces de verdad**, no simulando la segunda entrega. Las tres pruebas están en las suites de flujo de HU-605, que publican en Kafka real y comprueban que el efecto no se repite:
+
+| Servicio | Prueba | Qué afirma |
+|---|---|---|
+| Payment | `laReentregaNoCobraDosVeces` | Un solo pago para el pedido, con el mismo `paymentId` |
+| Order | `laReentregaNoVuelveAAplicar` | El estado no cambia y **`updated_at` no se mueve** |
+| Notification | `laReentregaNoDuplicaEnElFlujoReal` | Una sola notificación para el pedido |
+
+La de Order es la más estricta: comprobar solo el estado no distinguiría «no se reaplicó» de «se reaplicó al mismo valor». La marca de tiempo sí.
+
+**Payment tiene dos guardas y las dos hacen falta.** `payments.order_id` es único y responde a «¿este pedido ya tiene pago?», que es lo que evita el doble cobro; `processed_events` responde a «¿este evento ya se procesó?», que es lo que ADR-09 pide y lo que distingue una reentrega de un evento nuevo sobre el mismo pedido.

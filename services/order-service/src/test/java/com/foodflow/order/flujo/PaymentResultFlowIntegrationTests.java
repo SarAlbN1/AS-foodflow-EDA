@@ -141,6 +141,33 @@ class PaymentResultFlowIntegrationTests {
         }
     }
 
+    @Test
+    @DisplayName("HU-601 criterios 4 y 5: el mismo evento entregado dos veces no reaplica el cambio")
+    void laReentregaNoVuelveAAplicar() throws Exception {
+        Order pedido = pedidoCreado();
+        String evento = eventoDePago("PaymentApproved", pedido.id(),
+                "\"transactionReference\":\"TXN-HU601\"");
+
+        try {
+            esperarAsignacionDeParticiones();
+
+            kafka.send(paymentsTopic, pedido.id().toString(), evento).get();
+            esperarEstado(pedido.id(), OrderStatus.PAGADO);
+            Instant trasElPrimero = pedidos.findById(pedido.id()).orElseThrow().updatedAt();
+
+            // El mismo eventId otra vez: la idempotencia de ADR-09 debe descartarlo.
+            kafka.send(paymentsTopic, pedido.id().toString(), evento).get();
+            Thread.sleep(3000);
+
+            Order despues = pedidos.findById(pedido.id()).orElseThrow();
+            assertThat(despues.status()).isEqualTo(OrderStatus.PAGADO);
+            // Si se hubiera vuelto a aplicar, la marca de tiempo habria cambiado.
+            assertThat(despues.updatedAt()).isEqualTo(trasElPrimero);
+        } finally {
+            pedidos.deleteById(pedido.id());
+        }
+    }
+
     private Order pedidoCreado() {
         Order pedido = Order.crear("PED-HU605", NotificationChannel.EMAIL, "ana@foodflow.test",
                 PaymentToken.PAY_OK, new BigDecimal("45900.00"));

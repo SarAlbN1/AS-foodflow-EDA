@@ -141,6 +141,31 @@ class OrderCreatedFlowIntegrationTests {
         }
     }
 
+    @Test
+    @DisplayName("HU-601 criterios 4 y 5: el mismo evento entregado dos veces no cobra dos veces")
+    void laReentregaNoCobraDosVeces() throws Exception {
+        UUID orderId = UUID.randomUUID();
+        String evento = orderCreated(orderId, "PAY-OK");
+
+        esperarAsignacionDeParticiones();
+
+        // El mismo eventId dos veces, como lo haria una reentrega del broker (ADR-09).
+        kafka.send(ordersTopic, orderId.toString(), evento).get();
+        Payment pago = esperarPagoDe(orderId);
+        kafka.send(ordersTopic, orderId.toString(), evento).get();
+
+        // Se espera a proposito: lo que se afirma es que NO aparece un segundo pago.
+        Thread.sleep(3000);
+
+        try {
+            assertThat(pagos.findAll().stream().filter(p -> p.orderId().equals(orderId))).hasSize(1);
+            assertThat(pagos.findByOrderId(orderId)).get()
+                    .extracting(Payment::id).isEqualTo(pago.id());
+        } finally {
+            pagos.deleteById(pago.id());
+        }
+    }
+
     /** Envelope y payload tal como los publica Order Service (HU-103). */
     private static String orderCreated(UUID orderId, String paymentToken) {
         return """
