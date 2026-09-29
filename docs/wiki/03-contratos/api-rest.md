@@ -153,4 +153,4 @@ No se pone por adelantado en los servicios que todavía no tienen base: el arran
 }
 ```
 
-**El gateway todavía no los expone.** HU-604 cubre los tres servicios Spring Boot. El health check del API Gateway no está en el alcance de ninguna HU: queda registrado como [punto abierto A-10](../02-arquitectura/puntos-abiertos.md).
+**El API Gateway expone el mismo contrato** desde HU-607 ([punto abierto A-10](../02-arquitectura/puntos-abiertos.md)): `GET /actuator/health`, `/liveness` y `/readiness`, sin detalles. No tiene base ni Kafka, así que responde `UP` en cuanto arranca; no consulta a los servicios a los que enruta. Compose y `scripts/up.sh` lo usan para saber que el borde está listo.
