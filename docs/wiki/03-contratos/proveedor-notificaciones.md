@@ -27,6 +27,9 @@ Es el catálogo de `notifications.failure_code` y del `failureCode` de `Notifica
 | `TIEMPO_DE_ESPERA_AGOTADO` | Se agotó el tiempo de conexión o de lectura en todos los intentos (`*@slow.test`) | Sí |
 | `ERROR_DE_CONEXION` | No se pudo establecer la conexión: el proveedor no responde en esa dirección | Sí |
 | `PROVEEDOR_RECHAZO_EL_MENSAJE` | El proveedor respondió `4xx` | **No** |
+| `RESPUESTA_INESPERADA` | Respondió fuera de contrato (un estado que no es `2xx`, `4xx` ni `5xx`) o su respuesta no se pudo tratar | **No** |
+
+**Un `2xx` es una aceptación aunque su cuerpo no se entienda.** Si el proveedor responde `202` con otro tipo de contenido o con un JSON roto, el mensaje **ya fue aceptado**: el envío se da por hecho y se registra sin `providerReference`, con un aviso. Darlo por fallido —o dejar escapar el error de lectura— perdería un envío que sí ocurrió. Lo encontró Juan al revisar HU-302.
 
 **Por qué el `4xx` no se reintenta.** Dice que el mensaje no es aceptable, no que el proveedor esté indispuesto: repetirlo produce exactamente el mismo rechazo y solo retrasa el resultado. Los otros tres son transitorios por definición y agotan la política antes de darse por perdidos.
 

@@ -8,12 +8,17 @@ import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import com.foodflow.notification.application.ContactMasker;
 import com.foodflow.notification.application.DeliveryFailure;
@@ -53,6 +58,13 @@ class ProviderNotificationSender implements NotificationSender {
      */
     private static final String CLAVE_DE_IDEMPOTENCIA = "Idempotency-Key";
 
+    /**
+     * Lector tolerante de la respuesta del proveedor. A diferencia del de los eventos, aqui un
+     * campo desconocido no es una rotura de contrato: el proveedor es un tercero y puede
+     * devolver mas de lo que interesa.
+     */
+    private static final ObjectMapper JSON = JsonMapper.builder().build();
+
     private final RestClient cliente;
     private final int intentosMaximos;
     private final Duration esperaInicial;
@@ -91,13 +103,29 @@ class ProviderNotificationSender implements NotificationSender {
         for (int intento = 1; intento <= intentosMaximos; intento++) {
             realizados = intento;
             try {
-                ProviderAcceptance aceptacion = cliente.post()
+                // El cuerpo se lee como texto, nunca como ProviderAcceptance directamente: si el
+                // proveedor respondiera con otro tipo de contenido o con un JSON roto, el cliente
+                // lanzaria al extraerlo y la excepcion subiria al consumidor de Kafka. Un 202 es
+                // una aceptacion aunque su cuerpo no se entienda, y el criterio 4 exige que de
+                // aqui siempre salga un resultado.
+                ResponseEntity<String> respuesta = cliente.post()
                         .uri(RUTA)
                         .header(CLAVE_DE_IDEMPOTENCIA, notificacion.id().toString())
                         .body(mensaje)
                         .retrieve()
-                        .body(ProviderAcceptance.class);
-                String referencia = aceptacion == null ? "" : aceptacion.providerReference();
+                        .toEntity(String.class);
+
+                if (!respuesta.getStatusCode().is2xxSuccessful()) {
+                    // retrieve() solo trata como error los 4xx y 5xx: un 3xx llegaria hasta aqui
+                    // con el cuerpo vacio y se colaria como aceptacion con referencia en blanco.
+                    log.warn("El proveedor respondio fuera de contrato notificationId={} estado={} "
+                                    + "destino={} correlationId={}",
+                            notificacion.id(), respuesta.getStatusCode(), destinoEnmascarado,
+                            correlationId);
+                    return DeliveryOutcome.fallido(DeliveryFailure.RESPUESTA_INESPERADA, intento);
+                }
+
+                String referencia = referenciaDe(respuesta.getBody(), notificacion, correlationId);
                 log.info("Notificacion entregada al proveedor notificationId={} intento={}/{} "
                                 + "providerReference={} destino={} correlationId={}",
                         notificacion.id(), intento, intentosMaximos, referencia,
@@ -117,6 +145,15 @@ class ProviderNotificationSender implements NotificationSender {
                 ultimoFallo = clasificar(inalcanzable);
                 registrarIntentoFallido(notificacion, intento, ultimoFallo,
                         inalcanzable.getMessage(), destinoEnmascarado, correlationId);
+            } catch (RestClientException inesperada) {
+                // Red de seguridad del criterio 4: cualquier otro fallo del cliente sale como
+                // resultado y no como excepcion. Si escapara, el consumidor la trataria como
+                // error de proceso, Kafka reentregaria el evento y la idempotencia de ADR-09 lo
+                // descartaria: la notificacion se quedaria en PENDIENTE para siempre.
+                log.warn("Fallo inesperado del cliente del proveedor notificationId={} destino={} "
+                                + "correlationId={}",
+                        notificacion.id(), destinoEnmascarado, correlationId, inesperada);
+                return DeliveryOutcome.fallido(DeliveryFailure.RESPUESTA_INESPERADA, intento);
             }
 
             if (intento < intentosMaximos && !esperar(espera(intento))) {
@@ -127,6 +164,28 @@ class ProviderNotificationSender implements NotificationSender {
         log.warn("Envio agotado notificationId={} intentos={} fallo={} destino={} correlationId={}",
                 notificacion.id(), realizados, ultimoFallo, destinoEnmascarado, correlationId);
         return DeliveryOutcome.fallido(ultimoFallo, realizados);
+    }
+
+    /**
+     * Referencia que devolvio el proveedor, o cadena vacia si su cuerpo no la trae de forma
+     * legible. Un cuerpo que no se entiende no invalida la aceptacion: solo deja el envio sin
+     * referencia que registrar, y eso se advierte.
+     */
+    private static String referenciaDe(String cuerpo, Notification notificacion, String correlationId) {
+        if (cuerpo == null || cuerpo.isBlank()) {
+            return "";
+        }
+        try {
+            ProviderAcceptance aceptacion = JSON.readValue(cuerpo, ProviderAcceptance.class);
+            return aceptacion == null || aceptacion.providerReference() == null
+                    ? ""
+                    : aceptacion.providerReference();
+        } catch (RuntimeException ilegible) {
+            log.warn("El proveedor acepto la notificacion con un cuerpo que no trae la referencia "
+                            + "notificationId={} correlationId={}",
+                    notificacion.id(), correlationId);
+            return "";
+        }
     }
 
     /**

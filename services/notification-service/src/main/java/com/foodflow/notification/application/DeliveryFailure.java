@@ -25,7 +25,16 @@ public enum DeliveryFailure {
     ERROR_DE_CONEXION(true),
 
     /** El proveedor respondio {@code 4xx}: el mensaje no es aceptable y no se reintenta. */
-    PROVEEDOR_RECHAZO_EL_MENSAJE(false);
+    PROVEEDOR_RECHAZO_EL_MENSAJE(false),
+
+    /**
+     * El proveedor respondio algo que el contrato no contempla: un estado que no es {@code 2xx},
+     * {@code 4xx} ni {@code 5xx} —una redireccion, por ejemplo—, o un fallo del cliente al
+     * tratar la respuesta. No se reintenta: una respuesta fuera de contrato no cambia por
+     * repetir la peticion, y casi siempre significa que la URL configurada no es la del
+     * proveedor.
+     */
+    RESPUESTA_INESPERADA(false);
 
     private final boolean transitorio;
 

@@ -48,6 +48,11 @@ class ProviderNotificationSenderTests {
     private static volatile IntFunction<Integer> respuesta = intento -> 202;
     private static volatile Duration demora = Duration.ZERO;
 
+    /** Tipo y cuerpo de la respuesta, para los casos en que el proveedor devuelve algo raro. */
+    private static volatile String tipoDeContenido = "application/json";
+    private static volatile IntFunction<String> cuerpoDeExito =
+            intento -> "{\"providerReference\":\"MOCK-" + intento + "\"}";
+
     private static final AtomicInteger intentos = new AtomicInteger();
     private static final HttpServer proveedor = iniciarProveedor();
 
@@ -57,6 +62,8 @@ class ProviderNotificationSenderTests {
         intentos.set(0);
         respuesta = intento -> 202;
         demora = Duration.ZERO;
+        tipoDeContenido = "application/json";
+        cuerpoDeExito = intento -> "{\"providerReference\":\"MOCK-" + intento + "\"}";
     }
 
     @AfterAll
@@ -174,6 +181,43 @@ class ProviderNotificationSenderTests {
                 .toList();
     }
 
+    @Test
+    @DisplayName("criterio 4: un 202 con un tipo de contenido inesperado no lanza: el proveedor aceptó")
+    void elCuerpoIlegibleNoRompeLaAceptacion() {
+        // El proveedor SI acepto el mensaje. Dar esto por fallido —o peor, dejar escapar la
+        // excepcion— perderia un envio que ya ocurrio.
+        tipoDeContenido = "text/html";
+        cuerpoDeExito = intento -> "<html>aceptado</html>";
+
+        DeliveryOutcome resultado = enviar(notificacion(), url());
+
+        assertThat(resultado.aceptado()).isTrue();
+        assertThat(resultado.attempts()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("criterio 4: un 202 con JSON mal formado tampoco lanza")
+    void elJsonMalFormadoNoRompeLaAceptacion() {
+        cuerpoDeExito = intento -> "{no es json";
+
+        DeliveryOutcome resultado = enviar(notificacion(), url());
+
+        assertThat(resultado.aceptado()).isTrue();
+    }
+
+    @Test
+    @DisplayName("criterio 4: una respuesta que no es 2xx no se da por aceptada")
+    void elRedireccionNoEsAceptacion() {
+        // retrieve() no trata los 3xx como error: sin comprobar el estado, el cuerpo vacio
+        // se colaria como una aceptacion con referencia en blanco.
+        respuesta = intento -> 302;
+
+        DeliveryOutcome resultado = enviar(notificacion(), url());
+
+        assertThat(resultado.aceptado()).isFalse();
+        assertThat(resultado.failure()).isEqualTo(DeliveryFailure.RESPUESTA_INESPERADA);
+    }
+
     private static DeliveryOutcome enviar(Notification notificacion, String url) {
         return enviar(notificacion, url, Duration.ofSeconds(3));
     }
@@ -223,10 +267,10 @@ class ProviderNotificationSenderTests {
         }
 
         int codigo = respuesta.apply(intento);
-        byte[] cuerpo = codigo == 202
-                ? ("{\"providerReference\":\"MOCK-" + intento + "\"}").getBytes(StandardCharsets.UTF_8)
+        byte[] cuerpo = codigo / 100 == 2
+                ? cuerpoDeExito.apply(intento).getBytes(StandardCharsets.UTF_8)
                 : "{\"title\":\"Proveedor no disponible\"}".getBytes(StandardCharsets.UTF_8);
-        intercambio.getResponseHeaders().add("Content-Type", "application/json");
+        intercambio.getResponseHeaders().add("Content-Type", tipoDeContenido);
         intercambio.sendResponseHeaders(codigo, cuerpo.length);
         try (OutputStream salida = intercambio.getResponseBody()) {
             salida.write(cuerpo);

@@ -67,8 +67,8 @@ El texto habla **del resultado del pago**, nunca del estado del pedido:
 
 | Resultado | `content` |
 |---|---|
-| Aprobado | `Tu pago de 45.900,00 COP fue aprobado. Estamos preparando tu pedido.` |
-| Rechazado | `Tu pago de 45.900,00 COP fue rechazado. No se realizo ningun cobro.` |
+| Aprobado | `Tu pago de 45.900,00 COP fue aprobado.` |
+| Rechazado | `Tu pago de 45.900,00 COP fue rechazado. No se realizó ningún cobro.` |
 
 La notificación puede salir **antes** de que Order Service registre el cambio de estado, porque los dos reaccionan al mismo evento en paralelo. Un mensaje que afirmara «tu pedido está PAGADO» podría ser falso en ese instante; uno que habla del pago no lo es nunca. El `content` **no incluye el destino**: ya está en su propia columna y repetirlo lo duplicaría en el contrato REST, que lo devuelve enmascarado. Contrato completo: [proveedor-notificaciones.md](../../docs/wiki/03-contratos/proveedor-notificaciones.md).
 
@@ -106,6 +106,8 @@ Contrato: `POST /v1/messages` con `{channel, destination, content, correlationId
 | Circuit Breaker | **No**. Está en la lista de no implementar: con un único proveedor no hay riesgo de fallo en cascada que lo justifique |
 | Un `5xx`, un tiempo agotado o una conexión rechazada | Se reintentan, y al agotarse producen un resultado con su `failureCode` |
 | Un `4xx` | **No se reintenta**: dice que el mensaje no es aceptable, y repetirlo produce el mismo rechazo |
+| Un `2xx` con un cuerpo que no se entiende | Es una **aceptación**: el mensaje ya fue aceptado. Se registra sin `providerReference` y con un aviso |
+| Una respuesta fuera de contrato (un `3xx`) o un fallo del cliente al tratarla | `RESPUESTA_INESPERADA`, sin reintento: no cambia por repetir la petición |
 | Un fallo | Devuelve un resultado, **no lanza excepción**. Es resultado de negocio: el offset se confirma, no va a DLQ (regla 10) y el pago sigue registrado en Order Service (regla 12) |
 
 El catálogo de `failureCode` está en el [contrato del proveedor](../../docs/wiki/03-contratos/proveedor-notificaciones.md#catálogo-de-failurecode-hu-302) y lo implementa el enum `DeliveryFailure`.
