@@ -2,6 +2,7 @@ import { Component, DestroyRef, effect, inject, input, signal, untracked } from 
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 
+import { ImportePipe } from '../../core/importe.pipe';
 import { ErrorVisible, aErrorVisible } from '../../core/problem-details';
 import { OrderNotifications } from '../../notifications/order-notifications/order-notifications';
 import { OrderApiService } from '../order-api.service';
@@ -35,7 +36,7 @@ const ETIQUETAS: Record<OrderStatus, string> = {
  */
 @Component({
   selector: 'app-order-status',
-  imports: [RouterLink, OrderNotifications],
+  imports: [RouterLink, OrderNotifications, ImportePipe],
   templateUrl: './order-status.html',
   styleUrl: './order-status.css',
 })

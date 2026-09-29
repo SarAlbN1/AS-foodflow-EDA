@@ -1,65 +1,95 @@
-<section class="notificaciones">
-  <h3>Notificaciones</h3>
+<section class="notificaciones ff-notifications-section">
+  <div class="ff-notifications-header">
+    <div class="ff-notifications-title-group">
+      <h3>Notificaciones</h3>
+      @if (notificaciones(); as lista) {
+        <span class="ff-count-badge">{{ lista.length }}</span>
+      }
+    </div>
+  </div>
 
   @if (notificaciones(); as lista) {
     @if (lista.length === 0) {
-      <p class="nota" data-testid="sin-notificaciones" aria-live="polite">
-        Todavía no hay notificaciones: se crean cuando se conoce el resultado del pago.
-        @if (esperando()) {
-          Esta sección se actualiza sola.
-        }
-      </p>
+      <div class="ff-empty-state">
+        <div class="ff-empty-icon">🔔</div>
+        <p class="nota ff-empty-text" data-testid="sin-notificaciones" aria-live="polite">
+          Todavía no hay notificaciones: se crean cuando se conoce el resultado del pago.
+          @if (esperando()) {
+            Esta sección se actualiza sola.
+          }
+        </p>
+      </div>
     } @else {
-      <ul>
+      <ul class="ff-notifications-list">
         @for (n of lista; track n.id) {
-          <li class="notificacion" [attr.data-estado]="n.status" data-testid="notificacion">
-            <p class="cabecera">
-              <span class="estado" data-testid="notificacion-estado">{{
-                etiquetas[n.status]
-              }}</span>
-              <code data-testid="notificacion-estado-codigo">{{ n.status }}</code>
-            </p>
-            <p class="contenido" data-testid="notificacion-contenido">{{ n.content }}</p>
-            <dl>
-              <dt>Canal</dt>
-              <dd data-testid="notificacion-canal">{{ canales[n.channel] }}</dd>
-              <dt>Destino</dt>
-              <dd>{{ n.destination }}</dd>
-              <dt>Intentos</dt>
-              <dd>{{ n.attempts }}</dd>
+          <li class="notificacion ff-notification-card" [attr.data-estado]="n.status" data-testid="notificacion">
+            <div class="cabecera ff-notification-card-header">
+              <span class="estado ff-notification-badge" data-testid="notificacion-estado">{{ etiquetas[n.status] }}</span>
+              <code data-testid="notificacion-estado-codigo" class="ff-notification-code">{{ n.status }}</code>
+            </div>
+
+            <p class="contenido ff-notification-content" data-testid="notificacion-contenido">{{ n.content }}</p>
+
+            <dl class="ff-notification-dl">
+              <div class="ff-notif-dl-item">
+                <dt>Canal</dt>
+                <dd data-testid="notificacion-canal">{{ canales[n.channel] }}</dd>
+              </div>
+              <div class="ff-notif-dl-item">
+                <dt>Destino</dt>
+                <dd>{{ n.destination }}</dd>
+              </div>
+              <div class="ff-notif-dl-item">
+                <dt>Intentos</dt>
+                <dd>{{ n.attempts }}</dd>
+              </div>
               @if (n.status === 'FALLIDA' && n.failureCode) {
-                <dt>Motivo</dt>
-                <dd data-testid="notificacion-motivo">{{ n.failureCode }}</dd>
+                <div class="ff-notif-dl-item ff-notif-dl-error">
+                  <dt>Motivo</dt>
+                  <dd data-testid="notificacion-motivo">{{ n.failureCode }}</dd>
+                </div>
               }
-              <dt>Última actualización</dt>
-              <dd>{{ n.updatedAt }}</dd>
+              <div class="ff-notif-dl-item">
+                <dt>Última actualización</dt>
+                <dd>{{ n.updatedAt }}</dd>
+              </div>
             </dl>
           </li>
         }
       </ul>
+
       @if (esperando()) {
-        <p class="nota" data-testid="notificacion-en-curso" aria-live="polite">
-          El envío sigue en curso; esta sección se actualiza sola.
-        </p>
+        <div class="ff-alert ff-alert-polling">
+          <div class="ff-spinner-small"></div>
+          <p class="nota" data-testid="notificacion-en-curso" aria-live="polite">
+            El envío sigue en curso; esta sección se actualiza sola.
+          </p>
+        </div>
       }
     }
   }
 
   @if (error(); as falla) {
-    <div class="error" role="alert" data-testid="notificaciones-error">
-      <p>{{ falla.mensaje }}</p>
+    <div class="error ff-alert ff-alert-danger" role="alert" data-testid="notificaciones-error">
+      <p class="ff-alert-message">{{ falla.mensaje }}</p>
       @if (falla.referencia) {
         <p class="referencia">Referencia: {{ falla.referencia }}</p>
       }
     </div>
   }
 
-  <button
-    type="button"
-    (click)="actualizar()"
-    [disabled]="consultando()"
-    data-testid="notificaciones-actualizar"
-  >
-    {{ consultando() ? 'Consultando…' : 'Actualizar notificaciones' }}
-  </button>
+  <div class="ff-notifications-actions">
+    <button
+      type="button"
+      (click)="actualizar()"
+      [disabled]="consultando()"
+      data-testid="notificaciones-actualizar"
+      class="ff-btn ff-btn-outline-primary"
+    >
+      @if (consultando()) {
+        <span class="ff-spinner-primary"></span>
+      }
+      {{ consultando() ? 'Consultando…' : 'Actualizar notificaciones' }}
+    </button>
+  </div>
 </section>
