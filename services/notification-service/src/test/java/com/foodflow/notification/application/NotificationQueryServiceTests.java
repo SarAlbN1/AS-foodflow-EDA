@@ -26,7 +26,7 @@ class NotificationQueryServiceTests {
         UUID pedido = UUID.randomUUID();
         Notification a = Notification.pendiente(pedido, null, NotificationChannel.EMAIL, "ana@foodflow.test", "a");
         Notification b = Notification.pendiente(pedido, null, NotificationChannel.EMAIL, "ana@foodflow.test", "b");
-        when(repositorio.findByOrderIdOrderByCreatedAtDesc(pedido)).thenReturn(List.of(a, b));
+        when(repositorio.findByOrderIdOrderByCreatedAtDescIdDesc(pedido)).thenReturn(List.of(a, b));
 
         assertThat(consultas.notificacionesDelPedido(pedido)).containsExactly(a, b);
     }
@@ -35,7 +35,7 @@ class NotificationQueryServiceTests {
     @DisplayName("CA1: sin notificaciones devuelve lista vacia, no un error")
     void sinNotificaciones() {
         UUID pedido = UUID.randomUUID();
-        when(repositorio.findByOrderIdOrderByCreatedAtDesc(pedido)).thenReturn(List.of());
+        when(repositorio.findByOrderIdOrderByCreatedAtDescIdDesc(pedido)).thenReturn(List.of());
 
         assertThat(consultas.notificacionesDelPedido(pedido)).isEmpty();
     }

@@ -52,6 +52,7 @@ class ApiExceptionHandler {
     ProblemDetail errorNoControlado(Exception excepcion, HttpServletRequest peticion) {
         if (excepcion instanceof ErrorResponse deSpring) {
             ProblemDetail problema = deSpring.getBody();
+            problema.setProperty("code", codigoPara(problema.getStatus()));
             problema.setProperty("correlationId", correlationId(peticion));
             return problema;
         }
@@ -59,6 +60,20 @@ class ApiExceptionHandler {
                 peticion.getRequestURI(), excepcion);
         return problema(HttpStatus.INTERNAL_SERVER_ERROR, "internal-error", "Error interno",
                 "la solicitud no pudo procesarse", "INTERNAL_ERROR", peticion);
+    }
+
+    /**
+     * {@code code} del catalogo del contrato para un error que Spring ya clasifico: el esquema
+     * {@code ProblemDetail} lo exige en todos los errores ({@code contracts/api/openapi.yaml}).
+     */
+    static String codigoPara(int estado) {
+        if (estado == HttpStatus.NOT_FOUND.value()) {
+            return "NOT_FOUND";
+        }
+        if (estado == HttpStatus.SERVICE_UNAVAILABLE.value()) {
+            return "DEPENDENCY_UNAVAILABLE";
+        }
+        return estado >= 500 ? "INTERNAL_ERROR" : "VALIDATION_ERROR";
     }
 
     private static ProblemDetail problema(HttpStatus estado, String tipo, String titulo, String detalle,
