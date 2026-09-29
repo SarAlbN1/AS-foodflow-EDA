@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,9 +71,12 @@ public class OrderApplicationService {
 
         try {
             Order pedido = transaccion.crear(comando, requestHash, key, correlationId);
-            log.info("Pedido creado orderId={} status={} total={} canal={} correlationId={} contacto={}",
-                    pedido.id(), pedido.status(), pedido.total(), pedido.notificationChannel(),
-                    correlationId, ContactMasker.mask(pedido.customerContact()));
+            try (var correlation = MDC.putCloseable("correlationId", correlationId.toString());
+                    var orderId = MDC.putCloseable("orderId", pedido.id().toString())) {
+                log.info("Pedido creado orderId={} status={} total={} canal={} correlationId={} contacto={}",
+                        pedido.id(), pedido.status(), pedido.total(), pedido.notificationChannel(),
+                        correlationId, ContactMasker.mask(pedido.customerContact()));
+            }
             return pedido;
         } catch (DataIntegrityViolationException e) {
             // Otra solicitud con la misma clave gano la carrera y escribio primero. La clave
@@ -82,8 +86,11 @@ public class OrderApplicationService {
             if (delOtro == null) {
                 throw e;
             }
-            log.info("Solicitud simultanea con la misma Idempotency-Key: se devuelve el pedido que gano. "
-                    + "orderId={} correlationId={}", delOtro.id(), correlationId);
+            try (var correlation = MDC.putCloseable("correlationId", correlationId.toString());
+                    var orderId = MDC.putCloseable("orderId", delOtro.id().toString())) {
+                log.info("Solicitud simultanea con la misma Idempotency-Key: se devuelve el pedido que gano. "
+                        + "orderId={} correlationId={}", delOtro.id(), correlationId);
+            }
             return delOtro;
         }
     }
