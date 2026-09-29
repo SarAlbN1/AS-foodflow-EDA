@@ -14,15 +14,18 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import com.foodflow.payment.domain.NotificationChannel;
 import com.foodflow.payment.domain.NotificationContact;
 import com.foodflow.payment.domain.Payment;
 import com.foodflow.payment.domain.PaymentStatus;
 import com.foodflow.payment.domain.PaymentToken;
+import com.foodflow.payment.domain.ProcessedEvent;
 import com.foodflow.payment.domain.RejectionReason;
 import com.foodflow.payment.infrastructure.messaging.PaymentEventPublisher;
 import com.foodflow.payment.infrastructure.persistence.PaymentRepository;
+import com.foodflow.payment.infrastructure.persistence.ProcessedEventRepository;
 
 /**
  * HU-202 — resolucion y persistencia del pago, con el repositorio simulado. La persistencia
@@ -34,6 +37,7 @@ class PaymentApplicationServiceTests {
 
     private PaymentRepository repositorio;
     private PaymentEventPublisher publicador;
+    private ProcessedEventRepository procesados;
     private PaymentApplicationService servicio;
 
     @BeforeEach
@@ -42,7 +46,10 @@ class PaymentApplicationServiceTests {
         when(repositorio.findByOrderId(any())).thenReturn(Optional.empty());
         when(repositorio.saveAndFlush(any())).thenAnswer(invocacion -> invocacion.getArgument(0));
         publicador = mock(PaymentEventPublisher.class);
-        servicio = new PaymentApplicationService(repositorio, new TransactionReferences(), publicador);
+        procesados = mock(ProcessedEventRepository.class);
+        when(procesados.existsById(any())).thenReturn(false);
+        servicio = new PaymentApplicationService(repositorio, new TransactionReferences(), publicador,
+                procesados);
     }
 
     @Test
@@ -140,5 +147,30 @@ class PaymentApplicationServiceTests {
                 "COP",
                 token,
                 new NotificationContact(NotificationChannel.EMAIL, "cliente@foodflow.test"));
+    }
+
+    @Test
+    @DisplayName("CA-1 y CA-2 de HU-601: el eventId se registra en la misma transaccion que el pago")
+    void registraElEventoProcesado() {
+        StartPaymentCommand orden = orden("45900.00", PaymentToken.PAY_OK);
+
+        servicio.iniciarPago(orden);
+
+        ArgumentCaptor<ProcessedEvent> captor = ArgumentCaptor.forClass(ProcessedEvent.class);
+        verify(procesados).saveAndFlush(captor.capture());
+        assertThat(captor.getValue().eventId()).isEqualTo(orden.eventId());
+        assertThat(captor.getValue().consumer()).isEqualTo("payment-service.orders");
+    }
+
+    @Test
+    @DisplayName("CA-3 de HU-601: un eventId ya procesado no cobra ni publica de nuevo")
+    void elEventoYaProcesadoNoVuelveACobrar() {
+        StartPaymentCommand orden = orden("45900.00", PaymentToken.PAY_OK);
+        when(procesados.existsById(orden.eventId())).thenReturn(true);
+
+        servicio.iniciarPago(orden);
+
+        verify(repositorio, never()).saveAndFlush(any());
+        verify(publicador, never()).publicarResultado(any(), any());
     }
 }

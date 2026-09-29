@@ -84,7 +84,16 @@ El pago es determinista (ADR-10): el resultado se conoce al procesar `OrderCreat
 
 **Un pedido, un pago.** `payments.order_id` es único: reprocesar el mismo `OrderCreated` devuelve el pago que ya existía y no cobra de nuevo.
 
-Dos consumidores del grupo no pueden procesar el mismo pedido a la vez: la clave de partición es el `orderId` (regla 11, ADR-04), así que todos sus eventos van a la misma partición y la atiende un solo consumidor. El índice único queda como última garantía de la base, no como el mecanismo del que depende el caso normal. El registro del `eventId` en `processed_events` (ADR-09) lo añade HU-601.
+Dos consumidores del grupo no pueden procesar el mismo pedido a la vez: la clave de partición es el `orderId` (regla 11, ADR-04), así que todos sus eventos van a la misma partición y la atiende un solo consumidor. El índice único queda como última garantía de la base, no como el mecanismo del que depende el caso normal. **Idempotencia del consumidor (HU-601).** El `eventId` se registra en `processed_events` en la **misma transacción local** que el pago: o quedan las dos cosas o no queda ninguna. Un evento reentregado se ignora con `INFO` y no cobra ni publica de nuevo.
+
+Conviven dos guardas que responden a preguntas distintas, y las dos hacen falta:
+
+| Guarda | Pregunta | Protege de |
+|---|---|---|
+| `processed_events.event_id` | ¿este **evento** ya se procesó? | La reentrega del broker (ADR-09) |
+| `payments.order_id` único | ¿este **pedido** ya tiene pago? | El doble cobro, venga de donde venga |
+
+La segunda es la que evita el daño grave; la primera es la que distingue una reentrega de un evento nuevo que casualmente repite el pedido.
 
 El esquema lo crean los scripts de [`infrastructure/postgres/payment-db/`](../../infrastructure/postgres/payment-db) y Hibernate solo lo valida (`ddl-auto=validate`).
 
