@@ -1,0 +1,80 @@
+Project FoodFlow {
+  database_type: 'PostgreSQL'
+  Note: '''
+  Modelo lógico de las tres entidades de negocio del prototipo: Pedido, Pago y Notificación.
+  Físicamente cada servicio mantiene su propia base PostgreSQL.
+  Las referencias entre dominios son identificadores lógicos transportados por eventos; no son llaves foráneas entre bases separadas.
+
+  Cada base incorpora además una tabla técnica processed_events(event_id PK, processed_at) para idempotencia. Esa tabla no se cuenta como entidad de negocio y se omite del ERD principal para mantener el alcance del caso práctico.
+  '''
+}
+
+Enum order_status {
+  CREADO
+  PAGADO
+  PAGO_RECHAZADO
+}
+
+Enum payment_status {
+  APROBADO
+  RECHAZADO
+}
+
+Enum notification_status {
+  PENDIENTE
+  ENVIADA
+  FALLIDA
+}
+
+Enum notification_channel {
+  EMAIL
+  SMS
+}
+
+Table orders {
+  id uuid [pk, not null]
+  customer_reference varchar(120) [not null, note: 'Referencia del actor Cliente; Cliente no se modela como entidad de negocio.']
+  total decimal(12,2) [not null]
+  idempotency_key varchar(120) [not null, unique, note: 'Valor de la cabecera HTTP Idempotency-Key para impedir pedidos duplicados por reintento o doble clic.']
+  status order_status [not null, default: 'CREADO']
+
+  contact_email varchar(180) [note: 'Snapshot de contacto usado para EMAIL. Puede ser nulo si el canal es SMS.']
+  contact_phone varchar(40) [note: 'Snapshot de contacto usado para SMS. Puede ser nulo según el canal.']
+  notification_channel notification_channel [not null]
+  payment_test_token varchar(20) [not null, note: 'Solo demo: PAY-OK o PAY-FAIL. No representa una credencial de pago real.']
+
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: '''Entidad Pedido. Se persiste en Order DB. Los datos de contacto se almacenan como snapshot mínimo para que OrderStatusChanged pueda transportar el destino sin consultar otro dominio.'''
+}
+
+Table payments {
+  id uuid [pk, not null]
+  order_id uuid [not null, unique, note: 'Referencia lógica al Pedido que originó el procesamiento.']
+  amount decimal(12,2) [not null]
+  status payment_status [not null]
+  transaction_reference varchar(160)
+  created_at timestamp [not null]
+  updated_at timestamp [not null]
+
+  Note: '''Entidad Pago. Se persiste en Payment DB. La decisión es determinista en la demo: PAY-OK => APROBADO; PAY-FAIL => RECHAZADO.'''
+}
+
+Table notifications {
+  id uuid [pk, not null]
+  order_id uuid [not null, note: 'Referencia lógica al Pedido cuyo cambio de estado genera la notificación.']
+  channel notification_channel [not null]
+  destination varchar(180) [not null]
+  message text [not null]
+  status notification_status [not null, default: 'PENDIENTE']
+  provider_reference varchar(160)
+  idempotency_key uuid [not null, unique, note: 'Usada en la demo para evitar envíos externos duplicados con la misma notificación.']
+  created_at timestamp [not null]
+  sent_at timestamp
+
+  Note: '''Entidad Notificación. Se persiste en Notification DB y se origina al consumir OrderStatusChanged.'''
+}
+
+Ref payment_order: payments.order_id - orders.id
+Ref notification_order: notifications.order_id > orders.id
