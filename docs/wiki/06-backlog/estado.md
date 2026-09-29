@@ -30,7 +30,7 @@
 | [HU-202](epicas/EP-02-pagos.md) | Procesar y persistir el resultado del pago | 3 | Sara | 5 | Terminada | #73 | Resuelve y persiste el pago; la publicación es HU-203 y HU-204 |
 | [HU-203](epicas/EP-02-pagos.md) | Publicar PaymentApproved | 3 | Sara | 2 | Terminada | #84 | Publica PaymentApproved tras el commit; el rechazo es HU-204 |
 | [HU-204](epicas/EP-02-pagos.md) | Publicar PaymentRejected | 3 | Sara | 2 | Terminada | #86 | Publica PaymentRejected; un pago produce un solo evento |
-| [HU-702](epicas/EP-07-entregables-y-sustentacion.md) | Proyección laboral en la matriz de mercado | 3 | Juan | 2 | En revisión | [#76](https://github.com/SarAlbN1/AS-foodflow-EDA/pull/76) | Propuesta a `main.tex`: la aplica Sara |
+| [HU-702](epicas/EP-07-entregables-y-sustentacion.md) | Proyección laboral en la matriz de mercado | 3 | Juan | 2 | En revisión | #76 | Propuesta integrada en #76; falta aplicarla a `main.tex`, que solo edita Sara (issue #32 abierto) |
 | [HU-703](epicas/EP-07-entregables-y-sustentacion.md) | Patrones, antipatrones y trazabilidad en el documento técnico | 3 | Sara | 3 | Terminada | #88 | Matriz Investigado/Diseñado/Implementado, antipatrones y riesgos aceptados |
 | [HU-301](epicas/EP-03-notificaciones.md) | Crear una notificación ante el resultado del pago | 4 | Sara | 5 | Terminada | #93 | Consume `payments.events` en abanico (D-6) y crea la notificación en `PENDIENTE`; el envío es HU-302 |
 | [HU-302](epicas/EP-03-notificaciones.md) | Enviar una notificación mediante el proveedor externo | 4 | Sara | 5 | En revisión | #96 | Adaptador HTTP al proveedor: timeouts explícitos, 3 reintentos y sin Circuit Breaker; fija el catálogo de `failureCode` |
@@ -47,7 +47,7 @@
 | [HU-602](epicas/EP-06-resiliencia-y-calidad.md) | Aplicar reintentos y DLQ a eventos fallidos | 5 | Sara | 5 | Pendiente | | |
 | [HU-603](epicas/EP-06-resiliencia-y-calidad.md) | Implementar logs estructurados y correlacionados | 5 | Sara | 3 | Pendiente | | |
 | [HU-605](epicas/EP-06-resiliencia-y-calidad.md) | Automatizar pruebas de integración del flujo Kafka | 5 | Sara | 5 | Pendiente | | |
-| [HU-607](epicas/EP-06-resiliencia-y-calidad.md) | Scripts de arranque, parada y prueba de humo | 5 | Juan | 2 | En revisión | | `scripts/up.sh`, `down.sh`, `smoke-test.sh` verificados desde un clon limpio; incluye el health del gateway (A-10). La prueba de humo informa `PENDIENTE` el estado final hasta HU-104/105/106 |
+| [HU-607](epicas/EP-06-resiliencia-y-calidad.md) | Scripts de arranque, parada y prueba de humo | 5 | Juan | 2 | Terminada | #91 | `scripts/up.sh`, `down.sh`, `smoke-test.sh` verificados desde un clon limpio; incluye el health del gateway (A-10). La prueba de humo informa `PENDIENTE` el estado final hasta HU-104/105/106 |
 | [HU-606](epicas/EP-06-resiliencia-y-calidad.md) | Validar el flujo end-to-end contenerizado | 6 | Sara | 8 | Pendiente | | |
 | [HU-608](epicas/EP-06-resiliencia-y-calidad.md) | Verificar los atributos de calidad | 6 | Juan | 5 | Pendiente | | |
 | [HU-701](epicas/EP-07-entregables-y-sustentacion.md) | README, tag y release | 6 | Sara | 3 | Pendiente | | |
