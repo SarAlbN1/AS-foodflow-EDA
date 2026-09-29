@@ -70,6 +70,22 @@ Cada persona trabaja con su propio asistente, y **cada quien corrige lo suyo**. 
 
 **Al pedir cambios, la evidencia manda.** Un hallazgo se reporta con lo que se ejecutó y lo que salió, no con una sospecha. Y quien corrige demuestra que la corrección funciona: lo habitual es enseñar que la prueba nueva **falla** sin el arreglo.
 
+## Integración con aprobación cruzada
+
+Un PR se integra solo cuando **la otra persona** lo aprobó en su versión actual: los PR de Juan los aprueba Sara y los de Sara los aprueba Juan. Nadie integra sobre su propia aprobación ni sobre una aprobación anterior al último *push*.
+
+El asistente puede ejecutar `gh pr merge` porque una guarda lo comprueba antes de cada ejecución: [`.claude/hooks/guard-pr-merge.mjs`](../../../.claude/hooks/guard-pr-merge.mjs), registrada como *hook* `PreToolUse` en `.claude/settings.json`. Bloquea la integración si:
+
+| Condición | Por qué |
+|---|---|
+| El PR no está abierto, no es `MERGEABLE` o no está `APPROVED` | Lo mismo que exige la protección de `main` |
+| No hay una aprobación de alguien distinto del autor **sobre el commit actual** del PR | Aprobación cruzada; un *push* posterior obliga a revisar de nuevo |
+| Alguien tiene cambios pedidos vigentes | Una aprobación no anula los cambios que pidió la otra persona |
+| Falta `--squash`, `--subject` o `--body ""` | Historial lineal y mensaje escrito a mano, sin los *trailers* de los commits ([arriba](#la-traza-no-nombra-herramientas-de-ia)) |
+| Usa `--admin` o `--auto` | `--admin` salta la protección de `main`; `--auto` integraría más tarde sin volver a comprobar |
+
+Forma del comando: `gh pr merge <n> --squash --subject "<tipo>(<ámbito>): <descripción> [HU-###] (#<n>)" --body ""`. La guarda necesita `node` (ya instalado para el frontend) y `gh` autenticado.
+
 ## Protección de `main`, tags y releases
 
 **Protección de `main`** (Settings, Branches): PR obligatorio, 1 aprobación, resolución de conversaciones, historial lineal (squash), sin force-push ni borrado. Los *status checks* obligatorios solo se activan si se adopta CI (opcional).
