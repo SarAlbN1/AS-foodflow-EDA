@@ -1,6 +1,6 @@
 # services/order-service — Order Service
 
-> **Estado:** `POST /orders` crea y persiste el pedido en estado `CREADO` (HU-101), `GET /orders/{id}` lo consulta (HU-102), la creación publica `OrderCreated` en `orders.events` (HU-103) `Idempotency-Key` impide crear dos pedidos con la misma solicitud (HU-107) y el resultado del pago pasa el pedido a `PAGADO` o `PAGO_RECHAZADO` (HU-104 y HU-105). El resto de la funcionalidad la construyen las historias indicadas.
+> **Estado:** `POST /orders` crea y persiste el pedido en estado `CREADO` (HU-101), `GET /orders/{id}` lo consulta (HU-102), la creación publica `OrderCreated` en `orders.events` (HU-103) `Idempotency-Key` impide crear dos pedidos con la misma solicitud (HU-107) el resultado del pago pasa el pedido a `PAGADO` o `PAGO_RECHAZADO` (HU-104 y HU-105) y cada cambio publica `OrderStatusChanged` (HU-106). El resto de la funcionalidad la construyen las historias indicadas.
 
 **Responsabilidad:** Crea y consulta pedidos; publica `OrderCreated` y `OrderStatusChanged`; consume `PaymentApproved` y `PaymentRejected`. Único propietario de Order DB.
 
@@ -123,6 +123,7 @@ docker exec foodflow-kafka /opt/kafka/bin/kafka-console-consumer.sh \
 | `PaymentRejected` | El pedido pasa de `CREADO` a `PAGO_RECHAZADO` (HU-105), con las mismas reglas |
 | Otro tipo | Se ignora con `DEBUG` y se confirma el offset |
 
+- **`OrderStatusChanged` (HU-106).** Cada transición válida lo publica en `orders.events`, con clave `orderId`, **después del commit** y con el `correlationId` del evento de pago, con el mismo patrón que `OrderCreated`. Payload: `orderId`, `previousStatus`, `newStatus` y `notificationContact`. Una transición inválida, un evento repetido o un pedido inexistente no publican nada. Ningún servicio depende de él en el prototipo: Payment lo ignora y Notification reacciona a `payments.events` (D-6).
 - **Idempotencia (ADR-09).** El `eventId` se registra en `processed_events` en la misma transacción que el cambio de estado. Un evento ya procesado se ignora con `INFO`.
 - **Transición inválida.** Si el pedido ya no está en `CREADO`, el cambio se ignora con `WARN`, sin error ([comportamiento del flujo](../../docs/wiki/02-arquitectura/comportamiento-del-flujo.md)).
 - **Pedido inexistente.** Es recuperable: la excepción sube, el offset **no** se confirma y el contenedor reintenta. Hoy, agotados los reintentos, se registra y se sigue; HU-602 lo llevará a `payments.events.dlq`.

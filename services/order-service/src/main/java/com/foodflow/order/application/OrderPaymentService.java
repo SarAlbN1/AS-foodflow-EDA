@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.foodflow.order.domain.Order;
+import com.foodflow.order.domain.OrderStatus;
 import com.foodflow.order.domain.ProcessedEvent;
+import com.foodflow.order.infrastructure.messaging.OrderEventPublisher;
 import com.foodflow.order.infrastructure.persistence.OrderRepository;
 import com.foodflow.order.infrastructure.persistence.ProcessedEventRepository;
 
@@ -27,6 +29,10 @@ import com.foodflow.order.infrastructure.persistence.ProcessedEventRepository;
  * <p><strong>Pedido inexistente.</strong> Es un error recuperable ({@code comportamiento-del-flujo.md}):
  * se lanza para que el consumidor no confirme el offset y Kafka reintente; si persiste, HU-602 lo
  * lleva a la DLQ. No se registra el {@code eventId}, porque no hubo efecto.
+ *
+ * <p><strong>{@code OrderStatusChanged} (HU-106).</strong> Cada transicion valida lo publica en
+ * {@code orders.events} despues del commit, con el {@code correlationId} del evento de pago. Una
+ * transicion invalida, un evento repetido o un pedido inexistente no publican nada.
  */
 @Service
 public class OrderPaymentService {
@@ -38,10 +44,13 @@ public class OrderPaymentService {
 
     private final OrderRepository pedidos;
     private final ProcessedEventRepository procesados;
+    private final OrderEventPublisher publicador;
 
-    public OrderPaymentService(OrderRepository pedidos, ProcessedEventRepository procesados) {
+    public OrderPaymentService(OrderRepository pedidos, ProcessedEventRepository procesados,
+            OrderEventPublisher publicador) {
         this.pedidos = pedidos;
         this.procesados = procesados;
+        this.publicador = publicador;
     }
 
     /**
@@ -82,7 +91,10 @@ public class OrderPaymentService {
         Order pedido = pedidos.findById(resultado.orderId())
                 .orElseThrow(() -> new OrderNotFoundException(resultado.orderId()));
 
+        OrderStatus anterior = pedido.status();
         if (transicion.test(pedido)) {
+            // Se registra para despues del commit: si la transaccion se deshace, no sale.
+            publicador.publicarOrderStatusChanged(pedido, anterior, resultado.correlationId());
             log.info("Pedido {} orderId={} paymentId={} eventId={} correlationId={}",
                     pedido.status(), pedido.id(), resultado.paymentId(), resultado.eventId(),
                     resultado.correlationId());
