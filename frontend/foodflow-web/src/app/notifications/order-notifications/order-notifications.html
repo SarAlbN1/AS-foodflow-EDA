@@ -1,0 +1,65 @@
+<section class="notificaciones">
+  <h3>Notificaciones</h3>
+
+  @if (notificaciones(); as lista) {
+    @if (lista.length === 0) {
+      <p class="nota" data-testid="sin-notificaciones" aria-live="polite">
+        Todavía no hay notificaciones: se crean cuando se conoce el resultado del pago.
+        @if (esperando()) {
+          Esta sección se actualiza sola.
+        }
+      </p>
+    } @else {
+      <ul>
+        @for (n of lista; track n.id) {
+          <li class="notificacion" [attr.data-estado]="n.status" data-testid="notificacion">
+            <p class="cabecera">
+              <span class="estado" data-testid="notificacion-estado">{{
+                etiquetas[n.status]
+              }}</span>
+              <code data-testid="notificacion-estado-codigo">{{ n.status }}</code>
+            </p>
+            <p class="contenido" data-testid="notificacion-contenido">{{ n.content }}</p>
+            <dl>
+              <dt>Canal</dt>
+              <dd data-testid="notificacion-canal">{{ canales[n.channel] }}</dd>
+              <dt>Destino</dt>
+              <dd>{{ n.destination }}</dd>
+              <dt>Intentos</dt>
+              <dd>{{ n.attempts }}</dd>
+              @if (n.status === 'FALLIDA' && n.failureCode) {
+                <dt>Motivo</dt>
+                <dd data-testid="notificacion-motivo">{{ n.failureCode }}</dd>
+              }
+              <dt>Última actualización</dt>
+              <dd>{{ n.updatedAt }}</dd>
+            </dl>
+          </li>
+        }
+      </ul>
+      @if (esperando()) {
+        <p class="nota" data-testid="notificacion-en-curso" aria-live="polite">
+          El envío sigue en curso; esta sección se actualiza sola.
+        </p>
+      }
+    }
+  }
+
+  @if (error(); as falla) {
+    <div class="error" role="alert" data-testid="notificaciones-error">
+      <p>{{ falla.mensaje }}</p>
+      @if (falla.referencia) {
+        <p class="referencia">Referencia: {{ falla.referencia }}</p>
+      }
+    </div>
+  }
+
+  <button
+    type="button"
+    (click)="actualizar()"
+    [disabled]="consultando()"
+    data-testid="notificaciones-actualizar"
+  >
+    {{ consultando() ? 'Consultando…' : 'Actualizar notificaciones' }}
+  </button>
+</section>

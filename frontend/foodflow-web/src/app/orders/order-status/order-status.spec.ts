@@ -1,11 +1,19 @@
+import { Component, input } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { API_BASE_URL } from '../../core/api-config';
+import { OrderNotifications } from '../../notifications/order-notifications/order-notifications';
 import { Order, OrderStatus } from '../order.model';
 import { ESPERA_AUTOMATICA_MS, INTERVALO_CONSULTA_MS, OrderStatusPage } from './order-status';
+
+/** Sustituye a las notificaciones (HU-504): estas pruebas cubren solo el estado del pedido. */
+@Component({ selector: 'app-order-notifications', template: '' })
+class NotificacionesVacias {
+  readonly orderId = input.required<string>();
+}
 
 const GATEWAY = 'http://gateway.test';
 const ID = '3f6c1e0a-6c9d-4f6f-9c4b-2a9f1d5e7b10';
@@ -38,7 +46,12 @@ describe('OrderStatusPage (HU-502)', () => {
         provideRouter([]),
         { provide: API_BASE_URL, useValue: GATEWAY },
       ],
-    }).compileComponents();
+    })
+      .overrideComponent(OrderStatusPage, {
+        remove: { imports: [OrderNotifications] },
+        add: { imports: [NotificacionesVacias] },
+      })
+      .compileComponents();
     http = TestBed.inject(HttpTestingController);
   });
 
