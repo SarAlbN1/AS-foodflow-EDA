@@ -40,7 +40,7 @@ Un asistente **no debe**:
 - convertir Flyway, Testcontainers o CI en requisito obligatorio del prototipo;
 - elegir versiones de dependencias sin consultar `docs/wiki/04-implementacion/versiones.md`;
 - inventar rutas, credenciales, URLs o comportamientos no especificados;
-- **editar `docs/informe/main.tex`**: es la fuente de verdad del diseño y solo Sara lo modifica. Un asistente propone el cambio (sección, texto actual, texto propuesto y motivo) y lo registra en la página [Divergencias informe–wiki](../02-arquitectura/divergencias-informe-wiki.md);
+- **editar `docs/informe/main.tex`**: es la fuente de verdad del diseño y solo Sara lo modifica. Un asistente propone el cambio (sección, texto actual, texto propuesto y motivo) en el PR o en un comentario de la HU para revisión cruzada;
 - corregir el informe y la wiki en direcciones opuestas: ante una contradicción se ajusta la wiki, que describe y deriva el informe;
 - hacer commits directos a `main`, fusionar su propio PR o marcar una HU como terminada sin verificar todos sus criterios;
 - abrir un PR que no corresponda a una HU: si el cambio no cabe en ninguna, se reabre la HU que lo cubre.
