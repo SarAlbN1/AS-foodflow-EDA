@@ -130,4 +130,41 @@ class NotificationEventPublisherTests {
         notificacion.marcarEnviada(1);
         return notificacion;
     }
+
+    @Test
+    @DisplayName("criterios 2 y 4 de HU-304: NotificationFailed lleva el motivo y los intentos")
+    void publicaElFalloConSuCausa() {
+        Notification notificacion = fallida();
+
+        publicador.publicarFallida(notificacion, CORRELACION);
+
+        JsonNode evento = JSON.readTree(cuerpoPublicado());
+        assertThat(evento.get("eventType").asString()).isEqualTo("NotificationFailed");
+        assertThat(evento.get("aggregateId").asString()).isEqualTo(notificacion.orderId().toString());
+        assertThat(evento.get("correlationId").asString()).isEqualTo(CORRELACION.toString());
+
+        JsonNode payload = evento.get("payload");
+        assertThat(payload.propertyNames()).containsExactlyInAnyOrder(
+                "notificationId", "orderId", "paymentId", "channel", "failureCode", "attempts");
+        assertThat(payload.get("failureCode").asString()).isEqualTo("PROVEEDOR_NO_DISPONIBLE");
+        assertThat(payload.get("attempts").asInt()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("el evento de fallo tampoco lleva el destino ni el contenido")
+    void elFalloNoFiltraDatosPersonales() {
+        publicador.publicarFallida(fallida(), CORRELACION);
+
+        assertThat(cuerpoPublicado())
+                .doesNotContain("ana@foodflow.test")
+                .doesNotContain("Tu pago");
+    }
+
+    private static Notification fallida() {
+        Notification notificacion = Notification.pendiente(UUID.randomUUID(), UUID.randomUUID(),
+                NotificationChannel.EMAIL, "ana@foodflow.test",
+                "Tu pago de 45.900,00 COP fue aprobado.");
+        notificacion.marcarFallida("PROVEEDOR_NO_DISPONIBLE", 3);
+        return notificacion;
+    }
 }

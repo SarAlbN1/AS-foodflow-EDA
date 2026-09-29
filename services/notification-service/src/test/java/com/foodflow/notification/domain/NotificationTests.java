@@ -84,4 +84,50 @@ class NotificationTests {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> pendiente().marcarEnviada(0));
     }
+
+    @Test
+    @DisplayName("criterio 1 de HU-304: pasa a FALLIDA con su motivo y sus intentos")
+    void pasaAFallida() {
+        Notification notificacion = pendiente();
+
+        assertThat(notificacion.marcarFallida("PROVEEDOR_NO_DISPONIBLE", 3)).isTrue();
+
+        assertThat(notificacion.status()).isEqualTo(NotificationStatus.FALLIDA);
+        assertThat(notificacion.failureCode()).isEqualTo("PROVEEDOR_NO_DISPONIBLE");
+        assertThat(notificacion.attempts()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("una notificacion ya enviada no puede pasar a FALLIDA")
+    void noRetrocedeDeEnviadaAFallida() {
+        Notification notificacion = pendiente();
+        notificacion.marcarEnviada(1);
+
+        assertThat(notificacion.marcarFallida("PROVEEDOR_NO_DISPONIBLE", 3)).isFalse();
+
+        assertThat(notificacion.status()).isEqualTo(NotificationStatus.ENVIADA);
+        assertThat(notificacion.failureCode()).isNull();
+    }
+
+    @Test
+    @DisplayName("un fallo sin motivo no se registra: el evento lo exige para diagnosticar")
+    void exigeElMotivo() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> pendiente().marcarFallida("  ", 3));
+    }
+
+    @Test
+    @DisplayName("la guarda de la maquina de estados es una sola: vale para los dos destinos")
+    void laGuardaEsCompartida() {
+        Notification enviada = pendiente();
+        enviada.marcarEnviada(1);
+        Notification fallida = pendiente();
+        fallida.marcarFallida("PROVEEDOR_NO_DISPONIBLE", 3);
+
+        // Ninguna de las dos acepta una segunda transicion, sea al destino que sea.
+        assertThat(enviada.marcarFallida("PROVEEDOR_NO_DISPONIBLE", 3)).isFalse();
+        assertThat(fallida.marcarEnviada(1)).isFalse();
+        assertThat(enviada.status()).isEqualTo(NotificationStatus.ENVIADA);
+        assertThat(fallida.status()).isEqualTo(NotificationStatus.FALLIDA);
+    }
 }

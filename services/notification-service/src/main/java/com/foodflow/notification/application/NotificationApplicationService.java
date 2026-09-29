@@ -129,4 +129,46 @@ public class NotificationApplicationService {
                 providerReference, correlationId);
         return true;
     }
+
+    /**
+     * Registra que la notificacion no pudo entregarse y publica {@code NotificationFailed}
+     * (HU-304).
+     *
+     * <p>Mismas garantias que {@link #registrarEnvio}: transaccion local y publicacion despues
+     * del commit.
+     *
+     * <p><strong>Lo que NO hace, y es el criterio 3.</strong> No lanza, no revierte nada y no
+     * toca ni el pago ni el pedido. El proveedor contesto que no: es un resultado de negocio, no
+     * una averia. Por eso el evento de pago <strong>no va a DLQ</strong> y su offset se confirma
+     * (regla 10), y por eso un fallo aqui no impide que Order Service registre el resultado del
+     * pago (regla 12).
+     *
+     * @param failureCode motivo del catalogo de {@code proveedor-notificaciones.md}
+     * @return {@code true} si la notificacion paso a {@code FALLIDA}
+     */
+    @Transactional
+    public boolean registrarFallo(UUID notificationId, String failureCode, int attempts,
+            UUID correlationId) {
+        Notification notificacion = notificaciones.findById(notificationId).orElse(null);
+        if (notificacion == null) {
+            log.warn("No existe la notificacion cuyo envio fallo notificationId={} correlationId={}",
+                    notificationId, correlationId);
+            return false;
+        }
+        if (!notificacion.marcarFallida(failureCode, attempts)) {
+            log.warn("La notificacion no estaba PENDIENTE, no se registra el fallo notificationId={} "
+                            + "status={} correlationId={}",
+                    notificationId, notificacion.status(), correlationId);
+            return false;
+        }
+
+        notificaciones.saveAndFlush(notificacion);
+        publicador.publicarFallida(notificacion, correlationId);
+
+        log.warn("Notificacion FALLIDA notificationId={} orderId={} failureCode={} intentos={} "
+                        + "correlationId={}",
+                notificacion.id(), notificacion.orderId(), notificacion.failureCode(),
+                notificacion.attempts(), correlationId);
+        return true;
+    }
 }

@@ -1,5 +1,7 @@
 package com.foodflow.notification.infrastructure.messaging;
 
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -41,6 +43,8 @@ public class NotificationEventPublisher {
     /** Nombre del evento en el catalogo de {@code docs/wiki/03-contratos/eventos.md}. */
     static final String NOTIFICATION_SENT = "NotificationSent";
 
+    static final String NOTIFICATION_FAILED = "NotificationFailed";
+
     private final KafkaTemplate<String, String> kafka;
     private final ObjectMapper jackson;
     private final String notificationsTopic;
@@ -61,9 +65,22 @@ public class NotificationEventPublisher {
      * @param correlationId     correlacion del evento de pago que origino la notificacion
      */
     public void publicarEnviada(Notification notificacion, String providerReference,
-            java.util.UUID correlationId) {
+            UUID correlationId) {
         publicar(EventEnvelope.de(NOTIFICATION_SENT, notificacion.orderId(), correlationId,
                 NotificationSentPayload.de(notificacion, providerReference)));
+    }
+
+    /**
+     * Publica que la notificacion no pudo entregarse (HU-304).
+     *
+     * <p>Es un hecho de negocio como el otro: el proveedor contesto que no. No va a DLQ y no
+     * revierte nada; el pago sigue registrado y el pedido conserva su estado final (regla 12).
+     *
+     * @param correlationId correlacion del evento de pago que origino la notificacion
+     */
+    public void publicarFallida(Notification notificacion, UUID correlationId) {
+        publicar(EventEnvelope.de(NOTIFICATION_FAILED, notificacion.orderId(), correlationId,
+                NotificationFailedPayload.de(notificacion)));
     }
 
     private void publicar(EventEnvelope<? extends Record> evento) {
