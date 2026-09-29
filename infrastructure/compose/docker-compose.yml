@@ -209,6 +209,9 @@ services:
       ORDER_DB_USER: ${ORDER_DB_USER}
       ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:?falta KAFKA_BOOTSTRAP_SERVERS en .env; compara con .env.example}
+      KAFKA_RETRY_MAX_ATTEMPTS: ${KAFKA_RETRY_MAX_ATTEMPTS:?falta KAFKA_RETRY_MAX_ATTEMPTS en .env; compara con .env.example}
+      KAFKA_RETRY_INITIAL_INTERVAL: ${KAFKA_RETRY_INITIAL_INTERVAL:?falta KAFKA_RETRY_INITIAL_INTERVAL en .env; compara con .env.example}
+      KAFKA_RETRY_MULTIPLIER: ${KAFKA_RETRY_MULTIPLIER:?falta KAFKA_RETRY_MULTIPLIER en .env; compara con .env.example}
       ORDERS_TOPIC: ${ORDERS_TOPIC:?falta ORDERS_TOPIC en .env; compara con .env.example}
       # Consumo del resultado del pago (HU-104).
       PAYMENTS_TOPIC: ${PAYMENTS_TOPIC:?falta PAYMENTS_TOPIC en .env; compara con .env.example}
@@ -246,6 +249,9 @@ services:
       PAYMENT_DB_USER: ${PAYMENT_DB_USER}
       PAYMENT_DB_PASSWORD: ${PAYMENT_DB_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:?falta KAFKA_BOOTSTRAP_SERVERS en .env; compara con .env.example}
+      KAFKA_RETRY_MAX_ATTEMPTS: ${KAFKA_RETRY_MAX_ATTEMPTS:?falta KAFKA_RETRY_MAX_ATTEMPTS en .env; compara con .env.example}
+      KAFKA_RETRY_INITIAL_INTERVAL: ${KAFKA_RETRY_INITIAL_INTERVAL:?falta KAFKA_RETRY_INITIAL_INTERVAL en .env; compara con .env.example}
+      KAFKA_RETRY_MULTIPLIER: ${KAFKA_RETRY_MULTIPLIER:?falta KAFKA_RETRY_MULTIPLIER en .env; compara con .env.example}
       ORDERS_TOPIC: ${ORDERS_TOPIC:?falta ORDERS_TOPIC en .env; compara con .env.example}
       PAYMENTS_TOPIC: ${PAYMENTS_TOPIC:?falta PAYMENTS_TOPIC en .env; compara con .env.example}
       PAYMENT_ORDERS_CONSUMER_GROUP: ${PAYMENT_ORDERS_CONSUMER_GROUP:?falta PAYMENT_ORDERS_CONSUMER_GROUP en .env; compara con .env.example}
@@ -287,6 +293,9 @@ services:
       NOTIFICATION_DB_USER: ${NOTIFICATION_DB_USER}
       NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:?falta KAFKA_BOOTSTRAP_SERVERS en .env; compara con .env.example}
+      KAFKA_RETRY_MAX_ATTEMPTS: ${KAFKA_RETRY_MAX_ATTEMPTS:?falta KAFKA_RETRY_MAX_ATTEMPTS en .env; compara con .env.example}
+      KAFKA_RETRY_INITIAL_INTERVAL: ${KAFKA_RETRY_INITIAL_INTERVAL:?falta KAFKA_RETRY_INITIAL_INTERVAL en .env; compara con .env.example}
+      KAFKA_RETRY_MULTIPLIER: ${KAFKA_RETRY_MULTIPLIER:?falta KAFKA_RETRY_MULTIPLIER en .env; compara con .env.example}
       PAYMENTS_TOPIC: ${PAYMENTS_TOPIC:?falta PAYMENTS_TOPIC en .env; compara con .env.example}
       NOTIFICATION_PAYMENTS_CONSUMER_GROUP: ${NOTIFICATION_PAYMENTS_CONSUMER_GROUP:?falta NOTIFICATION_PAYMENTS_CONSUMER_GROUP en .env; compara con .env.example}
       # Crítica desde HU-302: es la baseUrl del cliente del proveedor. Vacía anularía el valor

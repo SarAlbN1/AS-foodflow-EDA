@@ -113,7 +113,7 @@ class PaymentResultEventConsumerTests {
     }
 
     @Test
-    @DisplayName("un cuerpo ilegible se descarta sin tumbar al consumidor y se confirma")
+    @DisplayName("un cuerpo ilegible se entrega al manejador y no se confirma directamente")
     void cuerpoIlegible() {
         assertThatExceptionOfType(UnsupportedEventException.class)
                 .isThrownBy(() -> consumidor.consumir(registro("{esto no es json"), confirmacion));

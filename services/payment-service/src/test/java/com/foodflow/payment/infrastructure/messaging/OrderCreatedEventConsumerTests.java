@@ -124,7 +124,7 @@ class OrderCreatedEventConsumerTests {
     }
 
     @Test
-    @DisplayName("CA-4: un cuerpo ilegible no inicia ningun pago y no tumba al consumidor")
+    @DisplayName("CA-4: un cuerpo ilegible no inicia pago y se entrega al manejador")
     void toleraUnCuerpoIlegible() {
         assertThatExceptionOfType(UnsupportedEventException.class)
                 .isThrownBy(() -> consumidor.consumir(registro("{ esto no es json"), confirmacion));
