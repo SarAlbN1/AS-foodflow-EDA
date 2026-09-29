@@ -84,6 +84,39 @@ class OrderPaymentServiceTests {
         verify(procesados, never()).saveAndFlush(any());
     }
 
+    @Test
+    @DisplayName("HU-105 CA2: el pedido pasa de CREADO a PAGO_RECHAZADO y el eventId se registra")
+    void rechazaElPedido() {
+        Order pedido = pedidoCreado();
+        PaymentResultCommand resultado = resultado(pedido.id());
+        when(pedidos.findById(pedido.id())).thenReturn(Optional.of(pedido));
+
+        assertThat(servicio.registrarPagoRechazado(resultado)).contains(pedido);
+        assertThat(pedido.status()).isEqualTo(OrderStatus.PAGO_RECHAZADO);
+        verify(procesados).saveAndFlush(any());
+    }
+
+    @Test
+    @DisplayName("HU-105: un rechazo sobre un pedido ya PAGADO se ignora; el pago aprobado no se deshace")
+    void rechazoTrasPagoIgnorado() {
+        Order pedido = pedidoCreado();
+        pedido.marcarPagado();
+        when(pedidos.findById(pedido.id())).thenReturn(Optional.of(pedido));
+
+        assertThat(servicio.registrarPagoRechazado(resultado(pedido.id())).orElseThrow().status())
+                .isEqualTo(OrderStatus.PAGADO);
+    }
+
+    @Test
+    @DisplayName("HU-105 CA3: un rechazo ya procesado no vuelve a tocar el pedido")
+    void rechazoRepetido() {
+        PaymentResultCommand resultado = resultado(UUID.randomUUID());
+        when(procesados.existsById(resultado.eventId())).thenReturn(true);
+
+        assertThat(servicio.registrarPagoRechazado(resultado)).isEmpty();
+        verify(pedidos, never()).findById(any());
+    }
+
     private static Order pedidoCreado() {
         return Order.crear("PED-0104", NotificationChannel.EMAIL, "ana@foodflow.test", PaymentToken.PAY_OK,
                 new BigDecimal("45000.00"));

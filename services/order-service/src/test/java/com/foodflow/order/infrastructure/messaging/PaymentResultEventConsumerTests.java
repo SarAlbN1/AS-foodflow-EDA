@@ -39,6 +39,8 @@ class PaymentResultEventConsumerTests {
 
     private static final Path EJEMPLO =
             Path.of("../../contracts/events/v1/examples/validos/payment-approved.json");
+    private static final Path EJEMPLO_RECHAZO =
+            Path.of("../../contracts/events/v1/examples/validos/payment-rejected.json");
 
     private final ObjectMapper jackson = new EventJsonConfig().eventObjectMapper();
     private final OrderPaymentService pagos = mock(OrderPaymentService.class);
@@ -64,9 +66,39 @@ class PaymentResultEventConsumerTests {
     }
 
     @Test
-    @DisplayName("PaymentRejected y otros tipos se ignoran y se confirma el offset (PaymentRejected llega con HU-105)")
+    @DisplayName("HU-105 CA1: un PaymentRejected del contrato se aplica al pedido y se confirma el offset")
+    void aplicaElPagoRechazado() throws Exception {
+        ObjectNode evento = (ObjectNode) jackson.readTree(Files.readString(EJEMPLO_RECHAZO));
+
+        consumidor.consumir(registro(evento.toString()), confirmacion);
+
+        ArgumentCaptor<PaymentResultCommand> orden = ArgumentCaptor.forClass(PaymentResultCommand.class);
+        verify(pagos).registrarPagoRechazado(orden.capture());
+        verify(pagos, never()).registrarPagoAprobado(any());
+        assertThat(orden.getValue().eventId()).isEqualTo(UUID.fromString(evento.get("eventId").asText()));
+        assertThat(orden.getValue().orderId()).isEqualTo(UUID.fromString(evento.get("aggregateId").asText()));
+        verify(confirmacion).acknowledge();
+    }
+
+    @Test
+    @DisplayName("HU-105: un PaymentRejected sin reasonCode o con el campo del aprobado se descarta")
+    void rechazoFueraDeContrato() throws Exception {
+        ObjectNode sinMotivo = (ObjectNode) jackson.readTree(Files.readString(EJEMPLO_RECHAZO));
+        ((ObjectNode) sinMotivo.get("payload")).remove("reasonCode");
+        ObjectNode conReferencia = (ObjectNode) jackson.readTree(Files.readString(EJEMPLO_RECHAZO));
+        ((ObjectNode) conReferencia.get("payload")).put("transactionReference", "TXN-X");
+
+        consumidor.consumir(registro(sinMotivo.toString()), confirmacion);
+        consumidor.consumir(registro(conReferencia.toString()), confirmacion);
+
+        verifyNoInteractions(pagos);
+        verify(confirmacion, org.mockito.Mockito.times(2)).acknowledge();
+    }
+
+    @Test
+    @DisplayName("otros tipos se ignoran y se confirma el offset")
     void ignoraOtrosTipos() throws Exception {
-        for (String tipo : new String[] {"PaymentRejected", "OrderCreated", "Desconocido"}) {
+        for (String tipo : new String[] {"OrderCreated", "Desconocido"}) {
             ObjectNode evento = ejemplo();
             evento.put("eventType", tipo);
 
@@ -74,7 +106,7 @@ class PaymentResultEventConsumerTests {
         }
 
         verifyNoInteractions(pagos);
-        verify(confirmacion, org.mockito.Mockito.times(3)).acknowledge();
+        verify(confirmacion, org.mockito.Mockito.times(2)).acknowledge();
     }
 
     @Test

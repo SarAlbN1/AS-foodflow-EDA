@@ -1,6 +1,6 @@
 # services/order-service — Order Service
 
-> **Estado:** `POST /orders` crea y persiste el pedido en estado `CREADO` (HU-101), `GET /orders/{id}` lo consulta (HU-102), la creación publica `OrderCreated` en `orders.events` (HU-103) `Idempotency-Key` impide crear dos pedidos con la misma solicitud (HU-107) y un pago aprobado pasa el pedido a `PAGADO` (HU-104). El resto de la funcionalidad la construyen las historias indicadas.
+> **Estado:** `POST /orders` crea y persiste el pedido en estado `CREADO` (HU-101), `GET /orders/{id}` lo consulta (HU-102), la creación publica `OrderCreated` en `orders.events` (HU-103) `Idempotency-Key` impide crear dos pedidos con la misma solicitud (HU-107) y el resultado del pago pasa el pedido a `PAGADO` o `PAGO_RECHAZADO` (HU-104 y HU-105). El resto de la funcionalidad la construyen las historias indicadas.
 
 **Responsabilidad:** Crea y consulta pedidos; publica `OrderCreated` y `OrderStatusChanged`; consume `PaymentApproved` y `PaymentRejected`. Único propietario de Order DB.
 
@@ -113,14 +113,14 @@ docker exec foodflow-kafka /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 --topic orders.events --from-beginning --max-messages 1
 ```
 
-## Resultado del pago (HU-104)
+## Resultado del pago (HU-104 y HU-105)
 
 `PaymentResultEventConsumer` consume `payments.events` en su propio grupo, `order-service.payments` (`ORDER_PAYMENTS_CONSUMER_GROUP`). Notification Service consume el mismo tópico en otro grupo: los dos reaccionan al pago por su cuenta (D-6, reglas 6 y 12).
 
 | Evento | Qué hace |
 |---|---|
 | `PaymentApproved` | El pedido pasa de `CREADO` a `PAGADO` (`OrderPaymentService`) |
-| `PaymentRejected` | Se ignora hasta HU-105 |
+| `PaymentRejected` | El pedido pasa de `CREADO` a `PAGO_RECHAZADO` (HU-105), con las mismas reglas |
 | Otro tipo | Se ignora con `DEBUG` y se confirma el offset |
 
 - **Idempotencia (ADR-09).** El `eventId` se registra en `processed_events` en la misma transacción que el cambio de estado. Un evento ya procesado se ignora con `INFO`.

@@ -102,6 +102,16 @@ public class Order {
         return transicionarDesdeCreado(OrderStatus.PAGADO);
     }
 
+    /**
+     * Registra que el pago fue rechazado: {@code CREADO} pasa a {@code PAGO_RECHAZADO} (HU-105).
+     * Misma regla que {@link #marcarPagado()}: desde cualquier otro estado no cambia nada.
+     *
+     * @return {@code true} si el pedido cambio de estado
+     */
+    public boolean marcarPagoRechazado() {
+        return transicionarDesdeCreado(OrderStatus.PAGO_RECHAZADO);
+    }
+
     private boolean transicionarDesdeCreado(OrderStatus destino) {
         if (status != OrderStatus.CREADO) {
             return false;
