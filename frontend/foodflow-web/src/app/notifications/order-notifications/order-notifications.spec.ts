@@ -23,7 +23,7 @@ function notificacion(
     orderId: PEDIDO,
     paymentId: 'c2d3e4f5-6789-4abc-8def-0123456789ab',
     channel: 'EMAIL',
-    destination: 'ana@foodflow.test',
+    destination: 'a***@foodflow.test',
     content: 'Tu pago del pedido PED-0001 fue aprobado.',
     status,
     attempts: 1,
