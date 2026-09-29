@@ -210,6 +210,9 @@ services:
       ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:?falta KAFKA_BOOTSTRAP_SERVERS en .env; compara con .env.example}
       ORDERS_TOPIC: ${ORDERS_TOPIC:?falta ORDERS_TOPIC en .env; compara con .env.example}
+      # Consumo del resultado del pago (HU-104).
+      PAYMENTS_TOPIC: ${PAYMENTS_TOPIC:?falta PAYMENTS_TOPIC en .env; compara con .env.example}
+      ORDER_PAYMENTS_CONSUMER_GROUP: ${ORDER_PAYMENTS_CONSUMER_GROUP:?falta ORDER_PAYMENTS_CONSUMER_GROUP en .env; compara con .env.example}
     healthcheck:
       # La imagen no trae curl: bash abre el socket y pide readiness (200 = listo).
       test: ["CMD", "bash", "-c", 'exec 3<>/dev/tcp/localhost/8081 && printf "GET /actuator/health/readiness HTTP/1.0\r\n\r\n" >&3 && head -1 <&3 | grep -q " 200"']
