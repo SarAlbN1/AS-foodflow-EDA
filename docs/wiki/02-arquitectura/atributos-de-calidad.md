@@ -71,3 +71,45 @@ Un evento ya registrado se ignora con `INFO` y su offset se confirma: una reentr
 La de Order es la más estricta: comprobar solo el estado no distinguiría «no se reaplicó» de «se reaplicó al mismo valor». La marca de tiempo sí.
 
 **Payment tiene dos guardas y las dos hacen falta.** `payments.order_id` es único y responde a «¿este pedido ya tiene pago?», que es lo que evita el doble cobro; `processed_events` responde a «¿este evento ya se procesó?», que es lo que ADR-09 pide y lo que distingue una reentrega de un evento nuevo sobre el mismo pedido.
+
+## Reintentos y DLQ (HU-602)
+
+Cada servicio registra su propio `DefaultErrorHandler` en `infrastructure.messaging`, con `ExponentialBackOff` y un `DeadLetterPublishingRecoverer` hacia `<tópico>.dlq`.
+
+| Situación | Qué pasa |
+|---|---|
+| Error transitorio (la base no responde, por ejemplo) | **3 intentos**, espera inicial 1 s que se duplica. Agotados, el evento va a `<tópico>.dlq` |
+| Evento no procesable (envelope ilegible, versión no soportada, payload fuera de contrato) | **A la DLQ sin reintentar**: no mejora por repetirlo y retrasaría al resto de la partición |
+| Evento de otro tipo en un tópico compartido | Se ignora con `DEBUG` y se confirma. **No** es un error y no va a DLQ |
+| Fallo de negocio del proveedor | La notificación queda `FALLIDA` y el offset se confirma. **No** lanza, así que nunca llega al manejador (regla 10) |
+
+**Qué reemplaza.** Sin este manejador actuaba el de Spring Kafka por omisión, con `FixedBackOff(0, 9)`: **diez intentos seguidos sin espera** y, agotados, confirmaba el offset y seguía. Un corte de unos segundos bastaba para perder el evento sin rastro. El síntoma está documentado en HU-606: un evento huérfano atascaba la partición y hacía fallar la prueba de humo.
+
+**Los consumidores ya no se tragan el evento.** Antes capturaban `UnsupportedEventException`, la registraban y confirmaban el offset. Ahora la dejan subir: el manejador la publica en la DLQ y el offset se confirma después, cuando el mensaje ya está a salvo.
+
+### Cómo inspeccionar una DLQ en la demostración
+
+```bash
+docker exec foodflow-kafka /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 --topic orders.events.dlq --from-beginning --timeout-ms 5000
+```
+
+Cambiando el tópico se ven las otras dos: `payments.events.dlq` y `notifications.events.dlq`. El mensaje conserva su clave y su partición, así que los eventos de un pedido siguen juntos también en la DLQ, y Spring añade cabeceras con el tópico original, el offset y la excepción.
+
+Para provocar uno a propósito, basta publicar un evento con una versión que no existe:
+
+```bash
+docker exec foodflow-kafka /opt/kafka/bin/kafka-console-producer.sh \
+  --bootstrap-server localhost:9092 --topic orders.events
+> {"eventId":"...","eventType":"OrderCreated","eventVersion":99, ...}
+```
+
+Lo comprueba automáticamente `DeadLetterQueueIntegrationTests` en payment-service, que además verifica el criterio 4: el evento bueno publicado **detrás** del roto se procesa igual.
+
+### Configuración
+
+| Variable | Por defecto |
+|---|---|
+| `KAFKA_RETRY_MAX_ATTEMPTS` | `3` |
+| `KAFKA_RETRY_INITIAL_INTERVAL` | `1s` |
+| `KAFKA_RETRY_MULTIPLIER` | `2` |

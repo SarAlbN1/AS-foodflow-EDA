@@ -1,6 +1,7 @@
 package com.foodflow.payment.infrastructure.messaging;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -114,27 +115,31 @@ class OrderCreatedEventConsumerTests {
     @Test
     @DisplayName("CA-2: una version de contrato distinta de la soportada no se procesa")
     void rechazaUnaVersionNoSoportada() {
-        consumidor.consumir(registro(eventoValido("PAY-OK").replace("\"eventVersion\": 1", "\"eventVersion\": 2")),
-                confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(eventoValido("PAY-OK").replace("\"eventVersion\": 1", "\"eventVersion\": 2")),
+                confirmacion));
 
         verify(pagos, never()).iniciarPago(any());
-        verify(confirmacion, times(1)).acknowledge();
+        verify(confirmacion, never()).acknowledge();
     }
 
     @Test
     @DisplayName("CA-4: un cuerpo ilegible no inicia ningun pago y no tumba al consumidor")
     void toleraUnCuerpoIlegible() {
-        consumidor.consumir(registro("{ esto no es json"), confirmacion);
-        consumidor.consumir(registro(""), confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro("{ esto no es json"), confirmacion));
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(""), confirmacion));
 
         verify(pagos, never()).iniciarPago(any());
-        verify(confirmacion, times(2)).acknowledge();
+        verify(confirmacion, never()).acknowledge();
     }
 
     @Test
     @DisplayName("CA-4: un paymentToken fuera de ADR-10 no inicia ningun pago")
     void rechazaUnTokenFueraDelContrato() {
-        consumidor.consumir(registro(eventoValido("PAY-MAYBE")), confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(eventoValido("PAY-MAYBE")), confirmacion));
 
         verify(pagos, never()).iniciarPago(any());
     }
@@ -145,7 +150,8 @@ class OrderCreatedEventConsumerTests {
         String sinCorrelation = eventoValido("PAY-OK")
                 .replace("\"correlationId\": \"1a2b3c4d-5e6f-4071-8293-a4b5c6d7e8f9\",", "");
 
-        consumidor.consumir(registro(sinCorrelation), confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(sinCorrelation), confirmacion));
 
         verify(pagos, never()).iniciarPago(any());
     }
@@ -157,7 +163,8 @@ class OrderCreatedEventConsumerTests {
                 .replace("\"aggregateId\": \"3f8b1c2e-5a47-4d9b-8e10-7c2a6b4f9d31\"",
                         "\"aggregateId\": \"9999b1c2-5a47-4d9b-8e10-7c2a6b4f9d31\"");
 
-        consumidor.consumir(registro(desalineado), confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(desalineado), confirmacion));
 
         verify(pagos, never()).iniciarPago(any());
     }
@@ -168,7 +175,8 @@ class OrderCreatedEventConsumerTests {
         String conExtra = eventoValido("PAY-OK")
                 .replace("\"currency\": \"COP\",", "\"currency\": \"COP\", \"descuento\": 10,");
 
-        consumidor.consumir(registro(conExtra), confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(conExtra), confirmacion));
 
         verify(pagos, never()).iniciarPago(any());
     }
@@ -179,11 +187,12 @@ class OrderCreatedEventConsumerTests {
         // NUMERIC(12,2) no puede representarlo y el contrato lo declara multiplo de 0.01.
         // Sin esta comprobacion, el evento reventaria al ajustar la escala y se reintentaria
         // en vano: nunca va a poder procesarse.
-        consumidor.consumir(registro(eventoValido("PAY-OK").replace("\"total\": 45900.00", "\"total\": 45900.005")),
-                confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(eventoValido("PAY-OK").replace("\"total\": 45900.00", "\"total\": 45900.005")),
+                confirmacion));
 
         verify(pagos, never()).iniciarPago(any());
-        verify(confirmacion, times(1)).acknowledge();
+        verify(confirmacion, never()).acknowledge();
     }
 
     @Test
@@ -198,7 +207,8 @@ class OrderCreatedEventConsumerTests {
     @Test
     @DisplayName("CA-4: una moneda distinta de COP no se procesa")
     void rechazaUnaMonedaFueraDelContrato() {
-        consumidor.consumir(registro(eventoValido("PAY-OK").replace("\"COP\"", "\"USD\"")), confirmacion);
+        assertThatExceptionOfType(UnsupportedEventException.class)
+                .isThrownBy(() -> consumidor.consumir(registro(eventoValido("PAY-OK").replace("\"COP\"", "\"USD\"")), confirmacion));
 
         verify(pagos, never()).iniciarPago(any());
     }
