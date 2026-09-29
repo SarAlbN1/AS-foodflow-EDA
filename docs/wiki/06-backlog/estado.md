@@ -36,7 +36,7 @@
 | [HU-302](epicas/EP-03-notificaciones.md) | Enviar una notificación mediante el proveedor externo | 4 | Sara | 5 | En revisión | #96 | Adaptador HTTP al proveedor: timeouts explícitos, 3 reintentos y sin Circuit Breaker; fija el catálogo de `failureCode` |
 | [HU-303](epicas/EP-03-notificaciones.md) | Registrar y publicar una notificación enviada | 4 | Sara | 3 | Pendiente | | |
 | [HU-304](epicas/EP-03-notificaciones.md) | Registrar y publicar una notificación fallida | 4 | Sara | 5 | Pendiente | | |
-| [HU-305](epicas/EP-03-notificaciones.md) | Consultar las notificaciones de un pedido | 4 | Juan | 3 | Pendiente | | |
+| [HU-305](epicas/EP-03-notificaciones.md) | Consultar las notificaciones de un pedido | 4 | Juan | 3 | En revisión | #97 | Lee solo Notification DB; `destination` enmascarado; verificada por el gateway contra Compose (respuesta validada con el esquema del OpenAPI) |
 | [HU-306](epicas/EP-03-notificaciones.md) | Mock del proveedor de notificaciones | 4 | Juan | 3 | Terminada | #62 |  |
 | [HU-402](epicas/EP-04-gateway-y-contratos.md) | Enrutar la consulta de notificaciones | 4 | Juan | 3 | Terminada | #83 | Verificada contra servicios simulados; en Compose el gateway ya llega a Notification Service (404 hasta HU-305) |
 | [HU-504](epicas/EP-05-frontend.md) | Visualizar el estado de la notificación | 4 | Juan | 3 | Terminada | #90 | Muestra `content` según el contrato de #89; probada en el navegador contra el gateway real (HU-607): el 404 actual se muestra como error hasta HU-305 |
