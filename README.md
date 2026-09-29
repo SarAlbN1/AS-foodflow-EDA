@@ -47,17 +47,23 @@ Detalle completo: [estructura del repositorio](docs/wiki/04-implementacion/estru
 
 Requisitos: JDK 25, Node.js 24.21.0 con npm y Docker o Podman con Compose. Las versiones fijadas están en [versiones.md](docs/wiki/04-implementacion/versiones.md). Maven no hace falta instalarlo: cada proyecto Java trae su *wrapper* (`mvnw`). El *wrapper* usa el JDK de `JAVA_HOME`, así que `JAVA_HOME` debe apuntar al JDK 25 (con un JDK anterior, la compilación falla con `release version 25 not supported`).
 
-> **Estado actual:** los proyectos son esqueletos sin funcionalidad de negocio (HU-001). A partir de la HU-607, `scripts/up.sh`, `scripts/down.sh` y `scripts/smoke-test.sh` levantarán, detendrán y probarán la solución completa.
+### Todo el prototipo con un comando (HU-607)
 
-**Infraestructura (Kafka y las tres PostgreSQL).** Desde la raíz del repositorio:
+Solo hace falta Docker (o Podman) con Compose y Bash (en Windows, Git Bash). Desde un clon limpio:
 
-```bash
-cp .env.example .env                                                                # primera vez; cambia las contraseñas
-docker compose --env-file .env -f infrastructure/compose/docker-compose.yml up -d   # levantar
-docker compose --env-file .env -f infrastructure/compose/docker-compose.yml down    # detener
-```
+| Acción | Comando | Qué hace |
+|---|---|---|
+| Levantar | `bash scripts/up.sh` | Crea `.env` desde `.env.example` si no existe, construye las imágenes y levanta frontend, API Gateway, los tres servicios, Kafka (con sus tópicos), las tres PostgreSQL y el proveedor simulado. Termina cuando todo está `healthy`; si algo no lo logra en 300 s (`UP_TIMEOUT`), falla y muestra el estado. `--sin-build` reutiliza las imágenes ya construidas |
+| Probar | `bash scripts/smoke-test.sh` | Recorre el flujo por el gateway con `PAY-OK` y con `PAY-FAIL`: crea el pedido, repite el `POST` con la misma `Idempotency-Key`, lo consulta y comprueba que `PaymentApproved` o `PaymentRejected` llegue a `payments.events`. Sale con código distinto de 0 si algo no es lo esperado |
+| Detener | `bash scripts/down.sh` | Elimina contenedores y red; los datos de las bases se conservan. `--limpiar` borra también los volúmenes, para recrear el entorno desde cero |
 
-Detalle y comprobación de salud: [`infrastructure/compose/README.md`](infrastructure/compose/README.md).
+Con el entorno arriba: frontend en http://localhost:4200 y API Gateway en http://localhost:8080 (`/actuator/health`). Los servicios no publican puertos en el host: el cliente solo ve el gateway.
+
+La prueba de humo también mira el estado final del pedido (`PAGADO` / `PAGO_RECHAZADO`). Mientras Order Service no consuma el resultado del pago (HU-104/105/106) el pedido sigue en `CREADO`, y eso se informa como `PENDIENTE`, no como fallo; llegar al estado equivocado sí falla.
+
+Detalle de Compose, salud y solución de problemas: [`infrastructure/compose/README.md`](infrastructure/compose/README.md).
+
+### Cada componente por separado
 
 **Servicios y gateway (Spring Boot + Maven).** Desde la carpeta de cada proyecto (`services/order-service`, `services/payment-service`, `services/notification-service`, `gateway/api-gateway`):
 
@@ -66,6 +72,8 @@ Detalle y comprobación de salud: [`infrastructure/compose/README.md`](infrastru
 | Compilar y probar | `./mvnw verify` |
 | Ejecutar | `./mvnw spring-boot:run` |
 | Detener | `Ctrl+C` |
+
+Para correr un servicio en el host contra la infraestructura de Compose, detén primero su contenedor (`docker stop foodflow-order-service`, por ejemplo) y usa `KAFKA_BOOTSTRAP_SERVERS=localhost:29092`: el `kafka:9092` de `.env` solo resuelve dentro de la red de Compose, y con él el productor falla y solo lo deja en el registro. Lo mismo con las URL de las bases: `.env` ya trae las del host (`localhost:5433`…).
 
 **Frontend (Angular).** Desde `frontend/foodflow-web`:
 

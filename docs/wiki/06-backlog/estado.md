@@ -20,8 +20,8 @@
 | [HU-107](epicas/EP-01-pedidos.md) | Evitar pedidos duplicados con Idempotency-Key | 2 | Sara | 3 | En revisión | #82 | Cabecera obligatoria; corrige ADR-12 y el CA4 de la HU |
 | [HU-403](epicas/EP-04-gateway-y-contratos.md) | Propagar correlationId y manejar CORS | 2 | Juan | 3 | Terminada | #72 | Verificada contra un Order Service simulado; prueba E2E pendiente de Docker |
 | [HU-404](epicas/EP-04-gateway-y-contratos.md) | Contrato OpenAPI y errores Problem Details | 2 | Sara | 5 | En revisión | #67 |  |
-| [HU-501](epicas/EP-05-frontend.md) | Crear un pedido desde Angular | 2 | Juan | 5 | Terminada | #74 | Criterios verificados con pruebas de componente; prueba E2E con el backend real pendiente de Docker |
-| [HU-502](epicas/EP-05-frontend.md) | Consultar y visualizar el estado del pedido | 2 | Juan | 2 | Terminada | #75 | Criterios verificados con pruebas de componente; prueba E2E pendiente de Docker |
+| [HU-501](epicas/EP-05-frontend.md) | Crear un pedido desde Angular | 2 | Juan | 5 | Terminada | #74 | Criterios verificados con pruebas de componente y en el navegador contra el gateway real en Compose (HU-607) |
+| [HU-502](epicas/EP-05-frontend.md) | Consultar y visualizar el estado del pedido | 2 | Juan | 2 | Terminada | #75 | Criterios verificados con pruebas de componente y en el navegador contra el gateway real en Compose (HU-607) |
 | [HU-604](epicas/EP-06-resiliencia-y-calidad.md) | Exponer health checks de componentes | 2 | Sara | 2 | En revisión | #68 | Health checks de los tres servicios; el del gateway lo añade HU-401 |
 | [HU-104](epicas/EP-01-pedidos.md) | Actualizar el pedido ante un pago aprobado | 3 | Juan | 3 | Pendiente | | |
 | [HU-105](epicas/EP-01-pedidos.md) | Actualizar el pedido ante un pago rechazado | 3 | Juan | 2 | Pendiente | | |
@@ -38,15 +38,15 @@
 | [HU-304](epicas/EP-03-notificaciones.md) | Registrar y publicar una notificación fallida | 4 | Sara | 5 | Pendiente | | |
 | [HU-305](epicas/EP-03-notificaciones.md) | Consultar las notificaciones de un pedido | 4 | Juan | 3 | Pendiente | | |
 | [HU-306](epicas/EP-03-notificaciones.md) | Mock del proveedor de notificaciones | 4 | Juan | 3 | Terminada | #62 |  |
-| [HU-402](epicas/EP-04-gateway-y-contratos.md) | Enrutar la consulta de notificaciones | 4 | Juan | 3 | Terminada | #83 | Verificada contra servicios simulados; E2E pendiente de HU-305 y Docker |
-| [HU-504](epicas/EP-05-frontend.md) | Visualizar el estado de la notificación | 4 | Juan | 3 | En revisión | [#90](https://github.com/SarAlbN1/AS-foodflow-EDA/pull/90) | Muestra `content` según el contrato de #89; E2E pendiente de HU-305 y Docker |
-| [HU-006](epicas/EP-00-base-tecnica-y-estandares.md) | Guardas de arquitectura ejecutables | 5 | Juan | 5 | Terminada | #85 | `bash scripts/verify-architecture.sh`; la comprobación de Compose se activa con HU-607 |
+| [HU-402](epicas/EP-04-gateway-y-contratos.md) | Enrutar la consulta de notificaciones | 4 | Juan | 3 | Terminada | #83 | Verificada contra servicios simulados; en Compose el gateway ya llega a Notification Service (404 hasta HU-305) |
+| [HU-504](epicas/EP-05-frontend.md) | Visualizar el estado de la notificación | 4 | Juan | 3 | Terminada | #90 | Muestra `content` según el contrato de #89; probada en el navegador contra el gateway real (HU-607): el 404 actual se muestra como error hasta HU-305 |
+| [HU-006](epicas/EP-00-base-tecnica-y-estandares.md) | Guardas de arquitectura ejecutables | 5 | Juan | 5 | Terminada | #85 | `bash scripts/verify-architecture.sh`; la comprobación de Compose cubre los tres servicios desde HU-607 |
 | [HU-505](epicas/EP-05-frontend.md) | Visualizar el flujo integral de un pedido | 5 | Juan | 5 | Pendiente | | |
 | [HU-601](epicas/EP-06-resiliencia-y-calidad.md) | Hacer idempotentes los consumidores Kafka | 5 | Sara | 5 | Pendiente | | |
 | [HU-602](epicas/EP-06-resiliencia-y-calidad.md) | Aplicar reintentos y DLQ a eventos fallidos | 5 | Sara | 5 | Pendiente | | |
 | [HU-603](epicas/EP-06-resiliencia-y-calidad.md) | Implementar logs estructurados y correlacionados | 5 | Sara | 3 | Pendiente | | |
 | [HU-605](epicas/EP-06-resiliencia-y-calidad.md) | Automatizar pruebas de integración del flujo Kafka | 5 | Sara | 5 | Pendiente | | |
-| [HU-607](epicas/EP-06-resiliencia-y-calidad.md) | Scripts de arranque, parada y prueba de humo | 5 | Juan | 2 | Pendiente | | |
+| [HU-607](epicas/EP-06-resiliencia-y-calidad.md) | Scripts de arranque, parada y prueba de humo | 5 | Juan | 2 | En revisión | | `scripts/up.sh`, `down.sh`, `smoke-test.sh` verificados desde un clon limpio; incluye el health del gateway (A-10). La prueba de humo informa `PENDIENTE` el estado final hasta HU-104/105/106 |
 | [HU-606](epicas/EP-06-resiliencia-y-calidad.md) | Validar el flujo end-to-end contenerizado | 6 | Sara | 8 | Pendiente | | |
 | [HU-608](epicas/EP-06-resiliencia-y-calidad.md) | Verificar los atributos de calidad | 6 | Juan | 5 | Pendiente | | |
 | [HU-701](epicas/EP-07-entregables-y-sustentacion.md) | README, tag y release | 6 | Sara | 3 | Pendiente | | |
