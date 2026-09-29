@@ -51,4 +51,5 @@ HU-007	EP-00	CI automático (opcional)	P2	-	-	-	chore,area:repo,priority:P2,epic
 HU-010	EP-00	Versionado de esquemas con Flyway (opcional)	P2	-	-	-	chore,area:infra,priority:P2,epic:EP-00	chore/HU-010-versionado-esquemas-flyway-opcional	docs/wiki/06-backlog/epicas/EP-00-base-tecnica-y-estandares.md
 HU-011	EP-06	Pruebas de integración con Testcontainers (opcional)	P2	-	-	-	chore,area:infra,priority:P2,epic:EP-06	chore/HU-011-pruebas-integracion-testcontainers-opcional	docs/wiki/06-backlog/epicas/EP-06-resiliencia-y-calidad.md
 HU-205	EP-02	Consultar el pago de un pedido	P2	-	-	-	enhancement,area:payment-service,priority:P2,epic:EP-02	feat/HU-205-consultar-pago-pedido	docs/wiki/06-backlog/epicas/EP-02-pagos.md
+HU-506	EP-05	Unificar la interfaz web con un diseño base	P1	5	3	Juan	enhancement,area:frontend,priority:P1,epic:EP-05	feat/HU-506-diseno-base-interfaz-web	docs/wiki/06-backlog/epicas/EP-05-frontend.md
 HU-503	EP-05	Visualizar el resultado del pago	P2	-	-	-	enhancement,area:frontend,priority:P2,epic:EP-05	feat/HU-503-visualizar-resultado-pago	docs/wiki/06-backlog/epicas/EP-05-frontend.md

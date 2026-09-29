@@ -95,10 +95,11 @@
 | 5 | HU-505 | Visualizar el flujo integral de un pedido | 5 | Juan |
 | 6 | HU-006 | Guardas de arquitectura ejecutables | 5 | Juan |
 | 7 | HU-607 | Scripts de arranque, parada y prueba de humo | 2 | Juan |
+| 8 | HU-506 | Unificar la interfaz web con un diseño base | 3 | Juan |
 
-**Incremento de Sprint:** eventos duplicados o defectuosos inyectados de forma controlada demuestran idempotencia, reintentos y DLQ; hay vista integral, logs estructurados, guardas de arquitectura y scripts de arranque.
+**Incremento de Sprint:** eventos duplicados o defectuosos inyectados de forma controlada demuestran idempotencia, reintentos y DLQ; hay vista integral con un diseño base común, logs estructurados, guardas de arquitectura y scripts de arranque.
 
-**Total:** 30 puntos (Sara 18, Juan 12).
+**Total:** 33 puntos (Sara 18, Juan 15). HU-506 se añadió durante el sprint y deja este sprint en 55 % / 45 %.
 
 ## Sprint 6 — Calidad verificada, entregables y sustentación
 
@@ -136,9 +137,9 @@
 | 2 | 25 | 15 | 10 | 60 % |
 | 3 | 25 | 15 | 10 | 60 % |
 | 4 | 30 | 18 | 12 | 60 % |
-| 5 | 30 | 18 | 12 | 60 % |
+| 5 | 33 | 18 | 15 | 55 % |
 | 6 | 30 | 18 | 12 | 60 % |
-| **Total** | **175** | **105** | **70** | **60 %** |
+| **Total** | **178** | **105** | **73** | **59 %** |
 
 Cada sprint respeta la proporción 60/40, no solo el total.
 

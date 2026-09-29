@@ -52,6 +52,7 @@
 - HU-403 Propagar correlationId y manejar CORS.
 - HU-504 Visualizar el estado de la notificación.
 - HU-505 Visualizar el flujo integral de un pedido.
+- HU-506 Unificar la interfaz web con un diseño base.
 - HU-603 Implementar logs estructurados y correlacionados.
 - HU-604 Exponer health checks de componentes.
 - HU-605 Automatizar pruebas de integración del flujo Kafka.

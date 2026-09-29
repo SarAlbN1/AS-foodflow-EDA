@@ -42,6 +42,7 @@
 | [HU-504](epicas/EP-05-frontend.md) | Visualizar el estado de la notificación | 4 | Juan | 3 | En revisión | [#90](https://github.com/SarAlbN1/AS-foodflow-EDA/pull/90) | Muestra `content` según el contrato de #89; E2E pendiente de HU-305 y Docker |
 | [HU-006](epicas/EP-00-base-tecnica-y-estandares.md) | Guardas de arquitectura ejecutables | 5 | Juan | 5 | Terminada | #85 | `bash scripts/verify-architecture.sh`; la comprobación de Compose se activa con HU-607 |
 | [HU-505](epicas/EP-05-frontend.md) | Visualizar el flujo integral de un pedido | 5 | Juan | 5 | Pendiente | | |
+| [HU-506](epicas/EP-05-frontend.md) | Unificar la interfaz web con un diseño base | 5 | Juan | 3 | En curso | | HU transversal añadida el 2026-09-28 |
 | [HU-601](epicas/EP-06-resiliencia-y-calidad.md) | Hacer idempotentes los consumidores Kafka | 5 | Sara | 5 | Pendiente | | |
 | [HU-602](epicas/EP-06-resiliencia-y-calidad.md) | Aplicar reintentos y DLQ a eventos fallidos | 5 | Sara | 5 | Pendiente | | |
 | [HU-603](epicas/EP-06-resiliencia-y-calidad.md) | Implementar logs estructurados y correlacionados | 5 | Sara | 3 | Pendiente | | |
