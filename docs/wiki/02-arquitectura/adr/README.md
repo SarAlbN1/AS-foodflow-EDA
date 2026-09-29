@@ -1,8 +1,8 @@
 # Registro de decisiones arquitectónicas (ADR)
 
-[← Índice de la wiki](../../Home.md) · [Decisiones (resumen)](../decisiones-adr.md) · [Plantilla](plantilla.md)
+[← Índice de la wiki](../../Home.md) · [Decisiones (resumen)](../decisiones-adr.md)
 
-Cada decisión de arquitectura vive en un archivo `ADR-NN-<slug>.md` en esta carpeta, con la [plantilla](plantilla.md). Un cambio de decisión **no edita** el ADR anterior: crea uno nuevo que lo reemplaza (estado `Superseded`).
+Cada decisión de arquitectura vive en un archivo `ADR-NN-<slug>.md` en esta carpeta. Un cambio de decisión **no edita** el ADR anterior: crea uno nuevo que lo reemplaza (estado `Superseded`).
 
 > **Fechas.** La wiki no registra la fecha original de cada decisión, así que los ADR llevan la fecha en que se registraron en el repositorio (HU-005, 2026-09-27) y lo indican expresamente. No se inventan fechas retroactivas.
 
