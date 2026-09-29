@@ -47,3 +47,87 @@ Sin las variables, las tres se omiten solas y `./mvnw verify` sigue funcionando 
 - **Se espera a que el consumidor tenga particiones asignadas antes de publicar.** Sin eso el evento saldría antes de que hubiera nadie escuchando y la prueba fallaría por una carrera, no por el flujo.
 
 **Detener los servicios antes de ejecutarlas.** Si un `order-service` suelto está corriendo contra la misma base, es él quien aplica la transición y publica el evento, y la prueba pasa sin ejercitar su propia instancia. Se descubrió así: la prueba pasaba con los servicios levantados y fallaba sin ellos.
+
+## Idempotencia de los consumidores (HU-601)
+
+Los tres servicios implementan ADR-09: tabla `processed_events` propia con `event_id` como clave primaria, escrita en la **misma transacción local** que el efecto de negocio. Si el registro falla, el efecto tampoco queda.
+
+| Servicio | Consumidor | Efecto que protege |
+|---|---|---|
+| Order | `order-service.payments` | El cambio de estado del pedido y su `OrderStatusChanged` |
+| Payment | `payment-service.orders` | El cobro y su evento de resultado |
+| Notification | `notification-service.payments` | La notificación y su envío al proveedor |
+
+Un evento ya registrado se ignora con `INFO` y su offset se confirma: una reentrega no es un error.
+
+**El criterio 4 se cumple entregando el evento dos veces de verdad**, no simulando la segunda entrega. Las tres pruebas están en las suites de flujo de HU-605, que publican en Kafka real y comprueban que el efecto no se repite:
+
+| Servicio | Prueba | Qué afirma |
+|---|---|---|
+| Payment | `laReentregaNoCobraDosVeces` | Un solo pago para el pedido, con el mismo `paymentId` |
+| Order | `laReentregaNoVuelveAAplicar` | El estado no cambia y **`updated_at` no se mueve** |
+| Notification | `laReentregaNoDuplicaEnElFlujoReal` | Una sola notificación para el pedido |
+
+La de Order es la más estricta: comprobar solo el estado no distinguiría «no se reaplicó» de «se reaplicó al mismo valor». La marca de tiempo sí.
+
+**Payment tiene dos guardas y las dos hacen falta.** `payments.order_id` es único y responde a «¿este pedido ya tiene pago?», que es lo que evita el doble cobro; `processed_events` responde a «¿este evento ya se procesó?», que es lo que ADR-09 pide y lo que distingue una reentrega de un evento nuevo sobre el mismo pedido.
+
+## Validación end-to-end contenerizada (HU-606)
+
+Todo el prototipo en contenedores, sin un solo componente corriendo en el host, y los dos escenarios de ADR-10 recorridos de punta a punta.
+
+**Un comando levanta los once contenedores** (criterio 1):
+
+```bash
+bash scripts/up.sh              # o --completar-env si el .env es anterior a variables nuevas
+bash scripts/smoke-test.sh
+bash scripts/down.sh
+```
+
+### Los dos escenarios, verificados
+
+| | `PAY-OK` | `PAY-FAIL` |
+|---|---|---|
+| `orders.status` | `PAGADO` | `PAGO_RECHAZADO` |
+| `payments.status` | `APROBADO` | `RECHAZADO` / `PAGO_RECHAZADO_POR_TOKEN` |
+| `notifications.status` | `ENVIADA`, 1 intento | `ENVIADA`, 1 intento |
+| Texto al cliente | «Tu pago de 45.000,00 COP fue aprobado.» | «Tu pago de 45.000,00 COP fue rechazado. No se realizó ningún cobro.» |
+
+**Ningún paso toca la base a mano** (criterio 6): todo entra por `POST /orders` en el gateway y el resto ocurre por eventos.
+
+### Los eventos en los tres tópicos (criterio 5)
+
+```
+orders.events         OrderCreated       af36c7cb   correlationId=b7d63300
+                      OrderStatusChanged af36c7cb   correlationId=b7d63300
+                      OrderCreated       76c3d241   correlationId=05105da3
+                      OrderStatusChanged 76c3d241   correlationId=05105da3
+payments.events       PaymentApproved    af36c7cb   correlationId=b7d63300
+                      PaymentRejected    76c3d241   correlationId=05105da3
+notifications.events  NotificationSent   af36c7cb   correlationId=b7d63300
+                      NotificationSent   76c3d241   correlationId=05105da3
+```
+
+**El mismo `correlationId` atraviesa los tres tópicos** por pedido. Es la traza completa de la coreografía: ocho hechos, tres servicios, ningún orquestador.
+
+### La interfaz (criterio 2)
+
+El frontend contenerizado sirve la aplicación y su *fallback* de rutas, y el recorrido que hace el navegador funciona por el gateway:
+
+```
+GET  http://localhost:4200/                     -> 200
+GET  http://localhost:4200/orders/{id}          -> 200   (fallback de Nginx)
+OPTIONS http://localhost:8080/orders            -> 200   (preflight CORS desde :4200)
+GET  http://localhost:8080/orders/{id}          -> SMOKE-PAY-OK  PAGADO
+GET  http://localhost:8080/orders/{id}/notifications -> ENVIADA | s***@foodflow.test
+```
+
+El destino sale enmascarado también aquí.
+
+### Lo que hay que saber para que sea reproducible
+
+**El entorno tiene que partir con los tópicos vacíos.** La primera ejecución falló con el pedido de `PAY-OK` quedándose en `CREADO`, y la causa no era el flujo: `payments.events` arrastraba eventos de ejecuciones anteriores cuyos pedidos ya no existían en Order DB. El consumidor arranca en `earliest`, cada evento huérfano produce `OrderNotFoundException`, y hasta HU-602 actúa el `DefaultErrorHandler` con `FixedBackOff(0, 9)`: **diez reintentos inmediatos por evento**, y solo después confirma el offset y sigue. Mientras desatasca ese historial, el evento nuevo no se procesa a tiempo.
+
+`scripts/down.sh` deja Kafka vacío —no monta volumen— y conserva las tres bases, así que `down` + `up` basta. Con el entorno limpio, `smoke-test.sh` da `RESULTADO: OK`.
+
+Ese atasco es exactamente el hueco que cierra **HU-602** con reintentos espaciados y DLQ: un evento no procesable saldría de la partición en vez de bloquearla.

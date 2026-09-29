@@ -10,7 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.foodflow.payment.domain.Payment;
 import com.foodflow.payment.infrastructure.messaging.PaymentEventPublisher;
+import com.foodflow.payment.domain.ProcessedEvent;
 import com.foodflow.payment.infrastructure.persistence.PaymentRepository;
+import com.foodflow.payment.infrastructure.persistence.ProcessedEventRepository;
 
 /**
  * Caso de uso de pago. Recibe ordenes ya validadas desde {@code infrastructure.messaging} y no
@@ -30,15 +32,21 @@ public class PaymentApplicationService {
 
     private static final Logger log = LoggerFactory.getLogger(PaymentApplicationService.class);
 
+    /** Identifica a este consumidor en {@code processed_events}. */
+    static final String CONSUMIDOR = "payment-service.orders";
+
     private final PaymentRepository repositorio;
+    private final ProcessedEventRepository procesados;
     private final TransactionReferences referencias;
     private final PaymentEventPublisher publicador;
 
     public PaymentApplicationService(PaymentRepository repositorio, TransactionReferences referencias,
-            PaymentEventPublisher publicador) {
+            PaymentEventPublisher publicador,
+            ProcessedEventRepository procesados) {
         this.repositorio = repositorio;
         this.referencias = referencias;
         this.publicador = publicador;
+        this.procesados = procesados;
     }
 
     /**
@@ -61,6 +69,17 @@ public class PaymentApplicationService {
      */
     @Transactional
     public Payment iniciarPago(StartPaymentCommand orden) {
+        // ADR-09: ¿este evento ya se proceso? Es una pregunta distinta de "¿este pedido ya tiene
+        // pago?", y responde a la reentrega del broker sin depender de la clave de negocio.
+        if (procesados.existsById(orden.eventId())) {
+            Payment pago = repositorio.findByOrderId(orden.orderId()).orElse(null);
+            log.info("Evento ya procesado, no se cobra ni se publica de nuevo. eventId={} orderId={} "
+                            + "paymentId={} correlationId={}",
+                    orden.eventId(), orden.orderId(), pago == null ? null : pago.id(),
+                    orden.correlationId());
+            return pago;
+        }
+
         Optional<Payment> yaCobrado = repositorio.findByOrderId(orden.orderId());
         if (yaCobrado.isPresent()) {
             Payment pago = yaCobrado.get();
@@ -68,6 +87,9 @@ public class PaymentApplicationService {
             // y repetirlo haria que Order y Notification lo procesaran dos veces.
             log.info("El pedido ya tenia pago, no se cobra ni se publica de nuevo. orderId={} paymentId={} status={} eventId={} correlationId={}",
                     orden.orderId(), pago.id(), pago.status(), orden.eventId(), orden.correlationId());
+            // El evento es nuevo aunque el pedido no lo sea: se registra igual, para que una
+            // reentrega de ESTE evento no vuelva a recorrer la busqueda.
+            procesados.saveAndFlush(ProcessedEvent.de(orden.eventId(), CONSUMIDOR));
             return pago;
         }
 
@@ -78,6 +100,8 @@ public class PaymentApplicationService {
                 referencias.nueva(orden.orderId(), Instant.now()));
 
         Payment guardado = repositorio.saveAndFlush(pago);
+        // En la misma transaccion local que el pago (ADR-09): si esto falla, el pago tampoco queda.
+        procesados.saveAndFlush(ProcessedEvent.de(orden.eventId(), CONSUMIDOR));
         publicador.publicarResultado(guardado, orden);
         log.info("Pago resuelto. orderId={} paymentId={} status={} amount={} {} reasonCode={} transactionReference={} eventId={} correlationId={} contacto={}",
                 guardado.orderId(), guardado.id(), guardado.status(), guardado.amount(),

@@ -32,6 +32,7 @@ import com.foodflow.payment.domain.Payment;
 import com.foodflow.payment.domain.PaymentStatus;
 import com.foodflow.payment.domain.RejectionReason;
 import com.foodflow.payment.infrastructure.persistence.PaymentRepository;
+import com.foodflow.payment.infrastructure.persistence.ProcessedEventRepository;
 
 /**
  * HU-605, criterio 1: {@code OrderCreated} llega a Payment Service <strong>por Kafka de
@@ -47,8 +48,8 @@ import com.foodflow.payment.infrastructure.persistence.PaymentRepository;
  * <p>Es una copia del patron que usan order-service y notification-service para sus propios
  * criterios, no una clase compartida: ningun servicio depende de codigo de otro (regla 8).
  *
- * <p>Grupo unico y {@code auto-offset-reset=latest}: un grupo nuevo desde el principio
- * reprocesaria todo {@code orders.events} y cobraria de nuevo pedidos antiguos. Se espera a la
+ * <p>Grupo unico y {@code auto-offset-reset=latest}: leer desde el principio arrastraria eventos
+ * historicos y huerfanos que no pertenecen al escenario y retrasarian la prueba. Se espera a la
  * asignacion de particiones antes de publicar.
  *
  * <p>Entorno reproducible (criterio 5):
@@ -82,6 +83,9 @@ class OrderCreatedFlowIntegrationTests {
 
     @Autowired
     private PaymentRepository pagos;
+
+    @Autowired
+    private ProcessedEventRepository procesados;
 
     @Value("${foodflow.kafka.orders-topic}")
     private String ordersTopic;
@@ -141,15 +145,46 @@ class OrderCreatedFlowIntegrationTests {
         }
     }
 
+    @Test
+    @DisplayName("HU-601 criterios 4 y 5: el mismo evento entregado dos veces no cobra dos veces")
+    void laReentregaNoCobraDosVeces() throws Exception {
+        UUID orderId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        String evento = orderCreated(eventId, orderId, "PAY-OK");
+
+        esperarAsignacionDeParticiones();
+
+        // El mismo eventId dos veces, como lo haria una reentrega del broker (ADR-09).
+        kafka.send(ordersTopic, orderId.toString(), evento).get();
+        Payment pago = esperarPagoDe(orderId);
+        kafka.send(ordersTopic, orderId.toString(), evento).get();
+
+        // Se espera a proposito: lo que se afirma es que NO aparece un segundo pago.
+        Thread.sleep(3000);
+
+        try {
+            assertThat(pagos.findAll().stream().filter(p -> p.orderId().equals(orderId))).hasSize(1);
+            assertThat(pagos.findByOrderId(orderId)).get()
+                    .extracting(Payment::id).isEqualTo(pago.id());
+            assertThat(procesados.existsById(eventId)).isTrue();
+        } finally {
+            pagos.deleteById(pago.id());
+        }
+    }
+
     /** Envelope y payload tal como los publica Order Service (HU-103). */
     private static String orderCreated(UUID orderId, String paymentToken) {
+        return orderCreated(UUID.randomUUID(), orderId, paymentToken);
+    }
+
+    private static String orderCreated(UUID eventId, UUID orderId, String paymentToken) {
         return """
                 {"eventId":"%s","eventType":"OrderCreated","eventVersion":1,"occurredAt":"%s",\
                 "correlationId":"%s","aggregateId":"%s",\
                 "payload":{"orderId":"%s","customerReference":"PED-HU605","total":45900.00,\
                 "currency":"COP","paymentToken":"%s",\
                 "notificationContact":{"channel":"EMAIL","destination":"ana@foodflow.test"}}}"""
-                .formatted(UUID.randomUUID(), Instant.now(), UUID.randomUUID(), orderId, orderId,
+                .formatted(eventId, Instant.now(), UUID.randomUUID(), orderId, orderId,
                         paymentToken);
     }
 
