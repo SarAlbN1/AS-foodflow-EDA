@@ -46,7 +46,7 @@
 | [HU-601](epicas/EP-06-resiliencia-y-calidad.md) | Hacer idempotentes los consumidores Kafka | 5 | Sara | 5 | Pendiente | | |
 | [HU-602](epicas/EP-06-resiliencia-y-calidad.md) | Aplicar reintentos y DLQ a eventos fallidos | 5 | Sara | 5 | Pendiente | | |
 | [HU-603](epicas/EP-06-resiliencia-y-calidad.md) | Implementar logs estructurados y correlacionados | 5 | Sara | 3 | Pendiente | | |
-| [HU-605](epicas/EP-06-resiliencia-y-calidad.md) | Automatizar pruebas de integración del flujo Kafka | 5 | Sara | 5 | Pendiente | | |
+| [HU-605](epicas/EP-06-resiliencia-y-calidad.md) | Automatizar pruebas de integración del flujo Kafka | 5 | Sara | 5 | En revisión | | Los tres tramos del flujo contra Kafka y PostgreSQL reales; verifican persistencia y evento resultante, no la invocación. Sin Testcontainers |
 | [HU-607](epicas/EP-06-resiliencia-y-calidad.md) | Scripts de arranque, parada y prueba de humo | 5 | Juan | 2 | Terminada | #91 | `scripts/up.sh`, `down.sh`, `smoke-test.sh` verificados desde un clon limpio; incluye el health del gateway (A-10). La prueba de humo informa `PENDIENTE` el estado final hasta HU-104/105/106 |
 | [HU-606](epicas/EP-06-resiliencia-y-calidad.md) | Validar el flujo end-to-end contenerizado | 6 | Sara | 8 | Pendiente | | |
 | [HU-608](epicas/EP-06-resiliencia-y-calidad.md) | Verificar los atributos de calidad | 6 | Juan | 5 | Pendiente | | |
