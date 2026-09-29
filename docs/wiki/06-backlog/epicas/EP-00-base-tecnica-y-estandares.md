@@ -121,24 +121,6 @@ Como equipo de desarrollo, quiero que las reglas arquitectónicas se verifiquen 
 3. Una violación deliberada hace fallar la verificación (evidencia documentada).
 4. Se ejecutan localmente con un comando documentado, sin depender de CI.
 
-## HU-007 — CI automático (opcional)
-
-**Orden:** 7  
-**Prioridad:** P2  
-**Sprint:** — (opcional, fuera del plan) · **Puntos:** — · **Responsable:** —  
-**Tipo:** Enabler  
-**INVEST:** I✅ N✅ V✅ E✅ S✅ T✅
-
-**Historia**  
-Como equipo de desarrollo, quiero compilación y pruebas automáticas en cada PR, para detectar rupturas sin ejecutar todo manualmente.
-
-**Criterios de aceptación**
-
-1. Un flujo de trabajo compila y prueba los servicios, el gateway y el frontend.
-2. Ejecuta `verify-architecture.sh` si existe.
-3. No usa secretos versionados.
-4. Su ausencia no impide dar por terminado el prototipo (página [Visión y alcance](../../01-producto/vision-y-alcance.md)).
-
 ## HU-008 — Alinear el documento técnico con las decisiones consolidadas
 
 **Orden:** 8  
@@ -178,23 +160,6 @@ Como equipo de desarrollo, quiero un repositorio con ramas, etiquetas, plantilla
 3. Existen `.github/pull_request_template.md` y las plantillas de issue `story`, `bug` y `adr`.
 4. `main` está protegida según la página [Pull requests, protección y releases](../../05-proceso/pull-requests-y-releases.md).
 5. Existen `.gitignore`, `.editorconfig`, `.env.example` y `CONTRIBUTING.md`.
-6. Existe un issue por cada HU del backlog, con etiquetas, milestone y responsable (las HU opcionales P2, sin sprint, no llevan milestone ni responsable), y todos están en el Project con su estado.
+6. Existe un issue por cada HU del backlog, con etiquetas, milestone y responsable, y todos están en el Project con su estado.
 
 > **Nota de bootstrap:** el bootstrap cumple los criterios 1 a 5 y creó los issues del Sprint 1. El 2026-09-28 se crearon los issues del resto del backlog (#18 a #60) y se añadieron al Project en estado `Todo`. La HU se cierra al verificar el checklist.
-
-## HU-010 — Versionado de esquemas con Flyway (opcional)
-
-**Orden:** 10  
-**Prioridad:** P2  
-**Sprint:** — (opcional, fuera del plan) · **Puntos:** — · **Responsable:** —  
-**Tipo:** Enabler  
-**INVEST:** I✅ N✅ V✅ E✅ S✅ T✅
-
-**Historia**  
-Como equipo de desarrollo, quiero versionar los esquemas de base de datos con migraciones, para evolucionar las tablas de forma controlada.
-
-**Criterios de aceptación**
-
-1. Cada servicio migra su propio esquema y ninguna migración toca bases ajenas.
-2. Los scripts de `infrastructure/postgres/` se convierten en migraciones sin cambiar el modelo.
-3. Su ausencia no impide dar por terminado el prototipo.

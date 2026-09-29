@@ -134,7 +134,7 @@ automáticamente la primera vez que se crea el volumen.
 Los scripts SQL viven versionados en `infrastructure/postgres/<db>/` y se montan en
 `/docker-entrypoint-initdb.d` en modo solo lectura. Se ejecutan **una única vez**, al crear
 el volumen. Para aplicar un cambio de esquema durante el desarrollo hay que recrear el
-volumen con `down -v`. Flyway es opcional (HU-010).
+volumen con `down -v`. El prototipo no usa Flyway.
 
 ## Solución de problemas
 

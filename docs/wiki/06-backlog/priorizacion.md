@@ -57,12 +57,4 @@
 - HU-604 Exponer health checks de componentes.
 - HU-605 Automatizar pruebas de integración del flujo Kafka.
 
-## P2 — Opcional (fuera del plan de sprints)
-
-- HU-007 CI automático (opcional).
-- HU-010 Versionado de esquemas con Flyway (opcional).
-- HU-011 Pruebas de integración con Testcontainers (opcional).
-- HU-205 Consultar el pago de un pedido.
-- HU-503 Visualizar el resultado del pago.
-
 Cualquier mejora que no contribuya a demostrar EDA o a cumplir un entregable se pospone hasta completar P0 y P1.

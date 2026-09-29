@@ -2,7 +2,7 @@
 
 [← Backlog](README.md) · [Índice de la wiki](../Home.md)
 
-> Estado vivo. Se actualiza al cerrar cada HU (en el mismo PR). Estados: `Pendiente`, `En curso`, `En revisión`, `Terminada`, `Bloqueada`, `Opcional`.
+> Estado vivo. Se actualiza al cerrar cada HU (en el mismo PR). Estados: `Pendiente`, `En curso`, `En revisión`, `Terminada`, `Bloqueada`.
 
 | HU | Título | Sprint | Resp. | Pts | Estado | PR | Notas |
 |---|---|---:|---|---:|---|---|---|
@@ -55,8 +55,3 @@
 | [HU-705](epicas/EP-07-entregables-y-sustentacion.md) | Lecciones aprendidas | 6 | Sara | 5 | Terminada | #110 | La §4 del informe pasa de placeholder a contenido: dificultades reales de Kafka, seis decisiones que cambiaron, el efecto de ADR-08 y siete recomendaciones para replicar el stack |
 | [HU-706](epicas/EP-07-entregables-y-sustentacion.md) | Presentación, demo y ensayo | 6 | Juan | 5 | Pendiente | | |
 | [HU-707](epicas/EP-07-entregables-y-sustentacion.md) | Segmento de arquitectura en la sustentación | 6 | Sara | 2 | Terminada | #111 | Agenda de 10 minutos, asistencia confirmada y respuestas del profesor registradas |
-| [HU-007](epicas/EP-00-base-tecnica-y-estandares.md) | CI automático (opcional) | - | - | - | Opcional | | |
-| [HU-010](epicas/EP-00-base-tecnica-y-estandares.md) | Versionado de esquemas con Flyway (opcional) | - | - | - | Opcional | | |
-| [HU-011](epicas/EP-06-resiliencia-y-calidad.md) | Pruebas de integración con Testcontainers (opcional) | - | - | - | Opcional | | |
-| [HU-205](epicas/EP-02-pagos.md) | Consultar el pago de un pedido | - | - | - | Opcional | | |
-| [HU-503](epicas/EP-05-frontend.md) | Visualizar el resultado del pago | - | - | - | Opcional | | |
