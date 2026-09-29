@@ -1,20 +1,19 @@
 # ============================================================================
-#  FoodFlow EDA — entorno local (HU-002, HU-004, HU-306)
+#  FoodFlow EDA — entorno local (HU-002, HU-004, HU-306, HU-607)
 # ============================================================================
-#  Contiene la infraestructura de datos y mensajería y las dependencias simuladas:
+#  Contiene todo el prototipo:
 #    - Apache Kafka en modo KRaft (un nodo que hace de broker y de controller).
 #    - Tres PostgreSQL independientes, una por servicio, con credenciales propias.
 #    - Los tópicos y sus DLQ, creados por `kafka-init` (HU-004).
 #    - El proveedor de notificaciones simulado `notification-provider` (HU-306).
-#
-#  Fuera del alcance:
-#    - Servicios, gateway y frontend -> HU-607
+#    - Los tres servicios, el API Gateway y el frontend (HU-607).
 #
 #  Reglas que aplican:
 #    2. Cada servicio es el único propietario de su base.
 #    3. Ninguna base publica ni consume eventos; Kafka nunca escribe en PostgreSQL.
 #
-#  Uso (desde la raíz del repositorio, con `.env` ya creado):
+#  Uso habitual (desde la raíz del repositorio): scripts/up.sh, scripts/down.sh y
+#  scripts/smoke-test.sh. Equivalente manual, con `.env` ya creado:
 #    docker compose --env-file .env -f infrastructure/compose/docker-compose.yml up -d
 #    docker compose --env-file .env -f infrastructure/compose/docker-compose.yml ps
 #    docker compose --env-file .env -f infrastructure/compose/docker-compose.yml down
@@ -178,6 +177,173 @@ services:
     environment:
       MOCK_SLOW_DELAY: ${MOCK_SLOW_DELAY:-5s}
       MOCK_FLAKY_FAILURES: ${MOCK_FLAKY_FAILURES:-2}
+    networks: [foodflow]
+    restart: unless-stopped
+
+  # ==========================================================================
+  #  Servicios, gateway y frontend (HU-607). Se construyen desde el código del
+  #  repositorio con la receta de infrastructure/docker/. Solo el gateway y el
+  #  frontend publican puertos en el host: el cliente nunca ve a los servicios.
+  #  Dentro de la red cada uno recibe la URL interna de SU base y kafka:9092.
+  # ==========================================================================
+
+  # --------------------------------------------------------------------------
+  #  Order Service — único propietario de Order DB. Publica en orders.events.
+  # --------------------------------------------------------------------------
+  order-service:
+    build:
+      context: ../../services/order-service
+      dockerfile: ../../infrastructure/docker/spring-boot-service.Dockerfile
+    image: foodflow/order-service:0.0.1
+    container_name: foodflow-order-service
+    depends_on:
+      order-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    environment:
+      ORDER_SERVICE_PORT: 8081
+      ORDER_DB_URL: jdbc:postgresql://order-db:5432/${ORDER_DB_NAME}
+      ORDER_DB_USER: ${ORDER_DB_USER}
+      ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      ORDERS_TOPIC: ${ORDERS_TOPIC}
+    healthcheck:
+      # La imagen no trae curl: bash abre el socket y pide readiness (200 = listo).
+      test: ["CMD", "bash", "-c", 'exec 3<>/dev/tcp/localhost/8081 && printf "GET /actuator/health/readiness HTTP/1.0\r\n\r\n" >&3 && head -1 <&3 | grep -q " 200"']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    networks: [foodflow]
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  #  Payment Service — único propietario de Payment DB. Consume orders.events y
+  #  publica en payments.events. No expone API de negocio.
+  # --------------------------------------------------------------------------
+  payment-service:
+    build:
+      context: ../../services/payment-service
+      dockerfile: ../../infrastructure/docker/spring-boot-service.Dockerfile
+    image: foodflow/payment-service:0.0.1
+    container_name: foodflow-payment-service
+    depends_on:
+      payment-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    environment:
+      PAYMENT_SERVICE_PORT: 8082
+      PAYMENT_DB_URL: jdbc:postgresql://payment-db:5432/${PAYMENT_DB_NAME}
+      PAYMENT_DB_USER: ${PAYMENT_DB_USER}
+      PAYMENT_DB_PASSWORD: ${PAYMENT_DB_PASSWORD}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      ORDERS_TOPIC: ${ORDERS_TOPIC}
+      PAYMENTS_TOPIC: ${PAYMENTS_TOPIC}
+      PAYMENT_ORDERS_CONSUMER_GROUP: ${PAYMENT_ORDERS_CONSUMER_GROUP}
+    healthcheck:
+      # La imagen no trae curl: bash abre el socket y pide readiness (200 = listo).
+      test: ["CMD", "bash", "-c", 'exec 3<>/dev/tcp/localhost/8082 && printf "GET /actuator/health/readiness HTTP/1.0\r\n\r\n" >&3 && head -1 <&3 | grep -q " 200"']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    networks: [foodflow]
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  #  Notification Service — único propietario de Notification DB y único que
+  #  llama al proveedor (regla 7). Recibe ya la URL de su base y la del mock
+  #  para cuando EP-03 las use; mientras tanto solo expone su health check.
+  # --------------------------------------------------------------------------
+  notification-service:
+    build:
+      context: ../../services/notification-service
+      dockerfile: ../../infrastructure/docker/spring-boot-service.Dockerfile
+    image: foodflow/notification-service:0.0.1
+    container_name: foodflow-notification-service
+    depends_on:
+      notification-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      notification-provider:
+        condition: service_started
+    environment:
+      # 8083 sigue la serie de puertos locales; el gateway enruta allí (HU-402).
+      SERVER_PORT: 8083
+      NOTIFICATION_DB_URL: jdbc:postgresql://notification-db:5432/${NOTIFICATION_DB_NAME}
+      NOTIFICATION_DB_USER: ${NOTIFICATION_DB_USER}
+      NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      PAYMENTS_TOPIC: ${PAYMENTS_TOPIC}
+      NOTIFICATION_PROVIDER_URL: ${NOTIFICATION_PROVIDER_URL}
+    healthcheck:
+      # La imagen no trae curl: bash abre el socket y pide readiness (200 = listo).
+      test: ["CMD", "bash", "-c", 'exec 3<>/dev/tcp/localhost/8083 && printf "GET /actuator/health/readiness HTTP/1.0\r\n\r\n" >&3 && head -1 <&3 | grep -q " 200"']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    networks: [foodflow]
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  #  API Gateway — el único punto de entrada del cliente (HU-401). Enruta por
+  #  la red interna; no tiene base ni Kafka.
+  # --------------------------------------------------------------------------
+  api-gateway:
+    build:
+      context: ../../gateway/api-gateway
+      dockerfile: ../../infrastructure/docker/spring-boot-service.Dockerfile
+    image: foodflow/api-gateway:0.0.1
+    container_name: foodflow-api-gateway
+    depends_on:
+      order-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+    ports:
+      # El frontend compila http://localhost:8080 como URL base (core/api-config.ts).
+      - "${GATEWAY_PORT}:8080"
+    environment:
+      ORDER_SERVICE_URL: http://order-service:8081
+      NOTIFICATION_SERVICE_URL: http://notification-service:8083
+      GATEWAY_CORS_ALLOWED_ORIGINS: ${GATEWAY_CORS_ALLOWED_ORIGINS}
+      GATEWAY_CONNECT_TIMEOUT: ${GATEWAY_CONNECT_TIMEOUT}
+      GATEWAY_READ_TIMEOUT: ${GATEWAY_READ_TIMEOUT}
+    healthcheck:
+      # La imagen no trae curl: bash abre el socket y pide readiness (200 = listo).
+      test: ["CMD", "bash", "-c", 'exec 3<>/dev/tcp/localhost/8080 && printf "GET /actuator/health/readiness HTTP/1.0\r\n\r\n" >&3 && head -1 <&3 | grep -q " 200"']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    networks: [foodflow]
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
+  #  Frontend Angular servido por Nginx. El navegador solo habla con el
+  #  gateway (regla 1); 4200 es el origen que GATEWAY_CORS_ALLOWED_ORIGINS autoriza.
+  # --------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ../../frontend/foodflow-web
+      dockerfile: ../../infrastructure/docker/frontend.Dockerfile
+    image: foodflow/frontend:0.0.1
+    container_name: foodflow-frontend
+    depends_on:
+      api-gateway:
+        condition: service_started
+    ports:
+      - "4200:80"
     networks: [foodflow]
     restart: unless-stopped
 
