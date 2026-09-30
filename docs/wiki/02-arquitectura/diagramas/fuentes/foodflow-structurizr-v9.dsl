@@ -106,7 +106,7 @@ workspace "FoodFlow - Arquitectura Orientada a Eventos" "Modelo C4 del prototipo
                 // NOTIFICATION SERVICE
                 // =================================================
 
-                notificationService = container "Notification Service" "Consume OrderStatusChanged y crea las notificaciones asociadas al pedido." "Spring Boot + Java" {
+                notificationService = container "Notification Service" "Consume PaymentApproved y PaymentRejected en su propio grupo de consumidores y crea las notificaciones asociadas al resultado del pago." "Spring Boot + Java" {
                     tags "Backend"
                 }
 
@@ -220,7 +220,10 @@ workspace "FoodFlow - Arquitectura Orientada a Eventos" "Modelo C4 del prototipo
 
         notificationService -> kafka "Publica NotificationSent o NotificationFailed" "Kafka / JSON"
 
-        kafka -> notificationService "Entrega OrderStatusChanged" "Kafka / JSON"
+        // Abanico: Order Service y Notification Service consumen el
+        // mismo resultado del pago en grupos distintos; Notification
+        // no depende de OrderStatusChanged.
+        kafka -> notificationService "Entrega PaymentApproved y PaymentRejected" "Kafka / JSON"
 
 
         // =====================================================
@@ -526,51 +529,85 @@ workspace "FoodFlow - Arquitectura Orientada a Eventos" "Modelo C4 del prototipo
         // PAY-FAIL utiliza el mismo patrón, pero Payment Service
         // publica PaymentRejected y Order Service cambia el
         // estado del pedido a PAGO_RECHAZADO.
+        //
+        // Abanico (informe, sección 3): PaymentApproved se publica
+        // una sola vez y lo consumen Order Service y Notification
+        // Service en paralelo, cada uno en su grupo. Los dos
+        // bloques internos son secuencias paralelas: Structurizr
+        // numera ambas ramas a partir del mismo paso.
+        //
+        // Hay dos vistas con el mismo contenido y distinta
+        // disposición: Dynamic_OrderFlow (la que cita el informe)
+        // y Dynamic_OrderFlow_Horizontal.
         // =====================================================
 
         dynamic foodFlow "Dynamic_OrderFlow" {
 
             description "Caso de uso end-to-end: crear pedido, procesar pago simulado y notificar resultado."
 
-            1: cliente -> angularApp "Confirma un pedido con PAY-OK y datos de contacto"
-
-            2: angularApp -> apiGateway "Envía POST /orders con Idempotency-Key"
-
-            3: apiGateway -> orderService "Enruta la creación del pedido"
-
-            4: orderService -> ordersDb "Persiste Pedido con estado CREADO"
-
-            5: orderService -> kafka "Publica OrderCreated"
-
-            6: kafka -> paymentService "Entrega OrderCreated"
-
-            7: paymentService -> paymentsDb "Persiste Pago con estado APROBADO"
-
-            8: paymentService -> kafka "Publica PaymentApproved"
-
-            9: kafka -> orderService "Entrega PaymentApproved"
-
-            10: orderService -> ordersDb "Actualiza Pedido a PAGADO"
-
-            11: orderService -> kafka "Publica OrderStatusChanged"
-
-            12: kafka -> notificationService "Entrega OrderStatusChanged"
-
-            13: notificationService -> notificationsDb "Persiste Notificación con estado PENDIENTE"
-
-            14: notificationService -> proveedorNotificaciones "Solicita el envío de la notificación"
-
-            15: proveedorNotificaciones -> notificationService "Devuelve resultado del envío"
-
-            16: notificationService -> notificationsDb "Actualiza Notificación a ENVIADA"
-
-            17: notificationService -> kafka "Publica NotificationSent"
-
-            18: proveedorNotificaciones -> cliente "Entrega la notificación al cliente"
+            cliente -> angularApp "Confirma un pedido con PAY-OK y datos de contacto"
+            angularApp -> apiGateway "Envía POST /orders con Idempotency-Key"
+            apiGateway -> orderService "Enruta la creación del pedido"
+            orderService -> ordersDb "Persiste Pedido con estado CREADO"
+            orderService -> kafka "Publica OrderCreated"
+            kafka -> paymentService "Entrega OrderCreated"
+            paymentService -> paymentsDb "Persiste Pago con estado APROBADO"
+            paymentService -> kafka "Publica PaymentApproved"
+            {
+                {
+                    kafka -> orderService "Entrega PaymentApproved (grupo de Order)"
+                    orderService -> ordersDb "Actualiza Pedido a PAGADO"
+                    orderService -> kafka "Publica OrderStatusChanged"
+                }
+                {
+                    kafka -> notificationService "Entrega PaymentApproved (grupo de Notification)"
+                    notificationService -> notificationsDb "Persiste Notificación con estado PENDIENTE"
+                    notificationService -> proveedorNotificaciones "Solicita el envío de la notificación"
+                    proveedorNotificaciones -> notificationService "Devuelve resultado del envío"
+                    notificationService -> notificationsDb "Actualiza Notificación a ENVIADA"
+                    notificationService -> kafka "Publica NotificationSent"
+                    proveedorNotificaciones -> cliente "Entrega la notificación al cliente"
+                }
+            }
 
             autoLayout lr
 
             title "C4 Dynamic - Flujo principal FoodFlow - PAY-OK"
+        }
+
+
+        dynamic foodFlow "Dynamic_OrderFlow_Horizontal" {
+
+            description "Mismo flujo que Dynamic_OrderFlow, dispuesto en horizontal con más separación entre columnas."
+
+            cliente -> angularApp "Confirma un pedido con PAY-OK y datos de contacto"
+            angularApp -> apiGateway "Envía POST /orders con Idempotency-Key"
+            apiGateway -> orderService "Enruta la creación del pedido"
+            orderService -> ordersDb "Persiste Pedido con estado CREADO"
+            orderService -> kafka "Publica OrderCreated"
+            kafka -> paymentService "Entrega OrderCreated"
+            paymentService -> paymentsDb "Persiste Pago con estado APROBADO"
+            paymentService -> kafka "Publica PaymentApproved"
+            {
+                {
+                    kafka -> orderService "Entrega PaymentApproved (grupo de Order)"
+                    orderService -> ordersDb "Actualiza Pedido a PAGADO"
+                    orderService -> kafka "Publica OrderStatusChanged"
+                }
+                {
+                    kafka -> notificationService "Entrega PaymentApproved (grupo de Notification)"
+                    notificationService -> notificationsDb "Persiste Notificación con estado PENDIENTE"
+                    notificationService -> proveedorNotificaciones "Solicita el envío de la notificación"
+                    proveedorNotificaciones -> notificationService "Devuelve resultado del envío"
+                    notificationService -> notificationsDb "Actualiza Notificación a ENVIADA"
+                    notificationService -> kafka "Publica NotificationSent"
+                    proveedorNotificaciones -> cliente "Entrega la notificación al cliente"
+                }
+            }
+
+            autoLayout lr 400 200
+
+            title "C4 Dynamic - Flujo principal FoodFlow - PAY-OK (horizontal)"
         }
 
 
