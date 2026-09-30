@@ -55,7 +55,7 @@
 | [HU-705](epicas/EP-07-entregables-y-sustentacion.md) | Lecciones aprendidas | 6 | Sara | 5 | Terminada | #110 | La §4 del informe pasa de placeholder a contenido: dificultades reales de Kafka, seis decisiones que cambiaron, el efecto de ADR-08 y siete recomendaciones para replicar el stack |
 | [HU-706](epicas/EP-07-entregables-y-sustentacion.md) | Presentación, demo y ensayo | 6 | Juan | 5 | Pendiente | | |
 | [HU-707](epicas/EP-07-entregables-y-sustentacion.md) | Segmento de arquitectura en la sustentación | 6 | Sara | 2 | Terminada | #111 | Agenda de 10 minutos, asistencia confirmada y respuestas del profesor registradas |
-| [HU-007](epicas/EP-00-base-tecnica-y-estandares.md) | CI automático (opcional) | - | Juan | - | Pendiente | | |
+| [HU-007](epicas/EP-00-base-tecnica-y-estandares.md) | CI automático (opcional) | - | Juan | - | En revisión | | `.github/workflows/ci.yml`: Maven verify de los cinco proyectos, build y pruebas del frontend, y verificaciones de estructura, contratos y arquitectura; sin secretos |
 | [HU-010](epicas/EP-00-base-tecnica-y-estandares.md) | Versionado de esquemas con Flyway (opcional) | - | Juan | - | Pendiente | | |
 | [HU-011](epicas/EP-06-resiliencia-y-calidad.md) | Pruebas de integración con Testcontainers (opcional) | - | Juan | - | Pendiente | | |
 | [HU-205](epicas/EP-02-pagos.md) | Consultar el pago de un pedido | - | Juan | - | Pendiente | | Bloqueada hasta que se integre el cambio de alcance de `CLAUDE.md` §5 (endpoint de consulta de pagos) |

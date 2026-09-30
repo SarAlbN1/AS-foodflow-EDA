@@ -1,0 +1,107 @@
+# CI de FoodFlow (HU-007, opcional).
+#
+# Compila y prueba los servicios, el gateway, el proveedor simulado y el
+# frontend en cada PR y en cada push a main, y ejecuta las
+# verificaciones de estructura, contratos y arquitectura.
+#
+# - No usa secretos: ni variables del repositorio ni el .env (criterio 3).
+# - Las pruebas de integración contra Kafka y PostgreSQL se omiten solas sin
+#   sus variables de entorno (HU-605), así que aquí corre lo que corre con
+#   `./mvnw verify` sin infraestructura. El flujo completo en contenedores se
+#   sigue verificando con scripts/up.sh y scripts/smoke-test.sh.
+# - Es opcional: su ausencia no impide dar por terminado el prototipo
+#   (criterio 4). Versiones según docs/wiki/04-implementacion/versiones.md.
+
+name: CI
+
+on:
+  # Cualquier PR, también los apilados sobre otra rama.
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Maven verify (${{ matrix.proyecto }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        proyecto:
+          - services/order-service
+          - services/payment-service
+          - services/notification-service
+          - gateway/api-gateway
+          - mocks/notification-provider
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: JDK 25 (Temurin)
+        uses: actions/setup-java@v6.0.1
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: ${{ matrix.proyecto }}/pom.xml
+
+      - name: ./mvnw verify
+        working-directory: ${{ matrix.proyecto }}
+        run: ./mvnw -B -ntp verify
+
+  frontend:
+    name: Frontend (build y pruebas)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend/foodflow-web
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Node.js 24.21.0
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '24.21.0'
+          cache: npm
+          cache-dependency-path: frontend/foodflow-web/package-lock.json
+
+      - run: npm ci
+      - run: npm run build
+      - run: npm test -- --watch=false
+
+  verificaciones:
+    name: Estructura, contratos y arquitectura
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      # verify-architecture.sh ejecuta las pruebas ArchUnit con el mvnw de
+      # cada servicio, así que necesita el JDK.
+      - name: JDK 25 (Temurin)
+        uses: actions/setup-java@v6.0.1
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: |
+            services/*/pom.xml
+            gateway/*/pom.xml
+
+      - name: Estructura del repositorio
+        run: bash scripts/check-structure.sh
+
+      - name: Contratos de eventos (JSON Schema)
+        run: bash scripts/validate-events.sh
+
+      - name: Contrato REST (OpenAPI)
+        run: bash scripts/validate-openapi.sh
+
+      - name: Verificación de arquitectura
+        run: bash scripts/verify-architecture.sh
