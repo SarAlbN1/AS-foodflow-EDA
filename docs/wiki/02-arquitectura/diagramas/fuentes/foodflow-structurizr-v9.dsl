@@ -535,10 +535,6 @@ workspace "FoodFlow - Arquitectura Orientada a Eventos" "Modelo C4 del prototipo
         // Service en paralelo, cada uno en su grupo. Los dos
         // bloques internos son secuencias paralelas: Structurizr
         // numera ambas ramas a partir del mismo paso.
-        //
-        // Hay dos vistas con el mismo contenido y distinta
-        // disposición: Dynamic_OrderFlow (la que cita el informe)
-        // y Dynamic_OrderFlow_Horizontal.
         // =====================================================
 
         dynamic foodFlow "Dynamic_OrderFlow" {
@@ -576,41 +572,6 @@ workspace "FoodFlow - Arquitectura Orientada a Eventos" "Modelo C4 del prototipo
         }
 
 
-        dynamic foodFlow "Dynamic_OrderFlow_Horizontal" {
-
-            description "Mismo flujo que Dynamic_OrderFlow, dispuesto en horizontal con más separación entre columnas."
-
-            cliente -> angularApp "Confirma un pedido con PAY-OK y datos de contacto"
-            angularApp -> apiGateway "Envía POST /orders con Idempotency-Key"
-            apiGateway -> orderService "Enruta la creación del pedido"
-            orderService -> ordersDb "Persiste Pedido con estado CREADO"
-            orderService -> kafka "Publica OrderCreated"
-            kafka -> paymentService "Entrega OrderCreated"
-            paymentService -> paymentsDb "Persiste Pago con estado APROBADO"
-            paymentService -> kafka "Publica PaymentApproved"
-            {
-                {
-                    kafka -> orderService "Entrega PaymentApproved (grupo de Order)"
-                    orderService -> ordersDb "Actualiza Pedido a PAGADO"
-                    orderService -> kafka "Publica OrderStatusChanged"
-                }
-                {
-                    kafka -> notificationService "Entrega PaymentApproved (grupo de Notification)"
-                    notificationService -> notificationsDb "Persiste Notificación con estado PENDIENTE"
-                    notificationService -> proveedorNotificaciones "Solicita el envío de la notificación"
-                    proveedorNotificaciones -> notificationService "Devuelve resultado del envío"
-                    notificationService -> notificationsDb "Actualiza Notificación a ENVIADA"
-                    notificationService -> kafka "Publica NotificationSent"
-                    proveedorNotificaciones -> cliente "Entrega la notificación al cliente"
-                }
-            }
-
-            autoLayout lr 400 200
-
-            title "C4 Dynamic - Flujo principal FoodFlow - PAY-OK (horizontal)"
-        }
-
-
 
         // =====================================================
         // C4 DEPLOYMENT DIAGRAM
@@ -622,7 +583,9 @@ workspace "FoodFlow - Arquitectura Orientada a Eventos" "Modelo C4 del prototipo
         // existentes entre los containers del modelo estático
         // para dibujar las relaciones entre sus instancias.
         //
-        // Layout vertical para evitar un diagrama ultrapanorámico.
+        // Dos vistas con el mismo contenido y distinta disposición:
+        // Deployment_Development (vertical, la que cita el informe)
+        // y Deployment_Development_Horizontal (de izquierda a derecha).
         // =====================================================
 
         deployment foodFlow development "Deployment_Development" {
@@ -634,6 +597,18 @@ workspace "FoodFlow - Arquitectura Orientada a Eventos" "Modelo C4 del prototipo
             autoLayout tb 160 80
 
             title "C4 Deployment - FoodFlow - Development"
+        }
+
+
+        deployment foodFlow development "Deployment_Development_Horizontal" {
+
+            description "Mismo despliegue que Deployment_Development, dispuesto de izquierda a derecha."
+
+            include *
+
+            autoLayout lr 160 80
+
+            title "C4 Deployment - FoodFlow - Development (horizontal)"
         }
 
 
