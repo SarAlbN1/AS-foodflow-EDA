@@ -135,6 +135,7 @@ El repositorio es el entregable académico. Lo que se evalúa es el trabajo del 
 | Validar contratos de eventos | `bash scripts/validate-events.sh` | HU-003 |
 | Validar el contrato REST | `bash scripts/validate-openapi.sh` | HU-404 |
 | Verificar arquitectura | `bash scripts/verify-architecture.sh` (`--sin-tests` omite las pruebas ArchUnit) | HU-006 |
+| Verificar atributos de calidad | `bash scripts/verify-quality-attributes.sh` (`--sin-disruptivos`, `--solo <pruebas>`) | HU-608 |
 | Construir y probar un servicio | `./mvnw verify` (en `services/<servicio>` o `gateway/api-gateway`; Windows: `mvnw.cmd verify`) | HU-001 |
 | Construir y probar el frontend | `npm ci && npm run build && npm test -- --watch=false` (en `frontend/foodflow-web`) | HU-001 |
 

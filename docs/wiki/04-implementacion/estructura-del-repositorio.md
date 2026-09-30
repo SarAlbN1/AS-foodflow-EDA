@@ -59,7 +59,7 @@ foodflow-eda/
 │   ├── postgres/{order-db,payment-db,notification-db}/
 │   └── nginx/
 ├── mocks/notification-provider/
-└── scripts/                           # up, down, smoke-test, verify-architecture, setup-*, create-issues, check-structure
+└── scripts/                           # up, down, smoke-test, verify-architecture, verify-quality-attributes, setup-*, create-issues, check-structure
 ```
 
 Cada carpeta de código incluye un `README.md` que declara su responsabilidad, las HU que la construyen y las reglas que le aplican.

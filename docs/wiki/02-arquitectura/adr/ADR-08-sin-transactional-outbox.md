@@ -111,7 +111,7 @@ Lo que hace esta decisión defendible **no es** elegir A, sino elegir A **y decl
 4. [ ] Registrar `ERROR` con `correlationId` y `orderId` si la publicación falla, dejando el pedido en `CREADO` (HU-103).
 5. [ ] Documentar la limitación en el `README.md` del repositorio (HU-701).
 6. [ ] Recogerla en las lecciones aprendidas del informe técnico (HU-008, HU-703).
-7. [ ] Verificar el *replay* con un grupo de consumidores nuevo y comprobar que no recupera lo no publicado (HU-608).
+7. [x] Verificar el *replay* con un grupo de consumidores nuevo y comprobar que no recupera lo no publicado (HU-608: el replay desde `earliest` no cambió estados ni publicó transiciones nuevas, y el pedido creado con el broker caído siguió en `CREADO` sin su `OrderCreated`; ver [Atributos de calidad medidos](../../04-implementacion/pruebas/atributos-de-calidad.md)).
 
 ## Táctica relacionada
 

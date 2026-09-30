@@ -8,7 +8,7 @@
 | A-2 | ~~ADR-11 menciona `OrderStatusChanged` como vía de propagación del contacto, pero la regla 10 exige que Notification reaccione al pago de forma independiente.~~ | **CERRADO (2026-09-28).** Notification consume `payments.events`; Payment copia el snapshot desde `OrderCreated`. `OrderStatusChanged` lo transporta para consumidores futuros. | Ninguna. La decisión confirma el abanico desde `payments.events`; se corrigió el informe, no la wiki. |
 | A-3 | La API mínima obligatoria no incluye consulta de pagos. | Fuera de alcance. El pago se observa mediante el estado del pedido. | Ninguna. |
 | A-4 | Calendario real de sprints y calibración de puntos. | Seis sprints; puntos relativos; el 60/40 se calcula sobre puntos. | Recalibrar tras el Sprint 1. |
-| A-5 | Umbrales numéricos de calidad (página [Atributos de calidad verificables](atributos-de-calidad.md)). | Valores propuestos. | Calibrar en HU-608. |
+| A-5 | ~~Umbrales numéricos de calidad (página [Atributos de calidad verificables](atributos-de-calidad.md)).~~ | **CERRADO (2026-09-30).** Calibrados en HU-608 con mediciones reales sobre el entorno Compose; se conservan los valores propuestos porque los medidos quedan muy por debajo. | Ninguna. Valores, entorno y fecha en [Atributos de calidad medidos](../04-implementacion/pruebas/atributos-de-calidad.md). |
 | A-6 | Versiones de Java, Spring Boot, Spring Kafka, Angular, Node, PostgreSQL, Kafka y Nginx. | Sin fijar. | Fijar en `docs/wiki/04-implementacion/versiones.md` antes del Sprint 1. |
 | A-7 | Licencia del repositorio. | Sin definir. | Decidir. |
 | A-8 | Usuarios de GitHub para asignaciones. | Sin registrar. | Registrar en el Project. |

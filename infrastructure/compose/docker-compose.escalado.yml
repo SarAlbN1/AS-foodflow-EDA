@@ -1,0 +1,25 @@
+# ============================================================================
+#  HU-608 — Segunda réplica de Payment Service para la prueba de escalabilidad
+# ============================================================================
+#  Se usa junto al Compose principal, nunca solo:
+#
+#    docker compose -f infrastructure/compose/docker-compose.yml \
+#                   -f infrastructure/compose/docker-compose.escalado.yml \
+#                   up -d payment-service-2
+#
+#  `--scale payment-service=2` no sirve aquí porque el servicio fija
+#  `container_name`, y dos contenedores no pueden compartir nombre. La réplica
+#  hereda del servicio original imagen, variables y red —incluido
+#  PAYMENT_ORDERS_CONSUMER_GROUP, que es lo que importa: ambas instancias
+#  entran al mismo grupo y Kafka reparte entre ellas las particiones de
+#  orders.events (ADR-04).
+#
+#  Payment Service no publica puertos al host, así que la réplica no colisiona.
+#  `bash scripts/verify-quality-attributes.sh` la levanta y la retira sola.
+# ============================================================================
+services:
+  payment-service-2:
+    extends:
+      file: docker-compose.yml
+      service: payment-service
+    container_name: foodflow-payment-service-2
