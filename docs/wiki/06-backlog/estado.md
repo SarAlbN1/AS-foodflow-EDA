@@ -30,7 +30,7 @@
 | [HU-202](epicas/EP-02-pagos.md) | Procesar y persistir el resultado del pago | 3 | Sara | 5 | Terminada | #73 | Resuelve y persiste el pago; la publicación es HU-203 y HU-204 |
 | [HU-203](epicas/EP-02-pagos.md) | Publicar PaymentApproved | 3 | Sara | 2 | Terminada | #84 | Publica PaymentApproved tras el commit; el rechazo es HU-204 |
 | [HU-204](epicas/EP-02-pagos.md) | Publicar PaymentRejected | 3 | Sara | 2 | Terminada | #86 | Publica PaymentRejected; un pago produce un solo evento |
-| [HU-702](epicas/EP-07-entregables-y-sustentacion.md) | Proyección laboral en la matriz de mercado | 3 | Juan | 2 | En revisión | #115 | Propuesta de #76 aplicada a `main.tex`: tendencias explícitas, datos observados separados de inferencias y cifras citadas |
+| [HU-702](epicas/EP-07-entregables-y-sustentacion.md) | Proyección laboral en la matriz de mercado | 3 | Juan | 2 | Terminada | #76, #115 | Propuesta de #76 aplicada a `main.tex`: tendencias explícitas, datos observados separados de inferencias y cifras citadas |
 | [HU-703](epicas/EP-07-entregables-y-sustentacion.md) | Patrones, antipatrones y trazabilidad en el documento técnico | 3 | Sara | 3 | Terminada | #88 | Matriz Investigado/Diseñado/Implementado, antipatrones y riesgos aceptados |
 | [HU-301](epicas/EP-03-notificaciones.md) | Crear una notificación ante el resultado del pago | 4 | Sara | 5 | Terminada | #93 | Consume `payments.events` en abanico (D-6) y crea la notificación en `PENDIENTE`; el envío es HU-302 |
 | [HU-302](epicas/EP-03-notificaciones.md) | Enviar una notificación mediante el proveedor externo | 4 | Sara | 5 | Terminada | #96 | Adaptador HTTP al proveedor: timeouts explícitos, 3 reintentos y sin Circuit Breaker; fija el catálogo de `failureCode` |
@@ -51,7 +51,7 @@
 | [HU-606](epicas/EP-06-resiliencia-y-calidad.md) | Validar el flujo end-to-end contenerizado | 6 | Sara | 8 | Terminada | #107 | Flujos PAY-OK y PAY-FAIL verificados en los once contenedores; ocho eventos observados con un correlationId por pedido |
 | [HU-608](epicas/EP-06-resiliencia-y-calidad.md) | Verificar los atributos de calidad | 6 | Sara | 5 | En curso | | Asignación transferida para ejecutar y documentar las mediciones finales; traspaso solicitado en el issue #50 |
 | [HU-701](epicas/EP-07-entregables-y-sustentacion.md) | README, tag y release | 6 | Sara | 3 | Pendiente | | |
-| [HU-704](epicas/EP-07-entregables-y-sustentacion.md) | Diagramas exportados desde sus fuentes | 6 | Juan | 2 | Pendiente | | |
+| [HU-704](epicas/EP-07-entregables-y-sustentacion.md) | Diagramas exportados desde sus fuentes | 6 | Juan | 2 | En revisión | #116 | Nueve diagramas y dos figuras en `docs/informe/`, en las rutas que espera `main.tex`; fuentes en `docs/wiki/02-arquitectura/diagramas/fuentes/`. Falta verificar los criterios 3 y 4 (abanico, `OrderStatusChanged`, `PAY-OK`/`PAY-FAIL`, borde punteado) |
 | [HU-705](epicas/EP-07-entregables-y-sustentacion.md) | Lecciones aprendidas | 6 | Sara | 5 | Terminada | #110 | La §4 del informe pasa de placeholder a contenido: dificultades reales de Kafka, seis decisiones que cambiaron, el efecto de ADR-08 y siete recomendaciones para replicar el stack |
 | [HU-706](epicas/EP-07-entregables-y-sustentacion.md) | Presentación, demo y ensayo | 6 | Juan | 5 | Pendiente | | |
 | [HU-707](epicas/EP-07-entregables-y-sustentacion.md) | Segmento de arquitectura en la sustentación | 6 | Sara | 2 | Terminada | #111 | Agenda de 10 minutos, asistencia confirmada y respuestas del profesor registradas |
