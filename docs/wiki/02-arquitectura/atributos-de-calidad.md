@@ -2,20 +2,45 @@
 
 [← Índice de la wiki](../Home.md)
 
-Cada atributo tiene un criterio verificable del prototipo. Los umbrales numéricos son **propuestos** y se calibran en HU-608 (punto abierto A-5).
+Cada atributo tiene un criterio verificable del prototipo. Los umbrales
+numéricos se **calibraron con mediciones reales en HU-608** y se conservan tal
+como estaban: los valores medidos quedan muy por debajo, y ajustarlos a la
+máquina de la medición haría fallar la prueba en cualquier equipo más lento sin
+que nada estuviera mal. El punto abierto A-5 queda cerrado.
+
+**Cada criterio de la tabla tiene una prueba ejecutable**: la columna *Prueba*
+apunta a la comprobación que lo verifica dentro de
+`bash scripts/verify-quality-attributes.sh`. Los valores medidos, el entorno y
+la fecha están en [Atributos de calidad medidos](../04-implementacion/pruebas/atributos-de-calidad.md).
 
 | Atributo | Soporte | Criterio verificable | Prueba |
 |---|---|---|---|
-| Rendimiento | Alto | `POST /orders` responde con p95 menor a 500 ms con 20 solicitudes concurrentes en el entorno local, sin esperar el pago | Script de carga |
-| Consistencia (eventual) | Limitado | El pedido converge a `PAGADO` o `PAGO_RECHAZADO` en menos de 5 s (p95) con 20 pedidos | Script E2E |
-| Disponibilidad | Alto | Con Notification Service detenido, los pedidos alcanzan su estado final; al reiniciarlo se procesan las notificaciones pendientes | Prueba manual guiada |
-| Idempotencia | Alto | El mismo evento entregado dos veces produce 1 pago, 1 transición y 1 notificación | Prueba automática |
-| Recuperabilidad | **Parcial** | Reprocesar `payments.events` con un grupo nuevo reconstruye el estado sin duplicados. Los eventos que nunca llegaron a Kafka no se recuperan (ADR-08) | Prueba de replay |
-| Desacoplamiento | Alto | Un consumidor adicional recibe `OrderCreated` sin modificar Order Service | Demostración |
-| Trazabilidad | Limitado | Con un `correlationId` se localizan los logs de los tres servicios y los eventos del pedido | Prueba automática |
-| Testabilidad | Limitado | Los flujos aprobado y rechazado se ejecutan con un solo comando | `smoke-test.sh` |
-| Escalabilidad | Alto | Con 2 réplicas de Payment Service en el mismo grupo, las particiones se reparten entre ambas | Verificación con `kafka-consumer-groups` |
-| Seguridad | Neutro | Ningún log ni endpoint expone secretos ni el contacto completo | Revisión y prueba |
+| Rendimiento | Alto | `POST /orders` responde con p95 menor a 500 ms con 20 solicitudes concurrentes en el entorno local, sin esperar el pago | `--solo rendimiento` |
+| Consistencia (eventual) | Limitado | El pedido converge a `PAGADO` o `PAGO_RECHAZADO` en menos de 5 s (p95) con 20 pedidos | `--solo rendimiento` |
+| Disponibilidad | Alto | Con Notification Service detenido, los pedidos alcanzan su estado final; al reiniciarlo se procesan las notificaciones pendientes | `--solo disponibilidad` |
+| Idempotencia | Alto | El mismo evento entregado dos veces produce 1 pago, 1 transición y 1 notificación | `--solo idempotencia` y las suites de HU-605 |
+| Recuperabilidad | **Parcial** | Reprocesar `payments.events` con un grupo nuevo reconstruye el estado sin duplicados. Los eventos que nunca llegaron a Kafka no se recuperan (ADR-08) | `--solo replay` |
+| Desacoplamiento | Alto | Un consumidor adicional recibe `OrderCreated` sin modificar Order Service | `--solo desacoplamiento` |
+| Trazabilidad | Limitado | Con un `correlationId` se localizan los logs de los tres servicios y los eventos del pedido | `--solo trazabilidad` |
+| Testabilidad | Limitado | Los flujos aprobado y rechazado se ejecutan con un solo comando | `smoke-test.sh`, encadenado por `--solo testabilidad` |
+| Escalabilidad | Alto | Con 2 réplicas de Payment Service en el mismo grupo, las particiones se reparten entre ambas | `--solo escalabilidad` |
+| Seguridad | Neutro | Ningún registro expone secretos ni el contacto completo, y el destino de la notificación sale enmascarado en `GET /orders/{id}/notifications`. `customerContact` viaja completo en `OrderResponse` porque el contrato lo exige (ADR-11) | `--solo seguridad` |
+
+## Cómo se verifican (HU-608)
+
+```bash
+bash scripts/verify-quality-attributes.sh            # las nueve pruebas
+bash scripts/verify-quality-attributes.sh --listar   # nombres para --solo
+bash scripts/verify-quality-attributes.sh --sin-disruptivos
+```
+
+El script imprime el valor medido de cada criterio y termina distinto de cero si
+alguno no se cumple. Tres pruebas son disruptivas —detienen Notification
+Service, detienen Kafka o levantan una segunda réplica de Payment Service— y
+dejan el entorno como lo encontraron. El replay va el último a propósito:
+mientras el consumidor drena el tópico, cualquier otra medición mediría esa cola.
+
+Resultados, entorno y fecha: [Atributos de calidad medidos](../04-implementacion/pruebas/atributos-de-calidad.md).
 
 ## Pruebas de integración del flujo EDA (HU-605)
 

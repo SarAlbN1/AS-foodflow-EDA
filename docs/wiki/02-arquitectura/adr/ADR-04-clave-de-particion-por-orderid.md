@@ -88,7 +88,7 @@ La Opción A es el compromiso estándar de Kafka: **ordenar por la clave del agr
 2. [x] Comprobar de forma automática que `aggregateId == payload.orderId` (HU-003, `scripts/validate-events.sh`).
 3. [ ] Usar `orderId` como clave del mensaje en cada productor Kafka (HU-103, HU-203, HU-303).
 4. [ ] Declarar los tópicos con 3 particiones (HU-004).
-5. [ ] Demostrar el reparto de particiones con 2 réplicas de Payment Service en el mismo grupo (HU-608).
+5. [x] Demostrar el reparto de particiones con 2 réplicas de Payment Service en el mismo grupo (HU-608: las 3 particiones de `orders.events` se repartieron 2 y 1 entre las dos réplicas; ver [Atributos de calidad medidos](../../04-implementacion/pruebas/atributos-de-calidad.md)).
 
 ## Táctica relacionada
 

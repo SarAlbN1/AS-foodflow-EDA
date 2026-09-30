@@ -12,7 +12,7 @@
 | [`01-producto/`](01-producto/vision-y-alcance.md) | Qué se construye, qué no, stack y criterios de éxito | [Visión y alcance](01-producto/vision-y-alcance.md) |
 | [`02-arquitectura/`](02-arquitectura/reglas-arquitectonicas.md) | Estilo, reglas, decisiones (ADR), calidad, trazabilidad, diagramas | [Reglas arquitectónicas](02-arquitectura/reglas-arquitectonicas.md) |
 | [`03-contratos/`](03-contratos/api-rest.md) | API REST, eventos Kafka, proveedor de notificaciones y persistencia | [API REST](03-contratos/api-rest.md) |
-| [`04-implementacion/`](04-implementacion/estructura-del-repositorio.md) | Estructura del repo, convenciones, versiones, runbook de la demo | [Estructura del repositorio](04-implementacion/estructura-del-repositorio.md) |
+| [`04-implementacion/`](04-implementacion/estructura-del-repositorio.md) | Estructura del repo, convenciones, versiones, runbook de la demo y pruebas ejecutadas | [Estructura del repositorio](04-implementacion/estructura-del-repositorio.md) |
 | [`05-proceso/`](05-proceso/README.md) | Políticas de Git, etiquetas, PR, releases, DoR/DoD y trabajo con IA | [Proceso](05-proceso/README.md) |
 | [`06-backlog/`](06-backlog/README.md) | Historias de usuario por épica, priorización, plan de sprints y estado | [Backlog](06-backlog/README.md) |
 
