@@ -11,6 +11,8 @@ import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.util.backoff.ExponentialBackOff;
 
+import com.foodflow.order.application.OrderNotFoundException;
+
 /**
  * Politica de reintentos y DLQ del consumidor (HU-602).
  *
@@ -22,9 +24,17 @@ import org.springframework.util.backoff.ExponentialBackOff;
  * <p><strong>Errores transitorios:</strong> 3 intentos con espera inicial de 1 s que se duplica
  * ({@code convenciones.md}), configurables por variable de entorno.
  *
- * <p><strong>Eventos no procesables:</strong> {@link UnsupportedEventException} va a la DLQ
- * <strong>sin reintentar</strong>. Un envelope ilegible o una version no soportada no mejoran por
- * repetirlos, y reintentarlos solo retrasa al resto de la particion.
+ * <p><strong>Eventos no procesables:</strong> {@link UnsupportedEventException} y
+ * {@link OrderNotFoundException} van a la DLQ <strong>sin reintentar</strong>. Un envelope
+ * ilegible o una version no soportada no mejoran por repetirlos, y reintentarlos solo retrasa al
+ * resto de la particion.
+ *
+ * <p><strong>Por que un pedido ausente no es transitorio.</strong> El pedido se persiste y se
+ * confirma antes de que exista cualquier evento de pago sobre el, asi que no hay carrera que
+ * esperar: si no esta en Order DB al llegar el resultado del pago, no va a aparecer por repetir la
+ * consulta. El caso real son los eventos huerfanos de una base recreada. Medido en HU-608:
+ * tratarlos como transitorios costaba ~7 s de particion retenida por evento, y drenar un replay de
+ * {@code payments.events} tardaba minutos.
  *
  * <p><strong>Lo que NO va a la DLQ.</strong> Un fallo de negocio no es un error y no lanza, asi
  * que no llega hasta aqui. El caso claro es el del proveedor de notificaciones: deja la
@@ -56,8 +66,9 @@ public class KafkaErrorHandlerConfig {
         espera.setMaxAttempts(Math.max(intentos - 1, 0));
 
         DefaultErrorHandler manejador = new DefaultErrorHandler(dlq, espera);
-        // Sin reintento: un evento fuera de contrato no cambia por repetirlo.
-        manejador.addNotRetryableExceptions(UnsupportedEventException.class);
+        // Sin reintento: ni un evento fuera de contrato ni uno sobre un pedido que no existe
+        // cambian por repetirlos.
+        manejador.addNotRetryableExceptions(UnsupportedEventException.class, OrderNotFoundException.class);
         return manejador;
     }
 }

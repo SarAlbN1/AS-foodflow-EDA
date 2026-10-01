@@ -1,0 +1,27 @@
+---
+config:
+  xyChart:
+    width: 600
+    height: 450
+    titleFontSize: 18
+    showDataLabel: true
+    showDataLabelOutsideBar: true
+    xAxis:
+      showTick: false
+  themeVariables:
+    xyChart:
+      plotColorPalette: "#1f77b4, #2ca02c, #d62728, #ff7f0e"
+---
+%% Valores en COP millones por mes.
+%% Cada barra tiene su propio color: las series se superponen y la última que cubre una barra le da su color.
+%% El valor -1000 es un marcador oculto (queda por debajo del eje y no se dibuja): así no aparece la franja de color bajo las barras.
+%% Entre categorías hay separadores invisibles (espacio de ancho cero) para que las barras sean más delgadas
+%% y el número que aparece encima (showDataLabel) salga a un tamaño moderado.
+xychart-beta
+    title "Salario mensual observado - perfiles Junior en Colombia"
+    x-axis ["Spring Boot", "​", "Angular", "​​", "PostgreSQL", "​​​", "Kafka"]
+    y-axis "COP millones/mes" 0 --> 7
+    bar [3.0, -1000, 2.75, -1000, 4.4, -1000, 5.5]
+    bar [-1000, -1000, 2.75, -1000, 4.4, -1000, 5.5]
+    bar [-1000, -1000, 2.75, -1000, -1000, -1000, 5.5]
+    bar [-1000, -1000, 2.75, -1000, -1000, -1000, -1000]
