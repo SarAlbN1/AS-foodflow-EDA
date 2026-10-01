@@ -30,7 +30,9 @@ case "${1:-}" in
   *) echo "Uso: bash scripts/down.sh [--limpiar]" >&2; exit 2 ;;
 esac
 
-docker compose --env-file "$env_file" -f "$COMPOSE_FILE" down --remove-orphans "${extra[@]}"
+# ${extra[@]+...}: con set -u, bash < 4.4 (el 3.2 de macOS) trata un array vacio como no
+# definido; esta forma expande a nada en lugar de abortar sin --limpiar.
+docker compose --env-file "$env_file" -f "$COMPOSE_FILE" down --remove-orphans ${extra[@]+"${extra[@]}"}
 
 if [ ${#extra[@]} -gt 0 ]; then
   echo "FoodFlow detenido y volúmenes de las bases eliminados."
