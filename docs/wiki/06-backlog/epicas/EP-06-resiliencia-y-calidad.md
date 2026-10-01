@@ -5,6 +5,23 @@
 **Objetivo:** garantizar que el prototipo demuestre tolerancia a fallos, idempotencia, trazabilidad, recuperación parcial y atributos de calidad verificables.  
 **Prioridad de la épica:** P0 / P1.
 
+## HU-011 — Pruebas de integración con Testcontainers (opcional)
+
+**Orden:** 9  
+**Prioridad:** P2  
+**Sprint:** — (opcional, fuera del plan) · **Puntos:** — · **Responsable:** Juan  
+**Tipo:** Enabler  
+**INVEST:** I✅ N✅ V✅ E✅ S✅ T✅
+
+**Historia**  
+Como equipo de desarrollo, quiero ejecutar pruebas de integración contra infraestructura real y efímera, para validar consumidores y persistencia con mayor fidelidad.
+
+**Criterios de aceptación**
+
+1. Las pruebas de HU-605 pueden ejecutarse con Testcontainers.
+2. Kafka y PostgreSQL efímeros se crean y destruyen por ejecución.
+3. Su ausencia no impide dar por terminado el prototipo.
+
 ## HU-601 — Hacer idempotentes los consumidores Kafka
 
 **Orden:** 1  
@@ -94,7 +111,7 @@ Como equipo de desarrollo, quiero ejecutar pruebas automáticas sobre productore
 3. Existe una prueba que valida `PaymentApproved/Rejected -> Notification`.
 4. Las pruebas verifican persistencia y evento resultante, no solo que el método haya sido invocado.
 5. Las pruebas pueden ejecutarse desde un entorno documentado y reproducible.
-6. La herramienta es libre (Kafka embebido o el entorno Compose) siempre que sea reproducible.
+6. La herramienta es libre (Testcontainers, Kafka embebido o el entorno Compose) siempre que sea reproducible; Testcontainers es opcional (HU-011).
 
 ## HU-606 — Validar el flujo end-to-end contenerizado
 
