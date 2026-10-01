@@ -94,7 +94,9 @@ if [ ${#ausentes[@]} -gt 0 ] || [ ${#vacias[@]} -gt 0 ]; then
 fi
 
 echo "Levantando FoodFlow (espera hasta ${UP_TIMEOUT} s a que todo esté healthy)..."
-if ! docker compose --env-file .env -f "$COMPOSE_FILE" up -d "${build[@]}" \
+# ${build[@]+...}: con set -u, bash < 4.4 (el 3.2 de macOS) trata un array vacio como no
+# definido; esta forma expande a nada en lugar de abortar con --sin-build.
+if ! docker compose --env-file .env -f "$COMPOSE_FILE" up -d ${build[@]+"${build[@]}"} \
     --wait --wait-timeout "$UP_TIMEOUT"; then
   echo >&2
   echo "ERROR: algún contenedor no quedó healthy. Estado actual:" >&2

@@ -64,7 +64,7 @@ export NOTIFICATION_PROVIDER_URL="http://localhost:${NOTIFICATION_PROVIDER_HOST_
 cd services/<servicio> && ./mvnw verify
 ```
 
-Sin las variables, las tres se omiten solas y `./mvnw verify` sigue funcionando sin infraestructura. **No usan Testcontainers**: la herramienta es el propio entorno Compose, que además es el que se demuestra.
+Sin las variables, las tres se omiten solas y `./mvnw verify` sigue funcionando sin infraestructura. **No usan Testcontainers**, que es opcional (HU-011): la herramienta es el propio entorno Compose, que además es el que se demuestra.
 
 **Dos decisiones que las hacen fiables:**
 

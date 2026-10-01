@@ -29,7 +29,7 @@ package "com.foodflow.order" {
     class OrderEventPublisher {
         - KafkaTemplate kafkaTemplate
         + publishOrderCreated(Order order)
-        + publishOrderUpdated(Order order)
+        + publishOrderStatusChanged(Order order, OrderStatus previousStatus)
     }
 
     class OrderEventConsumer {

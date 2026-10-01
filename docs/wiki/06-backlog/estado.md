@@ -2,7 +2,7 @@
 
 [← Backlog](README.md) · [Índice de la wiki](../Home.md)
 
-> Estado vivo. Se actualiza al cerrar cada HU (en el mismo PR). Estados: `Pendiente`, `En curso`, `En revisión`, `Terminada`, `Bloqueada`.
+> Estado vivo. Se actualiza al cerrar cada HU (en el mismo PR). Estados: `Pendiente`, `En curso`, `En revisión`, `Terminada`, `Bloqueada`, `Opcional`.
 
 | HU | Título | Sprint | Resp. | Pts | Estado | PR | Notas |
 |---|---|---:|---|---:|---|---|---|
@@ -51,7 +51,12 @@
 | [HU-606](epicas/EP-06-resiliencia-y-calidad.md) | Validar el flujo end-to-end contenerizado | 6 | Sara | 8 | Terminada | #107 | Flujos PAY-OK y PAY-FAIL verificados en los once contenedores; ocho eventos observados con un correlationId por pedido |
 | [HU-608](epicas/EP-06-resiliencia-y-calidad.md) | Verificar los atributos de calidad | 6 | Sara | 5 | Terminada | #119 | Asignación transferida (issue #50). Los diez criterios verificados con `bash scripts/verify-quality-attributes.sh` sobre el entorno Compose: valores, entorno y fecha en [Atributos de calidad medidos](../04-implementacion/pruebas/atributos-de-calidad.md). Cierra el punto abierto A-5. El formato JSON del log quedó comprobado desde las fuentes y, con imágenes reconstruidas, en las revisiones de #113 y #119 |
 | [HU-701](epicas/EP-07-entregables-y-sustentacion.md) | README, tag y release | 6 | Sara | 3 | En curso | #128 | El README (arranque, limitaciones conocidas y autores) entró en el PR de HU-608 por trabajar en el mismo clon; el `tag` y la release siguen pendientes |
-| [HU-704](epicas/EP-07-entregables-y-sustentacion.md) | Diagramas exportados desde sus fuentes | 6 | Juan | 2 | En revisión | #116 | Nueve diagramas y dos figuras en `docs/informe/`, en las rutas que espera `main.tex`; fuentes en `docs/wiki/02-arquitectura/diagramas/fuentes/`. Falta verificar los criterios 3 y 4 (abanico, `OrderStatusChanged`, `PAY-OK`/`PAY-FAIL`, borde punteado) |
+| [HU-704](epicas/EP-07-entregables-y-sustentacion.md) | Diagramas exportados desde sus fuentes | 6 | Juan | 2 | Terminada | #116, #121 | Diagramas reexportados desde un único `.dsl`, `.puml` y `.dbml`, con el abanico del resultado del pago; imágenes en las rutas que busca `main.tex`. Despliegue horizontal solo para la presentación. Propuesta de gráficas por nivel para §2.5 pendiente de Sara |
 | [HU-705](epicas/EP-07-entregables-y-sustentacion.md) | Lecciones aprendidas | 6 | Sara | 5 | Terminada | #110 | La §4 del informe pasa de placeholder a contenido: dificultades reales de Kafka, seis decisiones que cambiaron, el efecto de ADR-08 y siete recomendaciones para replicar el stack |
 | [HU-706](epicas/EP-07-entregables-y-sustentacion.md) | Presentación, demo y ensayo | 6 | Juan | 5 | Pendiente | | |
 | [HU-707](epicas/EP-07-entregables-y-sustentacion.md) | Segmento de arquitectura en la sustentación | 6 | Sara | 2 | Terminada | #111 | Agenda de 10 minutos, asistencia confirmada y respuestas del profesor registradas |
+| [HU-007](epicas/EP-00-base-tecnica-y-estandares.md) | CI automático (opcional) | - | Juan | - | En revisión | | `.github/workflows/ci.yml`: Maven verify de los cinco proyectos, build y pruebas del frontend, y verificaciones de estructura, contratos y arquitectura; sin secretos |
+| [HU-010](epicas/EP-00-base-tecnica-y-estandares.md) | Versionado de esquemas con Flyway (opcional) | - | Juan | - | Pendiente | | |
+| [HU-011](epicas/EP-06-resiliencia-y-calidad.md) | Pruebas de integración con Testcontainers (opcional) | - | Juan | - | Pendiente | | |
+| [HU-205](epicas/EP-02-pagos.md) | Consultar el pago de un pedido | - | Juan | - | Pendiente | | Bloqueada hasta que se integre el cambio de alcance de `CLAUDE.md` §5 (endpoint de consulta de pagos) |
+| [HU-503](epicas/EP-05-frontend.md) | Visualizar el resultado del pago | - | Juan | - | Pendiente | | Bloqueada: depende de HU-205 |

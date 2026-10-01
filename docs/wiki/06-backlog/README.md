@@ -32,6 +32,7 @@ El backlog vive en esta carpeta: **una página por épica** con sus historias de
 
 - **P0 — Must:** imprescindible para demostrar el flujo, la arquitectura y los entregables.
 - **P1 — Should:** necesario para robustez, trazabilidad o experiencia de demostración.
+- **P2 — Could:** opcional; no entra en los seis sprints y no condiciona la finalización del prototipo.
 
 Dentro de cada épica, **Orden** indica la secuencia recomendada. **Sprint**, **Puntos** y **Responsable** provienen del plan de la página [Plan de sprints](plan-de-sprints.md) (única fuente de verdad).
 
@@ -45,4 +46,4 @@ para <valor/resultado>.
 
 **Verificación INVEST.** Todas las historias están delimitadas para ser Independientes, Negociables, Valiosas, Estimables, Pequeñas y Testeables (`INVEST: I✅ N✅ V✅ E✅ S✅ T✅`).
 
-**Cambios respecto a la versión anterior del backlog.** `OrderUpdated` pasa a `OrderStatusChanged`; el pago se determina con `PAY-OK` y `PAY-FAIL`; la API mínima se reduce a tres operaciones; se añaden las historias de ADR, estándares del repositorio, OpenAPI, calidad y entregables académicos.
+**Cambios respecto a la versión anterior del backlog.** `OrderUpdated` pasa a `OrderStatusChanged`; el pago se determina con `PAY-OK` y `PAY-FAIL`; la API mínima se reduce a tres operaciones (HU-205 y HU-503 pasan a P2); Flyway, Testcontainers y CI pasan a P2; se añaden las historias de ADR, estándares del repositorio, OpenAPI, calidad y entregables académicos.
