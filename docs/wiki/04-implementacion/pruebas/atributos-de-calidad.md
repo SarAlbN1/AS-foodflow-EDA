@@ -199,10 +199,35 @@ notificación enmascarado en el *endpoint* que lo publica. El cambio es de
 redacción; el comportamiento no se tocó.
 
 **4. Las imágenes medidas no traen el *logging* estructurado de HU-603.** Se
-construyeron minutos antes de que se integrara `#113`, así que escriben el
-patrón de consola en vez de JSON. La trazabilidad se verificó igual porque el
-`correlationId` está en las dos formas, pero conviene repetir esa prueba con las
-imágenes reconstruidas para dejar registrada la línea JSON.
+construyeron minutos antes de que se integrara `#113`, así que escriben el patrón
+de consola en vez de JSON. La trazabilidad se verificó igual porque el
+`correlationId` está en las dos formas.
+
+**El formato JSON del código sí quedó comprobado**, ejecutando el servicio desde
+las fuentes con `./mvnw verify` contra el mismo entorno. Una línea real de esa
+corrida:
+
+```json
+{"timestamp":"2026-09-30T20:54:30.686243-05:00","@version":"1","message":"Pedido PAGADO orderId=aafa7f49-… paymentId=3189872f-… eventId=40b0487b-… correlationId=9ad9f115-…","logger_name":"com.foodflow.order.application.OrderPaymentService","thread_name":"main","level":"INFO","level_value":20000,"service":"order-service"}
+```
+
+Lo que queda pendiente es verlo **dentro del contenedor**, y eso depende de una
+reconstrucción que hoy no es posible: el *daemon* no alcanza el registry
+(`DeadlineExceeded` resolviendo `eclipse-temurin:25-jdk`, que ya no está en el
+store local), así que `bash scripts/up.sh` falla en el *build*. Se repite cuando
+el registry vuelva a estar accesible:
+
+```bash
+bash scripts/up.sh
+bash scripts/verify-quality-attributes.sh --solo trazabilidad
+```
+
+**5. Dos hallazgos de infraestructura, reportados aparte.** `scripts/up.sh
+--sin-build` falla en bash 3.2 por expandir un array vacío con `set -u`
+(issue #126, es de HU-607). Y tras un reinicio del *daemon* los contenedores
+quedan en la red anterior y los servicios no resuelven `order-db`: se arregla con
+`docker compose down` y `up -d --wait`, no con un `start`. Conviene tenerlo a mano
+antes de la demostración.
 
 ## Salida completa de la ejecución
 
