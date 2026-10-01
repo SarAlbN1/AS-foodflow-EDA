@@ -22,7 +22,6 @@ import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
-import org.testcontainers.utility.MountableFile;
 
 /**
  * Kafka, Notification DB y el proveedor simulado efimeros para las pruebas de integracion
@@ -37,11 +36,15 @@ import org.testcontainers.utility.MountableFile;
  * repositorio todo lo que puede, para no duplicarlo:
  * <ul>
  *   <li>las imagenes, de {@code .env.example} ({@code POSTGRES_IMAGE} y {@code KAFKA_IMAGE});</li>
- *   <li>el esquema, de {@code infrastructure/postgres/notification-db/01-schema.sql};</li>
+ *   <li>el esquema, de las migraciones Flyway del propio servicio (HU-010), que se aplican al arrancar;</li>
  *   <li>los topicos y sus DLQ con 3 particiones, como {@code infrastructure/kafka/scripts/create-topics.sh};</li>
  *   <li>el proveedor simulado, construido desde {@code mocks/notification-provider/Dockerfile} con la
  *       misma configuracion de fallos que le da Compose ({@code MOCK_SLOW_DELAY}, {@code MOCK_FLAKY_FAILURES}).</li>
  * </ul>
+ *
+ * <p><strong>Flyway (HU-010).</strong> Las pruebas lo traen desactivado (sin base no puede migrar).
+ * Este inicializador lo activa cuando hay una base: la efimera de este perfil, o la de Compose si
+ * esta definida {@code NOTIFICATION_DB_URL}. Asi las pruebas contra base real crean su esquema solas.
  *
  * <p>Es una copia propia del patron, no una clase compartida: ningun servicio depende de codigo de
  * otro (regla arquitectonica 8). Se registra en {@code META-INF/spring.factories} de las pruebas.
@@ -52,7 +55,6 @@ public class InfraestructuraEfimera implements ApplicationContextInitializer<Con
     static final String ACTIVAR = "foodflow.testcontainers";
 
     private static final Path RAIZ = Path.of("../..");
-    private static final Path ESQUEMA = RAIZ.resolve("infrastructure/postgres/notification-db/01-schema.sql");
     private static final List<String> TOPICOS = List.of("orders.events", "payments.events", "notifications.events");
     private static final int PARTICIONES = 3;
     private static final Path PROVEEDOR = RAIZ.resolve("mocks/notification-provider/Dockerfile");
@@ -61,11 +63,13 @@ public class InfraestructuraEfimera implements ApplicationContextInitializer<Con
 
     @Override
     public void initialize(ConfigurableApplicationContext contexto) {
-        if (!Boolean.getBoolean(ACTIVAR)) {
-            return;
+        var fuentes = contexto.getEnvironment().getPropertySources();
+        if (Boolean.getBoolean(ACTIVAR)) {
+            fuentes.addFirst(new MapPropertySource("testcontainers-hu011", arrancar()));
+        } else if (definida("NOTIFICATION_DB_URL")) {
+            // Base de Compose: el esquema lo crea Flyway igual que al arrancar el servicio.
+            fuentes.addFirst(new MapPropertySource("flyway-hu010", Map.of("spring.flyway.enabled", "true")));
         }
-        contexto.getEnvironment().getPropertySources()
-                .addFirst(new MapPropertySource("testcontainers-hu011", arrancar()));
     }
 
     private static synchronized Map<String, Object> arrancar() {
@@ -78,8 +82,7 @@ public class InfraestructuraEfimera implements ApplicationContextInitializer<Con
                 DockerImageName.parse(ejemplo.getProperty("POSTGRES_IMAGE")))
                 .withDatabaseName("notificationdb")
                 .withUsername("notification_user")
-                .withPassword("notification_test")
-                .withCopyFileToContainer(MountableFile.forHostPath(ESQUEMA), "/docker-entrypoint-initdb.d/01-schema.sql");
+                .withPassword("notification_test");
         KafkaContainer kafka = new KafkaContainer(DockerImageName.parse(ejemplo.getProperty("KAFKA_IMAGE")));
         GenericContainer<?> proveedor = new GenericContainer<>(
                 new ImageFromDockerfile("foodflow/notification-provider-hu011", false).withDockerfile(PROVEEDOR))
@@ -92,12 +95,18 @@ public class InfraestructuraEfimera implements ApplicationContextInitializer<Con
         crearTopicos(kafka.getBootstrapServers());
 
         propiedades = Map.of(
+                "spring.flyway.enabled", "true",
                 "spring.datasource.url", postgres.getJdbcUrl(),
                 "spring.datasource.username", postgres.getUsername(),
                 "spring.datasource.password", postgres.getPassword(),
                 "spring.kafka.bootstrap-servers", kafka.getBootstrapServers(),
                 "foodflow.provider.url", "http://" + proveedor.getHost() + ":" + proveedor.getMappedPort(8080));
         return propiedades;
+    }
+
+    private static boolean definida(String variable) {
+        String valor = System.getenv(variable);
+        return valor != null && !valor.isBlank();
     }
 
     private static void crearTopicos(String bootstrap) {
