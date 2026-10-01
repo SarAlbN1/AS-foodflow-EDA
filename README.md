@@ -2,11 +2,43 @@
 
 Prototipo académico de una plataforma de pedidos de comida cuyo objetivo es **demostrar una Arquitectura Orientada a Eventos (EDA)** con un flujo funcional, persistente y verificable: crear un pedido, procesar su pago (simulado) y notificar el resultado.
 
-> **Estado:** en construcción. Este README se completa en la HU-701 (descripción, tecnologías y pasos de despliegue).
+El cliente **solo crea el pedido**. A partir de ahí nadie da órdenes: el pedido publica un hecho, y cada servicio reacciona por su cuenta. No hay orquestador, y los servicios no se llaman entre sí para coordinarse.
+
+```
+Angular ──> API Gateway ──> Order Service ──> Order DB
+                                  │
+                                  └─ OrderCreated ─────> orders.events
+                                                              │
+                                        Payment Service <─────┘
+                                              │  └──> Payment DB
+                                              │
+                      PaymentApproved | PaymentRejected ─> payments.events
+                                                              │
+                        ┌─────────────────────────────────────┴──────────┐
+                        v                                               v
+                 Order Service                              Notification Service
+                 PAGADO / PAGO_RECHAZADO                     Notification DB
+                        │                                           │  └─> Proveedor (simulado)
+                        └─ OrderStatusChanged ─> orders.events      │
+                                                                    └─ NotificationSent |
+                                                                       NotificationFailed
+                                                                       ─> notifications.events
+```
+
+**Lo que hace interesante este diseño:** Order y Notification consumen el **mismo** evento de pago, cada uno en su grupo de consumidores. Ninguno espera al otro, y si Notification se cae, el pedido se marca como pagado igual. Un solo `correlationId` atraviesa los tres tópicos, así que el recorrido completo de un pedido se sigue con un único identificador.
 
 ## Stack
 
-Angular + TypeScript (Nginx) · API Gateway · Spring Boot + Java (3 servicios) · PostgreSQL (una base por servicio) · Apache Kafka · Docker Compose o Podman Compose.
+| Capa | Tecnología | Por qué |
+|---|---|---|
+| Interfaz | Angular + TypeScript, servida con Nginx | Único punto de contacto del cliente; nunca toca Kafka ni PostgreSQL |
+| Borde | API Gateway (Spring Cloud Gateway) | Enruta, propaga el `correlationId` y aplica CORS. Oculta la ubicación de los servicios |
+| Servicios | Spring Boot + Java (Order, Payment, Notification) | Un servicio por capacidad de negocio, cada uno dueño de sus datos |
+| Datos | PostgreSQL, **una base por servicio** | Sin base compartida: nadie lee las tablas de otro |
+| Mensajería | Apache Kafka (modo KRaft) | Los hechos del dominio como eventos inmutables; `orderId` como clave de partición conserva el orden por pedido |
+| Entorno | Docker Compose o Podman Compose | Todo el prototipo reproducible con un comando |
+
+Las versiones exactas están fijadas en [versiones.md](docs/wiki/04-implementacion/versiones.md); el proyecto no usa `latest` en ninguna imagen.
 
 ## Documentación: la wiki del repositorio
 
@@ -95,6 +127,23 @@ done
 ```
 
 Cada componente documenta sus detalles en su propio `README.md`.
+
+## Limitaciones conocidas
+
+Son decisiones deliberadas de un prototipo académico, no descuidos. Cada una está argumentada en su ADR o en la página de alcance.
+
+| Limitación | Consecuencia real | Dónde se decide |
+|---|---|---|
+| **Sin Transactional Outbox** | Un pedido puede quedar persistido sin que su evento llegue a Kafka. Se registra un `ERROR` y nadie lo reconcilia: la recuperabilidad es **Parcial** | [ADR-08](docs/wiki/02-arquitectura/decisiones-adr.md) |
+| **Pago simulado** | `PAY-OK` aprueba y `PAY-FAIL` rechaza. No hay pasarela real ni integración financiera | [ADR-10](docs/wiki/02-arquitectura/decisiones-adr.md) |
+| **Proveedor de notificaciones simulado** | Nada sale de la máquina. El mock imita los fallos (`*@fail.test`, `*@flaky.test`, `*@slow.test`) para poder demostrarlos | [Proveedor de notificaciones](docs/wiki/03-contratos/proveedor-notificaciones.md) |
+| **Sin autenticación** | Los endpoints son públicos. Quien conozca el UUID de un pedido ve su estado y su notificación, con el destino enmascarado | [Visión y alcance](docs/wiki/01-producto/vision-y-alcance.md) |
+| **Sin Circuit Breaker** | Con un único proveedor no hay riesgo de fallo en cascada que justifique la complejidad | [Visión y alcance](docs/wiki/01-producto/vision-y-alcance.md) |
+| **Un solo canal (`EMAIL`)** y moneda fija (`COP`) | El canal y la moneda son constantes del prototipo, no configuración | [Contrato de eventos](docs/wiki/03-contratos/eventos.md) |
+| **Kafka sin volumen** | Los tópicos se recrean en cada `up.sh`; los eventos no sobreviven a un `down`. Las tres bases sí conservan sus datos | [Compose](infrastructure/compose/README.md) |
+| **Sin tracing distribuido** | La trazabilidad es el `correlationId` en logs estructurados, no un sistema de *spans* | [Visión y alcance](docs/wiki/01-producto/vision-y-alcance.md) |
+
+Fuera de alcance por decisión: Saga, CQRS, Event Sourcing, Kubernetes, *backoffice* y analítica.
 
 ## Cómo contribuir
 

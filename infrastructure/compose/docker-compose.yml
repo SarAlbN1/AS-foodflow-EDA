@@ -326,12 +326,15 @@ services:
         condition: service_started
       notification-service:
         condition: service_started
+      payment-service:
+        condition: service_started
     ports:
       # El frontend compila http://localhost:8080 como URL base (core/api-config.ts).
       - "${GATEWAY_PORT:?falta GATEWAY_PORT en .env; compara con .env.example}:8080"
     environment:
       ORDER_SERVICE_URL: http://order-service:8081
       NOTIFICATION_SERVICE_URL: http://notification-service:8083
+      PAYMENT_SERVICE_URL: http://payment-service:8082
       GATEWAY_CORS_ALLOWED_ORIGINS: ${GATEWAY_CORS_ALLOWED_ORIGINS}
       GATEWAY_CONNECT_TIMEOUT: ${GATEWAY_CONNECT_TIMEOUT}
       GATEWAY_READ_TIMEOUT: ${GATEWAY_READ_TIMEOUT}

@@ -11,7 +11,17 @@
 | `GET /orders/{id}/notifications` | Notification Service (vía gateway) | `200` con lista, posiblemente vacía | `400` identificador inválido |
 | `GET /actuator/health` | Cada servicio | `200` | `503` |
 
-No existe un endpoint de consulta de pagos: el resultado del pago es visible mediante el estado del pedido (`PAGADO` o `PAGO_RECHAZADO`).
+El resultado del pago es visible mediante el estado del pedido (`PAGADO` o `PAGO_RECHAZADO`), y eso sigue siendo todo lo que exige el contrato mínimo.
+
+## Operación opcional (HU-205)
+
+| Operación | Servicio propietario | Éxito | Errores |
+|---|---|---|---|
+| `GET /orders/{id}/payment` | Payment Service (vía gateway) | `200` con `id`, `orderId`, `status` (`APROBADO` / `RECHAZADO`), `amount`, `transactionReference`, `reasonCode` (solo si se rechazó) y fechas | `400` identificador inválido; `404` `NOT_FOUND` si todavía no hay pago |
+
+- **No amplía el contrato mínimo del informe**: lo complementa. Solo lee Payment DB y no coordina el flujo, que sigue resolviendo el pago por eventos.
+- **Consistencia eventual**: un `404` puede significar «aún no procesado» o «pedido inexistente», porque Payment Service no conoce el catálogo de pedidos. Si `GET /orders/{id}` responde `CREADO`, el cliente lo trata como «en procesamiento», no como error (HU-503).
+- Contrato en `contracts/api/openapi.yaml` (etiqueta `pagos`).
 
 **Cuerpo de `POST /orders`:**
 

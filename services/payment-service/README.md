@@ -141,6 +141,15 @@ docker exec foodflow-kafka /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 --topic payments.events --from-beginning --max-messages 1
 ```
 
+## Consulta del pago (HU-205, opcional)
+
+`GET /orders/{id}/payment`, enrutada por el API Gateway. Es la única API de negocio del servicio y es **de solo lectura**: el pago se sigue resolviendo por eventos.
+
+- `api.PaymentController` → `application.PaymentQueryService` → `PaymentRepository.findByOrderId`. Solo Payment DB.
+- `200` con el pago; `404` `NOT_FOUND` en Problem Details (`PaymentNotFoundException`) si todavía no hay pago, sin inventar un resultado; `400` si el id no es un UUID.
+- `api.ApiExceptionHandler` es una copia propia del formato de errores de los otros servicios (regla 8).
+- Pruebas: `PaymentControllerTests` (forma de la respuesta y de los errores) y `PaymentQueryIntegrationTests` (contra Payment DB real, con `PAYMENT_DB_URL`). La ruta del gateway la prueba `PaymentRoutesTests`.
+
 ## Configuración
 
 Variables en [`.env.example`](../../.env.example):
