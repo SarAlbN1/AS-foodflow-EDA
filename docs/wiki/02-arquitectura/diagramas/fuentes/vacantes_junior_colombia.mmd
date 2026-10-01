@@ -1,0 +1,27 @@
+---
+config:
+  xyChart:
+    width: 600
+    height: 450
+    titleFontSize: 18
+    showDataLabel: true
+    showDataLabelOutsideBar: true
+    xAxis:
+      showTick: false
+  themeVariables:
+    xyChart:
+      plotColorPalette: "#1f77b4, #ff7f0e, #d62728, #2ca02c"
+---
+%% Número de vacantes publicadas en LinkedIn Colombia.
+%% Cada barra tiene su propio color: las series se superponen y la última que cubre una barra le da su color.
+%% El valor -1000 es un marcador oculto (queda por debajo del eje y no se dibuja): así no aparece la franja de color bajo las barras.
+%% Entre categorías hay separadores invisibles (espacio de ancho cero) para que las barras sean más delgadas
+%% y el número que aparece encima (showDataLabel) salga a un tamaño moderado.
+xychart-beta
+    title "Vacantes Junior por tecnologia en Colombia - ultimo mes"
+    x-axis ["Spring Boot", "​", "​​", "​​​", "Angular", "​​​​", "​​​​​", "​​​​​​", "PostgreSQL", "​​​​​​​", "​​​​​​​​", "​​​​​​​​​", "Kafka"]
+    y-axis "Vacantes LinkedIn (Entry level)" 0 --> 100
+    bar [26, -1000, -1000, -1000, 26, -1000, -1000, -1000, 59, -1000, -1000, -1000, 13]
+    bar [-1000, -1000, -1000, -1000, 26, -1000, -1000, -1000, 59, -1000, -1000, -1000, 13]
+    bar [-1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, 59, -1000, -1000, -1000, 13]
+    bar [-1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000, 59, -1000, -1000, -1000, -1000]

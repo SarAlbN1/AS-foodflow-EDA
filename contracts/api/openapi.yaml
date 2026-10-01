@@ -37,6 +37,11 @@ tags:
     description: Creación y consulta de pedidos. Servicio propietario, Order Service.
   - name: notificaciones
     description: Consulta de las notificaciones de un pedido. Servicio propietario, Notification Service.
+  - name: pagos
+    description: |
+      Consulta del pago de un pedido (HU-205, **opcional**). Servicio propietario, Payment Service.
+      No forma parte del contrato mínimo del informe: el pago se sigue observando también
+      mediante el estado del pedido.
 
 paths:
   /orders:
@@ -189,6 +194,68 @@ paths:
         '400':
           $ref: '#/components/responses/SolicitudInvalida'
 
+  /orders/{id}/payment:
+    get:
+      tags: [pagos]
+      operationId: consultarPagoDelPedido
+      summary: Consulta el pago de un pedido (opcional, HU-205)
+      description: |
+        Devuelve el resultado del pago del pedido: estado, monto y referencia. **Operación
+        opcional**: amplía el contrato mínimo del informe sin cambiarlo, y no coordina el flujo,
+        que sigue resolviendo el pago por eventos (`OrderCreated` → `PaymentApproved` /
+        `PaymentRejected`).
+
+        El API Gateway enruta esta operación a Payment Service, que solo lee Payment DB. Un
+        pedido tiene a lo sumo un pago.
+
+        **Consistencia eventual.** Si todavía no hay pago registrado, responde `404` con
+        `code: NOT_FOUND`, sin inventar un resultado. Puede significar que el pago **aún no se ha
+        procesado** o que el pedido no existe: Payment Service no conoce el catálogo de pedidos.
+        Si `GET /orders/{id}` responde `CREADO`, el cliente debe tratarlo como «en
+        procesamiento», no como un error.
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Pago registrado para el pedido.
+          headers:
+            X-Correlation-Id:
+              $ref: '#/components/headers/CorrelationIdRespuesta'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+              examples:
+                aprobado:
+                  summary: Pago aprobado (PAY-OK)
+                  value:
+                    id: c2d3e4f5-6789-4abc-8def-0123456789ab
+                    orderId: 3f6c1e0a-6c9d-4f6f-9c4b-2a9f1d5e7b10
+                    status: APROBADO
+                    amount: 45900.00
+                    transactionReference: TXN-20260928-3f6c1e0a-6c9d-4f6f-9c4b-2a9f1d5e7b10
+                    reasonCode: null
+                    createdAt: '2026-09-28T06:41:14.902117Z'
+                    updatedAt: '2026-09-28T06:41:14.902117Z'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '404':
+          description: Todavía no hay pago registrado para el pedido (aún no procesado, o pedido inexistente).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              examples:
+                sinPagoTodavia:
+                  value:
+                    type: https://foodflow.local/problems/not-found
+                    title: Pago no registrado
+                    status: 404
+                    detail: 'todavia no hay un pago registrado para el pedido 3f6c1e0a-6c9d-4f6f-9c4b-2a9f1d5e7b10'
+                    code: NOT_FOUND
+                    correlationId: 33333333-3333-3333-3333-333333333333
+
 components:
 
   parameters:
@@ -337,6 +404,11 @@ components:
       type: string
       enum: [PENDIENTE, ENVIADA, FALLIDA]
 
+    EstadoPago:
+      description: Resultado del pago, determinista en el prototipo (ADR-10).
+      type: string
+      enum: [APROBADO, RECHAZADO]
+
     TokenPago:
       description: |
         Token de pago simulado (ADR-10). `PAY-OK` produce `PaymentApproved` y `PAY-FAIL`
@@ -443,6 +515,34 @@ components:
           minimum: 0
         failureCode:
           description: Motivo del fallo cuando el estado es `FALLIDA`; `null` en los demás casos.
+          type: [string, 'null']
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Payment:
+      description: |
+        Pago registrado por Payment Service para un pedido (HU-205). La referencia de
+        transacción existe siempre, también en un pago rechazado, para poder rastrear el intento.
+      type: object
+      required: [id, orderId, status, amount, transactionReference, createdAt, updatedAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        orderId:
+          $ref: '#/components/schemas/Uuid'
+        status:
+          $ref: '#/components/schemas/EstadoPago'
+        amount:
+          $ref: '#/components/schemas/Importe'
+        transactionReference:
+          type: string
+          minLength: 1
+        reasonCode:
+          description: Motivo del rechazo cuando el estado es `RECHAZADO`; `null` si fue aprobado.
           type: [string, 'null']
         createdAt:
           type: string
