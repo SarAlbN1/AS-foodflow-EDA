@@ -20,12 +20,14 @@ Se clasifica cada fallo y se le da un tratamiento distinto:
 | Tipo de fallo | Ejemplo | Tratamiento |
 |---|---|---|
 | **Técnico recuperable** | Base momentáneamente caída, *timeout* de red | Reintentar: **3 intentos**, espera inicial **1 s**, multiplicador **2**. Si persiste, DLQ |
-| **Técnico no recuperable** | Mensaje corrupto, esquema o `eventVersion` no soportada | **DLQ directo, sin reintentos** |
+| **Técnico no recuperable** | Mensaje corrupto, esquema o `eventVersion` no soportada, resultado de pago sobre un pedido que no existe en Order DB | **DLQ directo, sin reintentos** |
 | **De negocio** | El proveedor de notificaciones falla tras sus propios reintentos | La notificación pasa a `FALLIDA`, se publica `NotificationFailed`, **se confirma el offset** y **NO va a DLQ** |
 
 Cada tópico principal tiene su DLQ: `orders.events.dlq`, `payments.events.dlq`, `notifications.events.dlq`. Los mensajes corruptos se toleran con `ErrorHandlingDeserializer`, de modo que un fallo de deserialización no tumba el contenedor del consumidor. El offset se confirma **manualmente y solo después** del commit de la transacción local.
 
 **No se implementa Circuit Breaker.**
+
+**Precisión del 2026-09-30 (medida en HU-608).** Un resultado de pago cuyo `orderId` no existe en Order DB se clasificaba como técnico recuperable, y no lo es: el pedido se persiste y se confirma **antes** de que exista cualquier evento de pago sobre él, así que no hay carrera que esperar y repetir la consulta da el mismo resultado. El caso real son los eventos huérfanos de una base recreada. Con la clasificación anterior cada uno retenía su partición ~7 s (3 intentos con espera 1 s y 2 s) y un *replay* completo de `payments.events` tardaba minutos: 191 s para ~100 eventos. Pasa a **DLQ directo**. La decisión no cambia; cambia una excepción de columna, que es justo el riesgo que anticipa el análisis de más abajo.
 
 ## Opciones consideradas
 
@@ -100,7 +102,8 @@ La Opción D se descarta por alcance: es una táctica correcta contra una depend
 
 **Qué habrá que revisar**
 
-- Los números (3 intentos, 1 s, multiplicador 2) son propuestos y se calibran junto con los umbrales de calidad en HU-608.
+- ~~Los números (3 intentos, 1 s, multiplicador 2) son propuestos y se calibran junto con los umbrales de calidad en HU-608.~~ Calibrados en HU-608: se conservan, y los valores medidos están en [Atributos de calidad medidos](../../04-implementacion/pruebas/atributos-de-calidad.md).
+- Qué excepción va en cada columna se revisa cuando aparezca una nueva: la de HU-608 demuestra que una clasificación equivocada no se nota hasta que se mide.
 - Si el proveedor dejara de ser un mock, habría que reconsiderar el Circuit Breaker en un ADR nuevo.
 
 ## Acciones

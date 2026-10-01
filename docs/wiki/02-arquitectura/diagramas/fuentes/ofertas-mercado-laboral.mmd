@@ -1,6 +1,19 @@
+---
+config:
+  themeVariables:
+    xyChart:
+      plotColorPalette: "#1f77b4, #ff7f0e, #2ca02c, #d62728, #1f77b4"
+---
+%% Figura "Mercado laboral - ofertas publicadas durante el último mes" del informe.
+%% Una serie por barra para que cada tecnología tenga su color (paleta del PNG);
+%% la quinta serie es la línea del promedio del stack.
+%% Conteos de LinkedIn Colombia citados en main.tex: 238 + 260 + 574 + 192 = 1.264; promedio 316.
 xychart-beta
     title "Ofertas publicadas en Colombia durante el último mes"
-    x-axis ["Java + Spring Boot", "Angular", "PostgreSQL", "Kafka"]
-    y-axis "Numero de ofertas" 0 --> 650
-    bar [238, 260, 574, 192]
+    x-axis "Tecnología / palabra clave" ["Java + Spring Boot", "Angular", "PostgreSQL", "Kafka"]
+    y-axis "Número de ofertas" 0 --> 650
+    bar [238, 0, 0, 0]
+    bar [0, 260, 0, 0]
+    bar [0, 0, 574, 0]
+    bar [0, 0, 0, 192]
     line [316, 316, 316, 316]

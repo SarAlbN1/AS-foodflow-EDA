@@ -61,7 +61,8 @@ public class OrderPaymentService {
      * evaluarla en una reentrega.
      *
      * @return el pedido tras aplicar el evento, o vacio si el evento ya se habia procesado
-     * @throws OrderNotFoundException si el pedido no existe en Order DB (recuperable)
+     * @throws OrderNotFoundException si el pedido no existe en Order DB; el manejador de
+     *         errores la trata como evento no procesable y lo lleva a la DLQ sin reintentar
      */
     @Transactional
     public Optional<Order> registrarPagoAprobado(PaymentResultCommand resultado) {
@@ -73,7 +74,8 @@ public class OrderPaymentService {
      * reglas que {@link #registrarPagoAprobado}.
      *
      * @return el pedido tras aplicar el evento, o vacio si el evento ya se habia procesado
-     * @throws OrderNotFoundException si el pedido no existe en Order DB (recuperable)
+     * @throws OrderNotFoundException si el pedido no existe en Order DB; el manejador de
+     *         errores la trata como evento no procesable y lo lleva a la DLQ sin reintentar
      */
     @Transactional
     public Optional<Order> registrarPagoRechazado(PaymentResultCommand resultado) {
