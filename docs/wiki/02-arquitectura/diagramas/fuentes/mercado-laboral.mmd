@@ -1,5 +1,21 @@
+---
+config:
+  themeVariables:
+    xyChart:
+      plotColorPalette: "#1f77b4, #ff7f0e, #2ca02c, #d62728"
+---
+%% Figura "Mercado laboral - salarios mensuales observados en Colombia (2026)" del informe.
+%% Una serie por barra para que cada tecnología tenga su color (paleta del PNG).
+%% Valores en COP millones por mes, con la fuente de main.tex:
+%%   Angular Senior           6.25 = punto medio de la banda 6.0-6.5 (job-angular-2)
+%%   Java/Spring              8.10 = salario publicado (job-java-81)
+%%   Java+Angular+PostgreSQL  7.20 = salario publicado (job-postgres-fullstack)
+%%   Java/Spring/Kafka        9.00 = tope publicado (job-kafka-9m); la matriz dice "hasta COP 9 M/mes"
 xychart-beta
     title "Salario mensual observado en vacantes Colombia (2026)"
     x-axis ["Angular Senior", "Java/Spring", "Java+Angular+PostgreSQL", "Java/Spring/Kafka"]
     y-axis "COP millones por mes" 0 --> 11
-    bar [6.25, 8.10, 7.20, 9.50]
+    bar [6.25, 0, 0, 0]
+    bar [0, 8.10, 0, 0]
+    bar [0, 0, 7.20, 0]
+    bar [0, 0, 0, 9.00]
