@@ -95,10 +95,13 @@ Cada servicio registra su propio `DefaultErrorHandler` en `infrastructure.messag
 |---|---|
 | Error transitorio (la base no responde, por ejemplo) | **3 intentos**, espera inicial 1 s que se duplica. Agotados, el evento va a `<tópico>.dlq` |
 | Evento no procesable (envelope ilegible, versión no soportada, payload fuera de contrato) | **A la DLQ sin reintentar**: no mejora por repetirlo y retrasaría al resto de la partición |
+| Resultado de pago sobre un pedido que no existe en Order DB | **A la DLQ sin reintentar** desde el 2026-09-30. El pedido se confirma antes que cualquier evento de pago sobre él, así que no hay carrera que esperar; son los eventos huérfanos de una base recreada |
 | Evento de otro tipo en un tópico compartido | Se ignora con `DEBUG` y se confirma. **No** es un error y no va a DLQ |
 | Fallo de negocio del proveedor | La notificación queda `FALLIDA` y el offset se confirma. **No** lanza, así que nunca llega al manejador (regla 10) |
 
 **Qué reemplaza.** Sin este manejador actuaba el de Spring Kafka por omisión, con `FixedBackOff(0, 9)`: **diez intentos seguidos sin espera** y, agotados, confirmaba el offset y seguía. Un corte de unos segundos bastaba para perder el evento sin rastro. El síntoma está documentado en HU-606: un evento huérfano atascaba la partición y hacía fallar la prueba de humo.
+
+**Por qué el pedido ausente cambió de columna.** Se clasificaba como transitorio. La medición de HU-608 mostró el costo: ~7 s de partición retenida por evento huérfano, y 191 s para drenar un *replay* completo de `payments.events`. Lo comprueba `OrphanPaymentDeadLetterIntegrationTests` en order-service, que sube la espera de reintento a 10 s y exige que el evento llegue a la DLQ en menos de 9: con reintentos habría tardado 30 s.
 
 **Los consumidores ya no se tragan el evento.** Antes capturaban `UnsupportedEventException`, la registraban y confirmaban el offset. Ahora la dejan subir: el manejador la publica en la DLQ y el offset se confirma después, cuando el mensaje ya está a salvo.
 
