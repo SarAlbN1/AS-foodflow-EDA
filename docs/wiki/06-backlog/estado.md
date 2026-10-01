@@ -58,5 +58,5 @@
 | [HU-007](epicas/EP-00-base-tecnica-y-estandares.md) | CI automático (opcional) | - | Juan | - | En revisión | | `.github/workflows/ci.yml`: Maven verify de los cinco proyectos, build y pruebas del frontend, y verificaciones de estructura, contratos y arquitectura; sin secretos |
 | [HU-010](epicas/EP-00-base-tecnica-y-estandares.md) | Versionado de esquemas con Flyway (opcional) | - | Juan | - | Pendiente | | |
 | [HU-011](epicas/EP-06-resiliencia-y-calidad.md) | Pruebas de integración con Testcontainers (opcional) | - | Juan | - | Pendiente | | |
-| [HU-205](epicas/EP-02-pagos.md) | Consultar el pago de un pedido | - | Juan | - | En revisión | | `GET /orders/{id}/payment` por el gateway a Payment Service, solo lectura de Payment DB; `404 NOT_FOUND` si aún no hay pago. El cambio de alcance de `CLAUDE.md` §5 entró con #122 |
+| [HU-205](epicas/EP-02-pagos.md) | Consultar el pago de un pedido | - | Juan | - | Terminada | #131 | `GET /orders/{id}/payment` por el gateway a Payment Service, solo lectura de Payment DB; `404 NOT_FOUND` si aún no hay pago. Propuesta de texto para el informe en `docs/informe/propuesta-HU-205-consulta-de-pago.md` |
 | [HU-503](epicas/EP-05-frontend.md) | Visualizar el resultado del pago | - | Juan | - | Pendiente | | Depende de HU-205 (consulta del pago) |
