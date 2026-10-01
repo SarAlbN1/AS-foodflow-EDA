@@ -80,7 +80,7 @@ for t in orders.events payments.events notifications.events; do
   echo "== $t"
   MSYS_NO_PATHCONV=1 docker exec foodflow-kafka /opt/kafka/bin/kafka-console-consumer.sh \
     --bootstrap-server kafka:9092 --topic $t --from-beginning \
-    --property print.key=true --timeout-ms 5000 2>/dev/null | grep "^$OK"
+    --formatter-property print.key=true --timeout-ms 5000 2>/dev/null | grep "^$OK"
 done
 ```
 
@@ -102,7 +102,7 @@ La respuesta muestra `"attempts":3` (el adaptador reintentó antes de rendirse) 
 echo 'demo-dlq:{"eventId":"no-es-un-uuid","eventType":"PaymentApproved","eventVersion":99}' \
  | MSYS_NO_PATHCONV=1 docker exec -i foodflow-kafka /opt/kafka/bin/kafka-console-producer.sh \
      --bootstrap-server kafka:9092 --topic payments.events \
-     --property parse.key=true --property key.separator=:
+     --reader-property parse.key=true --reader-property key.separator=:
 sleep 4
 MSYS_NO_PATHCONV=1 docker exec foodflow-kafka /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server kafka:9092 --topic payments.events.dlq --from-beginning \
@@ -148,6 +148,7 @@ grupo: notification-service.payments
 | El pedido se queda en `CREADO` más de 5 s | Memoria escasa o eventos antiguos en el *broker* | Pasar a la traza capturada de «Salida esperada»; tras la sesión, `down.sh` y `up.sh` |
 | `up.sh` no termina con todo `healthy` | Un contenedor no arrancó a tiempo | `docker compose ... ps` para ver cuál; `bash scripts/up.sh --sin-build` otra vez |
 | El consumidor de consola no imprime nada | Git Bash reescribió la ruta | Anteponer `MSYS_NO_PATHCONV=1` |
+| Tras reiniciar Docker los servicios no resuelven `order-db` (o las otras bases) | Los contenedores quedaron en la red anterior | `bash scripts/down.sh` y `bash scripts/up.sh --sin-build`. Un `docker start` no basta, porque no recrea la red |
 
 ## Restablecer el entorno
 
