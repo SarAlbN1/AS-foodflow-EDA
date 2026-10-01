@@ -10,6 +10,7 @@ Estas páginas son **normativas** para personas y asistentes de IA. Su objetivo 
 | [Issues, etiquetas y milestones](issues-etiquetas-y-milestones.md) | Una HU = un issue; taxonomía de etiquetas; sprints como milestones |
 | [Pull requests y releases](pull-requests-y-releases.md) | Plantilla de PR, protección de `main`, tags y releases |
 | [Estándares de documentación](documentacion.md) | README, ADR, OpenAPI, runbook |
+| [Notas de release v1.0.0](notas-release-v1.0.0.md) | Contenido de la release final: HU incluidas, demo, limitaciones y criterios de éxito |
 | [DoR y DoD](dor-y-dod.md) | Cuándo una HU está lista y cuándo está terminada |
 | [Trabajo con asistentes de IA](trabajo-con-ia.md) | Algoritmo, prohibiciones, reporte y plantilla de sesión |
 | [Bootstrap del repositorio](bootstrap-repositorio.md) | Cómo se creó y publicó el repositorio (runbook para un asistente de IA o una persona) |
