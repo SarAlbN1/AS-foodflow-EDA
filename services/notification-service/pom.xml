@@ -63,6 +63,18 @@
             <version>${archunit.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- Kafka y PostgreSQL efimeros para las pruebas de integracion (HU-011, opcional).
+             Version gestionada por Spring Boot (testcontainers-bom). Solo se usan con -Ptestcontainers. -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-kafka</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -73,4 +85,31 @@
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <!-- HU-011: ./mvnw verify -Ptestcontainers ejecuta las pruebas de integracion contra un Kafka,
+             un PostgreSQL y el proveedor simulado efimeros, creados y destruidos en cada ejecucion. Las variables de entorno
+             solo activan las pruebas (@EnabledIfEnvironmentVariable): las direcciones reales las pone
+             InfraestructuraEfimera. Sin el perfil, todo funciona como antes (Compose o nada). -->
+        <profile>
+            <id>testcontainers</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <foodflow.testcontainers>true</foodflow.testcontainers>
+                            </systemPropertyVariables>
+                            <environmentVariables>
+                                <KAFKA_BOOTSTRAP_SERVERS>testcontainers</KAFKA_BOOTSTRAP_SERVERS>
+                                <NOTIFICATION_DB_URL>testcontainers</NOTIFICATION_DB_URL>
+                                <NOTIFICATION_PROVIDER_URL>testcontainers</NOTIFICATION_PROVIDER_URL>
+                            </environmentVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

@@ -56,6 +56,31 @@ jobs:
         working-directory: ${{ matrix.proyecto }}
         run: ./mvnw -B -ntp verify
 
+  # HU-011: las pruebas de integración de HU-605 contra Kafka, PostgreSQL y el
+  # proveedor simulado efímeros (Testcontainers). Los runners de Ubuntu traen
+  # Docker; los contenedores se crean y se destruyen en cada ejecución.
+  integracion:
+    name: Integración con Testcontainers (${{ matrix.servicio }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        servicio: [order-service, payment-service, notification-service]
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: JDK 25 (Temurin)
+        uses: actions/setup-java@v6.0.1
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: services/${{ matrix.servicio }}/pom.xml
+
+      - name: ./mvnw verify -Ptestcontainers
+        working-directory: services/${{ matrix.servicio }}
+        run: ./mvnw -B -ntp verify -Ptestcontainers
+
   frontend:
     name: Frontend (build y pruebas)
     runs-on: ubuntu-latest

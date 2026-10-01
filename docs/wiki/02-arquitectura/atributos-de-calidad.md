@@ -64,7 +64,7 @@ export NOTIFICATION_PROVIDER_URL="http://localhost:${NOTIFICATION_PROVIDER_HOST_
 cd services/<servicio> && ./mvnw verify
 ```
 
-Sin las variables, las tres se omiten solas y `./mvnw verify` sigue funcionando sin infraestructura. **No usan Testcontainers**, que es opcional (HU-011): la herramienta es el propio entorno Compose, que además es el que se demuestra.
+Sin las variables, las tres se omiten solas y `./mvnw verify` sigue funcionando sin infraestructura. **Con Testcontainers (HU-011, opcional)** las mismas pruebas corren sin Compose: `./mvnw verify -Ptestcontainers` en cada servicio levanta un Kafka y un PostgreSQL efímeros por ejecución (y, en Notification Service, el proveedor simulado construido desde su Dockerfile), con las imágenes de `.env.example`, el esquema de `infrastructure/postgres/` y los tópicos de `create-topics.sh`. Sin el perfil, todo sigue igual: el entorno Compose sigue siendo la forma principal, porque además es el que se demuestra.
 
 **Dos decisiones que las hacen fiables:**
 
