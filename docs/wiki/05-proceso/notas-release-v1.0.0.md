@@ -4,7 +4,7 @@
 
 Notas del tag `v1.0.0` (HU-701), con el contenido que exige la página [Pull requests, protección y releases](pull-requests-y-releases.md): HU incluidas, cómo ejecutar, escenarios de demostración, limitaciones conocidas y verificación de los [criterios de éxito](../01-producto/criterios-de-exito.md).
 
-El estado vivo de cada historia está en [`estado.md`](../06-backlog/estado.md).
+> **El tag se crea cuando `main` queda cerrado.** Es el último paso del proyecto: etiquetar antes dejaría fuera lo que todavía está en revisión. El estado vivo de cada historia está en [`estado.md`](../06-backlog/estado.md), y lo que esté abierto al momento de etiquetar se anota aquí entonces.
 
 ## Qué es FoodFlow
 
@@ -46,8 +46,6 @@ Las seis épicas del backlog, completas en lo imprescindible:
 | EP-06 resiliencia y calidad | Consumidores idempotentes, reintentos y DLQ, logs correlacionados, *health checks*, pruebas de integración sobre Kafka real y medición de los atributos de calidad |
 
 Añadidos opcionales que también entraron: esquemas versionados con **Flyway** (ADR-13), pruebas de integración con **Testcontainers** (`-Ptestcontainers`) y un flujo de **CI** que repite en cada PR lo que se ejecuta en local.
-
-**Queda fuera del tag**, en revisión al momento de etiquetar: la vista del resultado del pago en el frontend (HU-503) y la presentación con su ensayo (HU-706). Ninguna de las dos cambia el comportamiento del prototipo.
 
 ## Verificación de los criterios de éxito
 
