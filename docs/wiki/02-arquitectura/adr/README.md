@@ -22,6 +22,7 @@ Cada decisión de arquitectura vive en un archivo `ADR-NN-<slug>.md` en esta car
 | ADR-10 | Pago determinista `PAY-OK` / `PAY-FAIL` | Aprobado | [ADR-10](ADR-10-pago-determinista.md) |
 | ADR-11 | Snapshot de contacto y canal de notificación | Aprobado | [ADR-11](ADR-11-snapshot-de-contacto-y-canal.md) |
 | ADR-12 | Contrato REST: OpenAPI, Problem Details, `Idempotency-Key` | **Propuesto** | [ADR-12](ADR-12-contrato-rest-openapi-problem-details-idempotency-key.md) |
+| ADR-13 | El esquema de cada base lo crea su servicio con Flyway | **Propuesto** | [ADR-13](ADR-13-esquema-con-flyway.md) |
 
 **ADR-12 sigue en `Propuesto`** porque su numeración está pendiente de confirmar por el equipo; el contenido de la decisión sí está acordado y ya se refleja en la página [API REST](../../03-contratos/api-rest.md).
 

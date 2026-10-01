@@ -37,7 +37,7 @@ Un asistente **no debe**:
 - crear entidades de dominio adicionales, ni ampliar el dominio hacia restaurante, inventario, delivery o autenticación;
 - importar entidades JPA ni compartir repositorios entre servicios;
 - cambiar nombres de tópicos, eventos o campos sin actualizar contratos y documentación;
-- convertir Flyway, Testcontainers o CI en requisito obligatorio del prototipo;
+- convertir Testcontainers o CI en requisito obligatorio del prototipo, o cambiar un esquema fuera de una migración Flyway del servicio dueño de la base (ADR-13);
 - elegir versiones de dependencias sin consultar `docs/wiki/04-implementacion/versiones.md`;
 - inventar rutas, credenciales, URLs o comportamientos no especificados;
 - **editar `docs/informe/main.tex`**: es la fuente de verdad del diseño y solo Sara lo modifica. Un asistente propone el cambio (sección, texto actual, texto propuesto y motivo) en el PR o en un comentario de la HU para revisión cruzada;

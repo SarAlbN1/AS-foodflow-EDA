@@ -34,4 +34,4 @@ Estados: `orders.status` es `CREADO`, `PAGADO` o `PAGO_RECHAZADO`; `payments.sta
 
 `payments.orderId` es **único**: un pedido tiene a lo sumo un pago. Es lo que impide cobrar dos veces el mismo pedido si `OrderCreated` se reprocesa, con independencia de `processed_events`.
 
-**Creación del esquema:** scripts SQL versionados en `infrastructure/postgres/<db>/` y `spring.jpa.hibernate.ddl-auto=validate`. Flyway es opcional (página [Visión y alcance](../01-producto/vision-y-alcance.md)).
+**Creación del esquema:** cada servicio migra su propia base con Flyway al arrancar (HU-010, opcional según [Visión y alcance](../01-producto/vision-y-alcance.md)), desde `services/<servicio>/src/main/resources/db/migration/`, y Hibernate solo valida (`spring.jpa.hibernate.ddl-auto=validate`). `V1__esquema_inicial.sql` reproduce el modelo de los scripts de HU-002 en `infrastructure/postgres/<db>/`, que se conservan como referencia. Ninguna migración toca una base ajena.
