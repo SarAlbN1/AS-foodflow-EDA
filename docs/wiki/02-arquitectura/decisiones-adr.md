@@ -20,5 +20,6 @@ Cada decisión tiene su ADR completo (contexto, opciones consideradas, trade-off
 | **[ADR-10](adr/ADR-10-pago-determinista.md)** | **Pago determinista:** `PAY-OK` y `PAY-FAIL`. | Aprobado |
 | **[ADR-11](adr/ADR-11-snapshot-de-contacto-y-canal.md)** | **Snapshot de contacto y canal** capturado en el pedido y propagado por eventos. | Aprobado |
 | [ADR-12](adr/ADR-12-contrato-rest-openapi-problem-details-idempotency-key.md) | Contrato REST: OpenAPI, Problem Details e `Idempotency-Key` | Propuesto (numeración por confirmar) |
+| [ADR-13](adr/ADR-13-esquema-con-flyway.md) | El esquema de cada base lo crea su servicio con Flyway (HU-010) | Propuesto |
 
 Consecuencia de ADR-08: el replay de Kafka recupera eventos **publicados**, no los que nunca llegaron al broker. Este riesgo debe estar documentado en el ADR, en el README y en las lecciones aprendidas.

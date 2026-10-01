@@ -66,7 +66,7 @@ Detalle y justificación: `docs/wiki/02-arquitectura/reglas-arquitectonicas.md`.
 
 Transactional Outbox, Saga, CQRS, Event Sourcing, Circuit Breaker, tracing distribuido completo, Kubernetes, Backoffice, Analítica, autenticación completa, base de datos compartida, orquestador central. **No usar `OrderUpdated`** (el evento se llama `OrderStatusChanged`).
 
-Flyway, Testcontainers y CI son **opcionales**: no los conviertas en requisito.
+Testcontainers y CI son **opcionales**: no los conviertas en requisito. **Flyway es el mecanismo del esquema desde HU-010** ([ADR-13](docs/wiki/02-arquitectura/adr/ADR-13-esquema-con-flyway.md)): cada servicio migra su propia base al arrancar, y un cambio de esquema es una migración nueva en ese servicio.
 
 La consulta de pagos por el API Gateway (HU-205 y su vista en HU-503) es **opcional**: amplía el contrato mínimo del informe sin cambiarlo, y el pago se sigue observando mediante el estado del pedido. Solo lee Payment DB desde Payment Service; nunca coordina el flujo.
 
