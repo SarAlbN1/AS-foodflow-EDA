@@ -1,0 +1,92 @@
+.pago,
+.ff-payment-section {
+  margin-top: 2rem;
+  border-top: 1px solid var(--ff-border);
+  padding-top: 1.5rem;
+}
+
+h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ff-text-main);
+  margin: 0 0 16px 0;
+}
+
+.ff-payment-card {
+  background: var(--ff-bg-page);
+  border: 1px solid var(--ff-border-muted);
+  border-radius: var(--ff-radius-sm);
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+
+.ff-payment-card[data-estado='APROBADO'] {
+  border-left: 4px solid var(--ff-success);
+}
+
+.ff-payment-card[data-estado='RECHAZADO'] {
+  border-left: 4px solid var(--ff-danger);
+}
+
+.ff-payment-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ff-payment-badge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--ff-radius-pill);
+}
+
+[data-estado='APROBADO'] .ff-payment-badge {
+  background: var(--ff-success-light);
+  color: var(--ff-success-text);
+  border: 1px solid var(--ff-success-border);
+}
+
+[data-estado='RECHAZADO'] .ff-payment-badge {
+  background: var(--ff-danger-light);
+  color: var(--ff-danger-text);
+  border: 1px solid var(--ff-danger-border);
+}
+
+.ff-payment-code {
+  font-size: 0.75rem;
+  color: var(--ff-text-muted);
+}
+
+.ff-payment-dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+}
+
+.ff-payment-dl-item dt {
+  font-size: 0.75rem;
+  color: var(--ff-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+.ff-payment-dl-item dd {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ff-text-main);
+  overflow-wrap: anywhere;
+}
+
+.ff-payment-dl-error dd {
+  color: var(--ff-danger-text);
+}
+
+.ff-payment-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}

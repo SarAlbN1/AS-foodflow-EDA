@@ -8,6 +8,7 @@ import {
   OrderNotifications,
   SituacionNotificaciones,
 } from '../../notifications/order-notifications/order-notifications';
+import { OrderPayment } from '../../payments/order-payment/order-payment';
 import { OrderFlow } from '../order-flow/order-flow';
 import { OrderApiService } from '../order-api.service';
 import { Order, OrderStatus } from '../order.model';
@@ -40,7 +41,7 @@ const ETIQUETAS: Record<OrderStatus, string> = {
  */
 @Component({
   selector: 'app-order-status',
-  imports: [RouterLink, OrderNotifications, OrderFlow, ImportePipe],
+  imports: [RouterLink, OrderNotifications, OrderPayment, OrderFlow, ImportePipe],
   templateUrl: './order-status.html',
   styleUrl: './order-status.css',
 })
