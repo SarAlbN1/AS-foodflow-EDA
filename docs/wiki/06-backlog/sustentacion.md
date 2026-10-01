@@ -69,7 +69,7 @@ Si la respuesta a la segunda pregunta fija un mínimo por integrante mayor que l
 Lo que debe estar cerrado para que la agenda se sostenga:
 
 - **HU-706 (Juan):** el guion del [Runbook de la demo](../04-implementacion/runbook-demo.md) y al menos un ensayo cronometrado. El bloque 3 depende de que la demo arranque sin incidentes.
-- **HU-608 (Juan):** los atributos medidos que cita el bloque 5.
+- **HU-608 (Sara; lo presenta Juan en el bloque 5):** los atributos medidos que cita ese bloque.
 - **HU-704 (Juan):** los diagramas exportados. El bloque 2 se apoya en ellos y hoy la vista dinámica y el C2 todavía dibujan la cadena en vez del abanico.
 - **HU-705 (Sara):** las lecciones aprendidas del informe, que son el material del bloque 4.
 - **El entorno parte limpio.** Un `broker` con historial de ejecuciones anteriores es lo que hizo fallar la primera validación end-to-end; la demo se ejecuta después de un ciclo de parada y arranque.
