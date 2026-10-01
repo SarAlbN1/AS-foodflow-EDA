@@ -1,0 +1,2 @@
+# HU-011: Kafka y Notification DB efimeros con -Ptestcontainers. Sin el perfil, el inicializador no hace nada.
+org.springframework.context.ApplicationContextInitializer=com.foodflow.notification.testcontainers.InfraestructuraEfimera
