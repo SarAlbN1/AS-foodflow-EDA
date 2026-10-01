@@ -46,7 +46,7 @@ Table orders {
   created_at timestamp [not null]
   updated_at timestamp [not null]
 
-  Note: '''Entidad Pedido. Se persiste en Order DB. Los datos de contacto se almacenan como snapshot mínimo para que OrderStatusChanged pueda transportar el destino sin consultar otro dominio.'''
+  Note: '''Entidad Pedido. Se persiste en Order DB. Los datos de contacto se almacenan como snapshot mínimo (ADR-11): OrderCreated los transporta, Payment Service los copia en PaymentApproved/PaymentRejected y Notification Service los toma de ahí sin consultar otro dominio.'''
 }
 
 Table payments {
@@ -63,7 +63,7 @@ Table payments {
 
 Table notifications {
   id uuid [pk, not null]
-  order_id uuid [not null, note: 'Referencia lógica al Pedido cuyo cambio de estado genera la notificación.']
+  order_id uuid [not null, note: 'Referencia lógica al Pedido cuyo resultado de pago genera la notificación.']
   channel notification_channel [not null]
   destination varchar(180) [not null]
   message text [not null]
@@ -73,7 +73,7 @@ Table notifications {
   created_at timestamp [not null]
   sent_at timestamp
 
-  Note: '''Entidad Notificación. Se persiste en Notification DB y se origina al consumir OrderStatusChanged.'''
+  Note: '''Entidad Notificación. Se persiste en Notification DB y se origina al consumir PaymentApproved o PaymentRejected, en paralelo con Order Service (abanico).'''
 }
 
 Ref payment_order: payments.order_id - orders.id
