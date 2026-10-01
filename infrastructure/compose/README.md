@@ -125,16 +125,21 @@ docker compose --env-file .env -f infrastructure/compose/docker-compose.yml down
 docker compose --env-file .env -f infrastructure/compose/docker-compose.yml up -d
 ```
 
-No hay ningún paso manual adicional: el esquema de cada base lo crean los scripts de
-[`infrastructure/postgres/<db>/`](../postgres), que el *entrypoint* de PostgreSQL ejecuta
-automáticamente la primera vez que se crea el volumen.
+No hay ningún paso manual adicional: el esquema de cada base lo crea **su servicio con Flyway**
+al arrancar (HU-010), con las migraciones de `services/<servicio>/src/main/resources/db/migration/`.
 
 ## Esquema de las bases
 
-Los scripts SQL viven versionados en `infrastructure/postgres/<db>/` y se montan en
-`/docker-entrypoint-initdb.d` en modo solo lectura. Se ejecutan **una única vez**, al crear
-el volumen. Para aplicar un cambio de esquema durante el desarrollo hay que recrear el
-volumen con `down -v`. Flyway es opcional (HU-010).
+Desde HU-010 cada servicio **migra su propia base con Flyway** al arrancar: la migración
+`V1__esquema_inicial.sql` crea el mismo modelo que antes creaba `infrastructure/postgres/<db>/01-schema.sql`,
+y Hibernate solo valida (`ddl-auto=validate`). Compose ya no monta esos scripts en
+`/docker-entrypoint-initdb.d`.
+
+- **Un cambio de esquema** es una migración nueva (`V2__...sql`) en el servicio dueño de la base;
+  no hace falta recrear el volumen.
+- **Bases creadas antes de HU-010** (con el script antiguo): `spring.flyway.baseline-on-migrate`
+  las registra como versión 1 sin volver a crear nada (`flyway_schema_history` muestra `BASELINE`).
+- **Volumen nuevo**: Flyway aplica `V1` (`flyway_schema_history` muestra `1 SQL esquema inicial`).
 
 ## Solución de problemas
 

@@ -1,6 +1,6 @@
 # infrastructure/postgres/notification-db
 
-**Responsabilidad:** Scripts SQL de esquema de Notification DB (Flyway es opcional).
+**Responsabilidad:** Referencia del esquema de Notification DB. **Desde HU-010 el esquema lo crea `notification-service` con Flyway** (`services/notification-service/src/main/resources/db/migration/V1__esquema_inicial.sql`); este script ya no se monta en Compose.
 
 **Historias que lo construyen:** HU-002
 
@@ -18,16 +18,10 @@ Contrato de referencia: [Persistencia](../../../docs/wiki/03-contratos/persisten
 
 ## Cómo se ejecuta
 
-El directorio se monta en `/docker-entrypoint-initdb.d` (solo lectura) del contenedor
-`notification-db`. PostgreSQL ejecuta los scripts en orden alfabético **una sola vez**, cuando se crea
-el volumen `foodflow-notification-db-data`. No hay ningún paso manual.
-
-Para reaplicar el esquema tras editarlo hay que recrear el volumen:
-
-```bash
-docker compose --env-file .env -f infrastructure/compose/docker-compose.yml down -v
-docker compose --env-file .env -f infrastructure/compose/docker-compose.yml up -d
-```
+**Ya no se ejecuta.** Compose dejaba este directorio en `/docker-entrypoint-initdb.d`; desde HU-010 el
+esquema lo aplica `notification-service` con Flyway al arrancar, y la **fuente del esquema es la migración**
+del servicio, con el mismo modelo que `01-schema.sql`. Este archivo se conserva como referencia
+de HU-002: si el esquema cambia, el cambio va en una migración nueva del servicio, no aquí.
 
 ## Credenciales y acceso
 

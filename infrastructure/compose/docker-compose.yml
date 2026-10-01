@@ -99,8 +99,8 @@ services:
       # montaje va en /var/lib/postgresql y no en /var/lib/postgresql/data: con el montaje
       # en .../data el contenedor aborta el arranque.
       - order-db-data:/var/lib/postgresql
-      # Los scripts se ejecutan en orden alfabético la primera vez que se crea el volumen.
-      - ../postgres/order-db:/docker-entrypoint-initdb.d:ro
+      # El esquema lo crea order-service con Flyway al arrancar (HU-010); ya no se monta
+      # infrastructure/postgres/order-db en docker-entrypoint-initdb.d.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -125,7 +125,8 @@ services:
       POSTGRES_PASSWORD: ${PAYMENT_DB_PASSWORD}
     volumes:
       - payment-db-data:/var/lib/postgresql
-      - ../postgres/payment-db:/docker-entrypoint-initdb.d:ro
+      # El esquema lo crea payment-service con Flyway al arrancar (HU-010); ya no se monta
+      # infrastructure/postgres/payment-db en docker-entrypoint-initdb.d.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -150,7 +151,8 @@ services:
       POSTGRES_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
     volumes:
       - notification-db-data:/var/lib/postgresql
-      - ../postgres/notification-db:/docker-entrypoint-initdb.d:ro
+      # El esquema lo crea notification-service con Flyway al arrancar (HU-010); ya no se monta
+      # infrastructure/postgres/notification-db en docker-entrypoint-initdb.d.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s

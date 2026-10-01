@@ -74,4 +74,4 @@ Pueden aparecer en la investigación o en la evolución propuesta, pero **no se 
 
 ### Herramientas opcionales
 
-Flyway, Testcontainers y CI automático **pueden** incorporarse si aportan valor, pero **no son dependencias obligatorias** para considerar terminado el prototipo. Ninguna HU del plan puede exigirlos como criterio de aceptación (aparecen como P2 en la página [Backlog](../06-backlog/README.md)).
+Testcontainers y CI automático **pueden** incorporarse si aportan valor, pero **no son dependencias obligatorias** para considerar terminado el prototipo. Flyway se incorporó en HU-010 y es desde entonces el mecanismo que crea el esquema de cada base ([ADR-13](../02-arquitectura/adr/ADR-13-esquema-con-flyway.md)). Ninguna HU del plan puede exigirlos como criterio de aceptación (aparecen como P2 en la página [Backlog](../06-backlog/README.md)).

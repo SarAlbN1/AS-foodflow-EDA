@@ -31,4 +31,4 @@ Una HU se considera terminada únicamente cuando:
 11. Se ejecuta con el entorno local documentado y puede demostrarse desde una entrada observable, no solo manipulando la base de datos.
 12. El PR cumple la plantilla, fue revisado por la otra persona y se integró con squash a `main`.
 
-La DoD **no** exige Flyway, Testcontainers ni CI automático.
+La DoD **no** exige Testcontainers ni CI automático. Si una HU cambia un esquema, el cambio va como migración Flyway nueva en el servicio dueño de la base ([ADR-13](../02-arquitectura/adr/ADR-13-esquema-con-flyway.md)).
