@@ -6,7 +6,7 @@
 
 ## Cuándo usarlo
 
-En el **bloque 3** de la [agenda de la sustentación](../06-backlog/sustentacion.md): 4 minutos, que bajan a 2 si la ventana se reduce a 10. También sirve para ensayar.
+En el **bloque 3** de la [agenda de la sustentación](../06-backlog/sustentacion.md): 4 minutos, que bajan a 2 si la ventana se reduce a 10. También sirve para ensayar. La presentación y el registro de los ensayos están en [`docs/sustentacion/`](../../sustentacion/README.md).
 
 ## Qué se levanta
 
