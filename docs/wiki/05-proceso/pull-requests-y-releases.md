@@ -91,6 +91,20 @@ El asistente puede ejecutar `gh pr merge` porque una guarda lo revisa antes de c
 
 Forma del comando: `gh pr merge <n> --squash --subject "<tipo>(<ámbito>): <descripción> [HU-###] (#<n>)" --body ""`. La guarda necesita `node` (ya instalado para el frontend) y `gh` autenticado.
 
+## CI automático (HU-007, opcional)
+
+[`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml) se ejecuta en cada PR, también en los apilados, y en cada push a `main`. Tiene tres trabajos:
+
+| Trabajo | Qué ejecuta |
+|---|---|
+| `backend` | `./mvnw -B -ntp verify` en los tres servicios, el API Gateway y el proveedor simulado, con JDK 25 (Temurin) |
+| `frontend` | `npm ci`, `npm run build` y `npm test -- --watch=false` con Node.js 24.21.0 |
+| `verificaciones` | `check-structure.sh`, `validate-events.sh`, `validate-openapi.sh` y `verify-architecture.sh` (incluye ArchUnit) |
+
+- **No usa secretos**: ni variables del repositorio ni el `.env`.
+- **No levanta Kafka ni PostgreSQL**: las pruebas de integración de HU-605 se omiten solas sin sus variables. El flujo completo se sigue verificando en local con `scripts/up.sh` y `scripts/smoke-test.sh`.
+- **Es opcional**: una CI en rojo avisa, pero no sustituye la revisión cruzada ni es requisito para dar por terminado el prototipo. Convertirla en *status check* obligatorio de `main` es una decisión aparte.
+
 ## Protección de `main`, tags y releases
 
 **Protección de `main`** (Settings, Branches): PR obligatorio, 1 aprobación, resolución de conversaciones, historial lineal (squash), sin force-push ni borrado. Los *status checks* obligatorios solo se activan si se adopta CI (opcional).
