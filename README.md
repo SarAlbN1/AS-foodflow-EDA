@@ -141,7 +141,7 @@ Son decisiones deliberadas de un prototipo académico, no descuidos. Cada una es
 | **Sin Circuit Breaker** | Con un único proveedor no hay riesgo de fallo en cascada que justifique la complejidad | [Visión y alcance](docs/wiki/01-producto/vision-y-alcance.md) |
 | **Un solo canal (`EMAIL`)** y moneda fija (`COP`) | El canal y la moneda son constantes del prototipo, no configuración | [Contrato de eventos](docs/wiki/03-contratos/eventos.md) |
 | **Kafka sin volumen** | Los tópicos se recrean en cada `up.sh`; los eventos no sobreviven a un `down`. Las tres bases sí conservan sus datos | [Compose](infrastructure/compose/README.md) |
-| **Sin tracing distribuido** | La trazabilidad es el `correlationId` en logs estructurados, no un sistema de *spans* | [ADR-07](docs/wiki/02-arquitectura/decisiones-adr.md) |
+| **Sin tracing distribuido** | La trazabilidad es el `correlationId` en logs estructurados, no un sistema de *spans* | [Visión y alcance](docs/wiki/01-producto/vision-y-alcance.md) |
 
 Fuera de alcance por decisión: Saga, CQRS, Event Sourcing, Kubernetes, *backoffice* y analítica.
 

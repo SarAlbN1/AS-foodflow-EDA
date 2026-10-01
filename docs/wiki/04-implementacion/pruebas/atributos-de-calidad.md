@@ -211,16 +211,25 @@ corrida:
 {"timestamp":"2026-09-30T20:54:30.686243-05:00","@version":"1","message":"Pedido PAGADO orderId=aafa7f49-… paymentId=3189872f-… eventId=40b0487b-… correlationId=9ad9f115-…","logger_name":"com.foodflow.order.application.OrderPaymentService","thread_name":"main","level":"INFO","level_value":20000,"service":"order-service"}
 ```
 
-Lo que queda pendiente es verlo **dentro del contenedor**, y eso depende de una
-reconstrucción que hoy no es posible: el *daemon* no alcanza el registry
-(`DeadlineExceeded` resolviendo `eclipse-temurin:25-jdk`, que ya no está en el
-store local), así que `bash scripts/up.sh` falla en el *build*. Se repite cuando
-el registry vuelva a estar accesible:
+**Dentro del contenedor también está verificado**, con imágenes reconstruidas
+desde el código con `#113` integrado, en las revisiones de `#113` y `#119`:
+`docker logs` de los tres servicios dio 103/103, 99/99 y 104/104 líneas en JSON,
+y la prueba de trazabilidad sobre un entorno reconstruido con `up.sh` localizó el
+`correlationId` en **22 líneas JSON** y 4 eventos. La medición de esta página se
+tomó antes, sobre imágenes anteriores a `#113`, así que registra el patrón de
+consola; el criterio queda cubierto por las dos.
+
+Para repetirlo sobre un entorno recién reconstruido:
 
 ```bash
 bash scripts/up.sh
 bash scripts/verify-quality-attributes.sh --solo trazabilidad
 ```
+
+En este equipo hoy no se puede: el *daemon* no alcanza el registry
+(`DeadlineExceeded` resolviendo `eclipse-temurin:25-jdk`, que ya no está en el
+store local), así que `up.sh` falla en el *build*. Es una limitación de la
+máquina, no del prototipo.
 
 **5. Dos hallazgos de infraestructura, reportados aparte.** `scripts/up.sh
 --sin-build` falla en bash 3.2 por expandir un array vacío con `set -u`
