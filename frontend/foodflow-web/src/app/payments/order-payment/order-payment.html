@@ -1,0 +1,71 @@
+<section class="pago ff-payment-section">
+  <h3>Pago</h3>
+
+  @if (pago(); as p) {
+    <div class="ff-payment-card" [attr.data-estado]="p.status" data-testid="pago">
+      <div class="ff-payment-header">
+        <span class="ff-payment-badge" data-testid="pago-estado">{{ etiquetas[p.status] }}</span>
+        <code class="ff-payment-code" data-testid="pago-estado-codigo">{{ p.status }}</code>
+      </div>
+
+      <dl class="ff-payment-dl">
+        <div class="ff-payment-dl-item">
+          <dt>Monto</dt>
+          <dd data-testid="pago-monto">{{ p.amount | importe }}</dd>
+        </div>
+        <div class="ff-payment-dl-item">
+          <dt>Referencia de transacción</dt>
+          <dd><code data-testid="pago-referencia">{{ p.transactionReference }}</code></dd>
+        </div>
+        @if (p.status === 'RECHAZADO' && p.reasonCode) {
+          <div class="ff-payment-dl-item ff-payment-dl-error">
+            <dt>Motivo</dt>
+            <dd data-testid="pago-motivo">{{ motivo(p.reasonCode) }}</dd>
+          </div>
+        }
+        <div class="ff-payment-dl-item">
+          <dt>Registrado</dt>
+          <dd>{{ p.createdAt }}</dd>
+        </div>
+      </dl>
+    </div>
+  } @else if (procesando()) {
+    <div class="ff-alert ff-alert-polling" data-testid="pago-procesando" aria-live="polite">
+      @if (esperando()) {
+        <div class="ff-spinner-small"></div>
+      }
+      <p class="nota">
+        Procesando el pago: el resultado aparece aquí en cuanto Payment Service lo registre.
+        @if (esperando()) {
+          Esta sección se actualiza sola.
+        } @else {
+          Pulsa "Actualizar pago" para consultar de nuevo.
+        }
+      </p>
+    </div>
+  }
+
+  @if (error(); as falla) {
+    <div class="error ff-alert ff-alert-danger" role="alert" data-testid="pago-error">
+      <p class="ff-alert-message">{{ falla.mensaje }}</p>
+      @if (falla.referencia) {
+        <p class="referencia">Referencia: {{ falla.referencia }}</p>
+      }
+    </div>
+  }
+
+  <div class="ff-payment-actions">
+    <button
+      type="button"
+      (click)="actualizar()"
+      [disabled]="consultando()"
+      data-testid="pago-actualizar"
+      class="ff-btn ff-btn-outline-primary"
+    >
+      @if (consultando()) {
+        <span class="ff-spinner-primary"></span>
+      }
+      {{ consultando() ? 'Consultando…' : 'Actualizar pago' }}
+    </button>
+  </div>
+</section>

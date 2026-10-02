@@ -77,6 +77,8 @@
         </div>
       }
 
+      <app-order-payment [orderId]="id()" />
+
       <app-order-notifications [orderId]="id()" (situacion)="notificaciones.set($event)" />
     }
 

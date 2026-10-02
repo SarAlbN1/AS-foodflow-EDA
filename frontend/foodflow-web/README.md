@@ -4,7 +4,7 @@
 
 **Responsabilidad:** Interfaz para crear pedidos y consultar su estado y sus notificaciones. Se publica con Nginx. Solo consume APIs REST del API Gateway.
 
-**Historias que lo construyen:** HU-001 (esqueleto), HU-501, HU-502, HU-504, HU-505
+**Historias que lo construyen:** HU-001 (esqueleto), HU-501, HU-502, HU-503, HU-504, HU-505
 
 **Reglas que aplican:** Nunca accede a Kafka ni a PostgreSQL; sin URLs internas de los servicios.
 
@@ -47,6 +47,12 @@ La consistencia es eventual: mientras el pedido está en `CREADO`, la pantalla v
 La pantalla `/orders/:id` incluye la sección **Notificaciones**, que consulta `GET /orders/{id}/notifications` a través del gateway (HU-402). Cada notificación muestra su **estado** (`PENDIENTE` «Enviando», `ENVIADA` «Enviada», `FALLIDA` «No se pudo enviar», con su motivo), el **contenido** enviado al cliente, el canal, el destino, los intentos y la última actualización.
 
 Que todavía no haya notificaciones es normal: se crean cuando Notification Service conoce el resultado del pago. Mientras no haya ninguna, o alguna siga `PENDIENTE`, la sección se vuelve a consultar cada segundo durante 30 s como máximo; después queda el botón **Actualizar notificaciones**.
+
+## Resultado del pago (HU-503)
+
+La pantalla `/orders/:id` incluye la sección **Pago**, que consulta `GET /orders/{id}/payment` a través del gateway (HU-205); la vista nunca llama a Payment Service directamente. Muestra el **estado** (`APROBADO` «Pago aprobado», `RECHAZADO` «Pago rechazado»), el **monto**, la **referencia de transacción** y, si se rechazó, el **motivo** en palabras de la persona.
+
+Mientras el pago no existe, la API responde `404 NOT_FOUND`. Es el procesamiento eventual, así que la sección muestra **«Procesando el pago»** y no un error, y se vuelve a consultar cada segundo durante 30 s como máximo; después queda el botón **Actualizar pago**. Un fallo real (por ejemplo `503`) sí se muestra como error, con su referencia.
 
 ## Flujo integral del pedido (HU-505)
 

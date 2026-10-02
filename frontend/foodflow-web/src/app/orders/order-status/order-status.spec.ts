@@ -6,12 +6,19 @@ import { provideRouter } from '@angular/router';
 
 import { API_BASE_URL } from '../../core/api-config';
 import { OrderNotifications } from '../../notifications/order-notifications/order-notifications';
+import { OrderPayment } from '../../payments/order-payment/order-payment';
 import { Order, OrderStatus } from '../order.model';
 import { ESPERA_AUTOMATICA_MS, INTERVALO_CONSULTA_MS, OrderStatusPage } from './order-status';
 
 /** Sustituye a las notificaciones (HU-504): estas pruebas cubren solo el estado del pedido. */
 @Component({ selector: 'app-order-notifications', template: '' })
 class NotificacionesVacias {
+  readonly orderId = input.required<string>();
+}
+
+/** Sustituye al pago (HU-503), que tiene sus propias pruebas en `order-payment.spec.ts`. */
+@Component({ selector: 'app-order-payment', template: '' })
+class PagoVacio {
   readonly orderId = input.required<string>();
 }
 
@@ -48,8 +55,8 @@ describe('OrderStatusPage (HU-502)', () => {
       ],
     })
       .overrideComponent(OrderStatusPage, {
-        remove: { imports: [OrderNotifications] },
-        add: { imports: [NotificacionesVacias] },
+        remove: { imports: [OrderNotifications, OrderPayment] },
+        add: { imports: [NotificacionesVacias, PagoVacio] },
       })
       .compileComponents();
     http = TestBed.inject(HttpTestingController);
